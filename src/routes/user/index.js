@@ -111,7 +111,6 @@ router.post("/login", async (req, res) => {
 
 router.get("/get_user/:id", auth, (req, res) => {
   const id = req.params.id;
-  console.log("user_id", id);
   Users.findOne({ _id: id })
     .then((user) => {
       res.send({ status: 1, msg: "get User succeeded.", user: user });
