@@ -5,7 +5,6 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/point_log");
 
 router.post("/purchase", auth, async (req, res) => {
-  console.log("req.body", req.body);
   const { user_id, point_num, price } = req.body;
   if (user_id == undefined)
     return res.status(401).json({ msg: "authorization denied" });
@@ -23,7 +22,6 @@ router.post("/purchase", auth, async (req, res) => {
       newPointLog
         .save()
         .then((data) => {
-          console.log("newpointlog save res", data);
           //   user.remain = data.point_num;
           user.point_remain = user.point_remain
             ? user.point_remain + point_num
