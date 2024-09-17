@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+
 //gacha category schema
 const categorySchema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   display_order: { type: Number, required: true, default: 0 },
 });
+
 //remain prize list
 const prizeSchema = new Schema({
   name: { type: String },
@@ -32,6 +34,7 @@ const Category = mongoose.model("Category", categorySchema, "admin_category");
 const Prize = mongoose.model("Prize", prizeSchema, "admin_prize");
 const Point = mongoose.model("model", pointSchema, "admin_point");
 const Administrator = mongoose.model("Adminer", AdminSchema, "admin_adminer");
+
 const adminSchemas = {
   Category: Category,
   Prize: Prize,

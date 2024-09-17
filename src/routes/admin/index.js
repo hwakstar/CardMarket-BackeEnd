@@ -20,7 +20,6 @@ router.get("/admin_test", (req, res) => {
 router.get("/get_category", async (req, res) => {
   const category = await adminSchemas.Category.find().sort("display_order");
   if (category) {
-    // console.log(category)
     res.send({
       status: 1,
       category: category,
@@ -34,7 +33,6 @@ router.get("/get_category", async (req, res) => {
 
 router.post("/add_category", auth, async (req, res) => {
   const { name, description } = req.body;
-  console.log("Category name", name);
   if (name && description) {
     const newCategory = new adminSchemas.Category({
       name: name,
@@ -67,7 +65,6 @@ router.post("/edit_category", auth, async (req, res) => {
 });
 router.delete("/del_category/:id", auth, async (req, res) => {
   const id = req.params.id;
-  console.log("del_id", id);
   adminSchemas.Category.deleteOne({ _id: id }).then((cat) =>
     res.send({ status: 1, msg: "Deleted!" })
   );
@@ -85,10 +82,8 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     return res.send({ status: 2, msg: "file is not selected." });
   }
   prizeData.img_url = `/uploads/prize/${req.file.filename}`;
-  console.log("req.file", req.file);
 
   if (id != "") {
-    console.log("update id----->", id);
     await adminSchemas.Prize.updateOne({ _id: id }, prizeData)
       .then((res) => {
         return res.send({ status: 1, msg: "Updated successfully." });
@@ -133,7 +128,6 @@ router.delete("/del_prize/:id", auth, async (req, res) => {
         return res.send({ status: 0, msg: "Can't delete setted prize" });
       const filename = prize.img_url;
       const filePath = path.join("./", filename);
-      console.log("filepath------->", filePath);
       try {
         await deleteFile(filePath);
         prize.deleteOne();
@@ -174,7 +168,6 @@ router.post(
       pointData.img_url = `/uploads/point/${req.file.filename}`;
 
     if (id != "" && id != undefined) {
-      console.log("update id----->", id);
       adminSchemas.Point.findOne({ _id: id })
         .then(async (point) => {
           try {
@@ -252,13 +245,11 @@ router.post("/add_admin", auth, (req, res) => {
     authority[item] = 1;  //set read authority by default
   }
   admin_data.authority = authority;
-  console.log("admin_data", admin_data);
   if (adminId == undefined || adminId == "") {
     adminSchemas.Administrator.create(admin_data)
       .then(() => res.send({ status: 1 }))
       .catch((err) => res.send({ status: 0, err: err }));
   } else {
-    console.log("admin update");
     adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data)
       .then(() => res.send({ status: 2 }))
       .catch((err) => res.send({ status: 0, err: err }));
