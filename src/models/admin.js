@@ -15,6 +15,7 @@ const prizeSchema = new Schema({
   cashback: { type: Number },
   img_url: { type: String },
   status: { type: String, default: "unset" }, //prize status- unset, set,
+  grade: { type: Number }
 });
 
 const pointSchema = new Schema({

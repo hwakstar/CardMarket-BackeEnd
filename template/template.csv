@@ -1,2 +1,2 @@
-No,name,rarity,cashback,img_url,status
-1,prize1,100,1000,/uploads/prize/1.png,set
+No,name,rarity,cashback,img_url,status,grade
+1,prize1,100,1000,/uploads/prize/1.png,set,First

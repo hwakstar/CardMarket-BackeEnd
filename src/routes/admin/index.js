@@ -1,16 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const path = require("path");
+
 const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
-const path = require("path");
+const deleteFile = require("../../utils/delete");
+
 const auth = require("../../middleware/auth");
+
 const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/card_delivering");
 const Users = require("../../models/user");
-const deleteFile = require("../../utils/delete");
 const Gacha = require("../../models/gacha");
-const config = require('../../../config')
+
+const config = require("../../../config");
 
 router.get("/admin_test", (req, res) => {
   res.send("amdin test is sucessful.");
@@ -19,6 +23,7 @@ router.get("/admin_test", (req, res) => {
 /* Category Management */
 router.get("/get_category", async (req, res) => {
   const category = await adminSchemas.Category.find().sort("display_order");
+
   if (category) {
     res.send({
       status: 1,
@@ -33,6 +38,7 @@ router.get("/get_category", async (req, res) => {
 
 router.post("/add_category", auth, async (req, res) => {
   const { name, description } = req.body;
+
   if (name && description) {
     const newCategory = new adminSchemas.Category({
       name: name,
@@ -49,6 +55,7 @@ router.post("/add_category", auth, async (req, res) => {
 
 router.post("/edit_category", auth, async (req, res) => {
   const { id, name, description } = req.body;
+
   adminSchemas.Category.findOne({ _id: id })
     .then((category) => {
       category.name = name;
@@ -63,8 +70,10 @@ router.post("/edit_category", auth, async (req, res) => {
       res.send({ status: 0, msg: "category update failed.", err: err })
     );
 });
+
 router.delete("/del_category/:id", auth, async (req, res) => {
   const id = req.params.id;
+
   adminSchemas.Category.deleteOne({ _id: id }).then((cat) =>
     res.send({ status: 1, msg: "Deleted!" })
   );
@@ -72,15 +81,15 @@ router.delete("/del_category/:id", auth, async (req, res) => {
 
 /* Prize Management */
 router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
-  const { id, name, rarity, cashBack } = req.body;
+  const { id, name, rarity, cashBack, grade } = req.body;
+
   const prizeData = {
     name: name,
     rarity: rarity,
     cashback: cashBack,
+    grade: grade
   };
-  if (req.file == null || req.file == undefined) {
-    return res.send({ status: 2, msg: "file is not selected." });
-  }
+
   prizeData.img_url = `/uploads/prize/${req.file.filename}`;
 
   if (id != "") {
@@ -94,6 +103,7 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
   } else {
     const newPrize = new adminSchemas.Prize(prizeData);
     const saved = await newPrize.save();
+
     if (saved) {
       res.send({
         status: 1,
@@ -107,8 +117,10 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     }
   }
 });
+
 router.get("/get_prize", auth, async (req, res) => {
   const prize = await adminSchemas.Prize.find();
+
   if (prize) {
     res.send({
       status: 1,
@@ -120,8 +132,10 @@ router.get("/get_prize", auth, async (req, res) => {
     });
   }
 });
+
 router.delete("/del_prize/:id", auth, async (req, res) => {
   const id = req.params.id;
+
   adminSchemas.Prize.findOne({ _id: id })
     .then(async (prize) => {
       if (prize.status == "set")
@@ -137,9 +151,7 @@ router.delete("/del_prize/:id", auth, async (req, res) => {
         res.status(500).send({ status: 0, msg: "Error deleting file" });
       }
     })
-    .catch((err) =>
-      res.send({ status: 0, msg: "prize find error", err: err })
-    );
+    .catch((err) => res.send({ status: 0, msg: "prize find error", err: err }));
 });
 
 /* Point management */
@@ -205,6 +217,7 @@ router.post(
 //delete point with image deleting by id
 router.delete("/del_point/:id", auth, (req, res) => {
   const id = req.params.id;
+
   adminSchemas.Point.findOne({ _id: id })
     .then(async (point) => {
       const filePath = path.join("./", point.img_url);
@@ -238,11 +251,12 @@ router.post("/add_admin", auth, (req, res) => {
     email: email,
     password: password,
   };
-  authority = {}
+
+  authority = {};
   const admin_authority = config.admin_authority;
   for (key in admin_authority) {
     let item = admin_authority[key];
-    authority[item] = 1;  //set read authority by default
+    authority[item] = 1; //set read authority by default
   }
   admin_data.authority = authority;
   if (adminId == undefined || adminId == "") {
@@ -258,23 +272,29 @@ router.post("/add_admin", auth, (req, res) => {
 
 router.delete("/del_admin/:id", auth, (req, res) => {
   const id = req.params.id;
+
   adminSchemas.Administrator.deleteOne({ _id: id })
     .then(() => res.send({ status: 1 }))
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-
 //change admin authority
 router.post("/chang_auth", auth, (req, res) => {
-  const {adminId, authority} = req.body;
-  adminSchemas.Administrator.findOne({_id: adminId}).then((admin) => {
+  const { adminId, authority } = req.body;
+
+  adminSchemas.Administrator.findOne({ _id: adminId })
+    .then((admin) => {
       admin.authority = authority;
-      admin.save().then(() => res.send({status: 1})).catch(() => res.send({status: 0}))
-  }).catch((err) => res.send({status: 0, msg: "Not Found Admin", err: err}))
-})
+      admin
+        .save()
+        .then(() => res.send({ status: 1 }))
+        .catch(() => res.send({ status: 0 }));
+    })
+    .catch((err) => res.send({ status: 0, msg: "Not Found Admin", err: err }));
+});
 
 //get deliver data
-router.get("/get_deliver", auth,  async (req, res) => {
+router.get("/get_deliver", auth, async (req, res) => {
   CardDeliver.find()
     .then((deliver) => {
       return res.send({ status: 1, deliverData: deliver });
@@ -284,6 +304,7 @@ router.get("/get_deliver", auth,  async (req, res) => {
 
 router.post("/set_deliver_status", auth, async (req, res) => {
   const { id, user_id, status } = req.body;
+
   if (status == "delivering") {
     const deliver = await CardDeliver.findOne({ _id: id });
     Users.findOne({ _id: user_id })
@@ -307,4 +328,5 @@ router.post("/set_deliver_status", auth, async (req, res) => {
       })
       .catch((err) => res.send({ status: 0, err: err }));
 });
+
 module.exports = router;
