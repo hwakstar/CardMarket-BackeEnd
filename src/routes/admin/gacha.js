@@ -99,11 +99,11 @@ router.get("/set_release/:id", auth, (req, res) => {
 
 //unset prize from gacha
 router.post("/unset_prize", auth, (req, res) => {
-  const { gachaId, prizeId, flag } = req.body;
+  const { gachaId, prizeId, last } = req.body;
 
   Gacha.findOne({ _id: gachaId })
     .then((gacha) => {
-      if (flag === -1) gacha.last_prize = {};
+      if (last) gacha.last_prize = {};
       else {
         let prize = gacha.remain_prizes;
         prize = prize.filter((data) => data._id != prizeId);
