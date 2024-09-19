@@ -72,12 +72,14 @@ router.delete("/del_category/:id", auth, async (req, res) => {
 
 /* Prize Management */
 router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
-  const { id, name, rarity, cashBack } = req.body;
+  const { id, name, rarity, cashBack, grade } = req.body;
   const prizeData = {
     name: name,
     rarity: rarity,
     cashback: cashBack,
+    grade: grade
   };
+
   if (req.file == null || req.file == undefined) {
     return res.send({ status: 2, msg: "file is not selected." });
   }
@@ -262,7 +264,6 @@ router.delete("/del_admin/:id", auth, (req, res) => {
     .then(() => res.send({ status: 1 }))
     .catch((err) => res.send({ status: 0, err: err }));
 });
-
 
 //change admin authority
 router.post("/chang_auth", auth, (req, res) => {

@@ -51,8 +51,10 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  var payload;
+  let payload;
+
   const admin = await adminSchemas.Administrator.findOne({ email: email });
+
   if (admin) {
     if (password == admin.password) {
       payload = {
@@ -63,6 +65,7 @@ router.post("/login", async (req, res) => {
         role: "admin",
       };
       const token = jwt.sign(payload, "RANDOM-TOKEN", { expiresIn: "1h" });
+
       res.send({
         status: 1,
         message: "Login Successful",
@@ -73,43 +76,37 @@ router.post("/login", async (req, res) => {
       res.send({ status: 0, msg: "Password and Email is not correct." });
     }
   } else {
-    await Users.findOne({ email: email })
-      .then((user) => {
-        bcrypt
-          .compare(password, user.hashedPass)
-          .then((checkPass) => {
-            if (checkPass) {
-              payload = {
-                user_id: user._id,
-                name: user.name,
-                email: user.email,
-              };
-              const token = jwt.sign(payload, "RANDOM-TOKEN", {
-                expiresIn: "1h",
-              });
-              res.send({
-                status: 1,
-                msg: "Login Successful",
-                user: user,
-                token,
-              });
-            } else
-              return res.send({
-                status: 0,
-                msg: "Password and Email is not correct.",
-              });
-          })
-          .catch((err) =>
-            res.send({ status: 0, msg: "Input data invalid", err: err })
-          );
-      })
-      .catch((err) => {
+    try {
+      const user = await Users.findOne({ email: email });
+      const checkPass = await bcrypt.compare(password, user.hashedPass);
+
+      if (checkPass) {
+        payload = {
+          user_id: user._id,
+          name: user.name,
+          email: user.email,
+        };
+        const token = jwt.sign(payload, "RANDOM-TOKEN", {
+          expiresIn: "1h",
+        });
         res.send({
+          status: 1,
+          msg: "Login Successful",
+          user: user,
+          token,
+        });
+      } else
+        return res.send({
           status: 0,
           msg: "Password and Email is not correct.",
-          err: err,
         });
+    } catch (error) {
+      res.send({
+        status: 0,
+        msg: "Password and Email is not correct.",
+        err: error,
       });
+    }
   }
 });
 

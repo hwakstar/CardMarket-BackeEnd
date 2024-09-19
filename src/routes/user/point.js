@@ -30,7 +30,6 @@ router.post("/purchase", auth, async (req, res) => {
             .save()
             // .updateOne({ _id: user_id }, { point_remain: point_num })
             .then(() => {
-              console.log("user update succeed");
               res.send({ status: 1, msg: "Point Purchase Succeeded." });
             })
             .catch((err) => console.log("user update err", err));
