@@ -37,14 +37,14 @@ router.post("/upload_bulk", auth, async (req, res) => {
   try {
     const { gachaId, prizes } = req.body;
 
-    const prize = await adminSchemas.Prize.create(prizes);
+    const newPrizes = await adminSchemas.Prize.create(prizes);
     const gacha = await Gacha.findOne({ _id: gachaId });
 
     if (gacha.remain_prizes.length > 0) {
       let remainPrizes = gacha.remain_prizes;
-      prize.map((element) => remainPrizes.push(element));
+      newPrizes.map((newPrize) => remainPrizes.push(newPrize));
       gacha.remain_prizes = remainPrizes;
-    } else gacha.remain_prizes = prize;
+    } else gacha.remain_prizes = newPrizes;
 
     await gacha.save();
     res.send({ status: 1, msg: "upload prizes successfully." });
@@ -130,35 +130,30 @@ router.post("/unset_prize", auth, (req, res) => {
 });
 
 //set prize to gacha
-router.post("/set_prize", auth, (req, res) => {
-  const { isLastPrize, gachaId, prizeId } = req.body;
-  Gacha.findOne({ _id: gachaId })
-    .then((gacha) => {
-      adminSchemas.Prize.findOne({ _id: prizeId })
-        .then(async (prize) => {
-          prize.status = "set";
-          await prize.save();
-          if (isLastPrize) {
-            if (gacha.last_prize) {
-              await adminSchemas.Prize.updateOne(
-                { _id: gacha.last_prize._id },
-                { status: "unset" }
-              );
-            }
-            gacha.last_prize = prize;
-          } else gacha.remain_prizes.push(prize);
-          gacha
-            .save()
-            .then(() => res.send({ status: 1 }))
-            .catch((err) =>
-              res.send({ status: 0, msg: "gacha save failed.", err: err })
-            );
-        })
-        .catch((err) =>
-          res.send({ status: 0, msg: "Not found Prize", err: err })
+router.post("/set_prize", auth, async (req, res) => {
+  try {
+    const { isLastPrize, gachaId, prizeId } = req.body;
+
+    const gacha = await Gacha.findOne({ _id: gachaId });
+    const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
+    prize.status = "set";
+    await prize.save();
+
+    if (isLastPrize) {
+      if (gacha.last_prize) {
+        await adminSchemas.Prize.updateOne(
+          { _id: gacha.last_prize._id },
+          { status: "unset" }
         );
-    })
-    .catch((err) => res.send({ status: 0, msg: "Not found gacha", err: err }));
+      }
+      gacha.last_prize = prize;
+    } else gacha.remain_prizes.push(prize);
+
+    await gacha.save();
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
 });
 
 router.delete("/:id", async (req, res) => {
