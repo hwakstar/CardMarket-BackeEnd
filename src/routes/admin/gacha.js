@@ -37,9 +37,6 @@ router.post("/upload_bulk", auth, async (req, res) => {
   try {
     const { gachaId, prizes } = req.body;
 
-    console.log(req.body);
-    console.log(prizes);
-
     const prize = await adminSchemas.Prize.create(prizes);
     const gacha = await Gacha.findOne({ _id: gachaId });
 
@@ -47,7 +44,6 @@ router.post("/upload_bulk", auth, async (req, res) => {
       let remainPrizes = gacha.remain_prizes;
       prize.map((element) => remainPrizes.push(element));
       gacha.remain_prizes = remainPrizes;
-      console.log(gacha.remain_prizes);
     } else gacha.remain_prizes = prize;
 
     await gacha.save();
@@ -103,11 +99,11 @@ router.get("/set_release/:id", auth, (req, res) => {
 
 //unset prize from gacha
 router.post("/unset_prize", auth, (req, res) => {
-  const { gachaId, prizeId, flag } = req.body;
+  const { gachaId, prizeId, last } = req.body;
 
   Gacha.findOne({ _id: gachaId })
     .then((gacha) => {
-      if (flag === -1) gacha.last_prize = {};
+      if (last) gacha.last_prize = {};
       else {
         let prize = gacha.remain_prizes;
         prize = prize.filter((data) => data._id != prizeId);
