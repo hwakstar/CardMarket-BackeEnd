@@ -90,6 +90,10 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     grade: grade
   };
 
+  if (req.file == null || req.file == undefined) {
+    return res.send({ status: 2, msg: "file is not selected." });
+  }
+
   prizeData.img_url = `/uploads/prize/${req.file.filename}`;
 
   if (id != "") {

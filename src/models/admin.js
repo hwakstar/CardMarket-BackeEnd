@@ -15,7 +15,7 @@ const prizeSchema = new Schema({
   cashback: { type: Number },
   img_url: { type: String },
   status: { type: String, default: "unset" }, //prize status- unset, set,
-  grade: { type: Number }
+  grade: { type: Number },
 });
 
 const pointSchema = new Schema({
@@ -28,7 +28,7 @@ const AdminSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
-  authority: {type: Object},  //1: read, 2: write, 3: delete
+  authority: { type: Object }, //1: read, 2: write, 3: delete
 });
 
 const Category = mongoose.model("Category", categorySchema, "admin_category");
