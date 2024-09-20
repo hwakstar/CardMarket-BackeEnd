@@ -36,9 +36,7 @@ router.post("/add", auth, uploadGacha.single("file"), async (req, res) => {
 router.post("/upload_bulk", auth, async (req, res) => {
   try {
     const { gachaId, prizes } = req.body;
-
-    console.log("================== req.body");
-    console.log(req.body);
+    
     let newPrizes = await adminSchemas.Prize.create(prizes);
     let gacha = await Gacha.findOne({ _id: gachaId });
 
