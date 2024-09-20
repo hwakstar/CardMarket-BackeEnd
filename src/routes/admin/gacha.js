@@ -37,8 +37,10 @@ router.post("/upload_bulk", auth, async (req, res) => {
   try {
     const { gachaId, prizes } = req.body;
 
-    const newPrizes = await adminSchemas.Prize.create(prizes);
-    const gacha = await Gacha.findOne({ _id: gachaId });
+    console.log("================== req.body");
+    console.log(req.body);
+    let newPrizes = await adminSchemas.Prize.create(prizes);
+    let gacha = await Gacha.findOne({ _id: gachaId });
 
     if (gacha.remain_prizes.length > 0) {
       let remainPrizes = gacha.remain_prizes;
@@ -47,9 +49,9 @@ router.post("/upload_bulk", auth, async (req, res) => {
     } else gacha.remain_prizes = newPrizes;
 
     await gacha.save();
-    res.send({ status: 1, msg: "upload prizes successfully." });
+    res.send({ status: 1, msg: "Upload prizes successfully." });
   } catch (error) {
-    res.send({ status: 0, msg: "upload prizes failed.", err: error });
+    res.send({ status: 0, msg: "Upload prizes failed." });
   }
 });
 
@@ -177,9 +179,11 @@ router.delete("/:id", async (req, res) => {
 //handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
   const { gachaId, draw, user } = req.body;
+
   if (user.role == "admin")
     return res.send({ status: 0, msg: "Can't Draw as Admin" });
   const userData = await User.findOne({ _id: user.user_id });
+
   Gacha.findOne({ _id: gachaId })
     .then((gacha) => {
       const drawPoint = gacha.price * draw;
