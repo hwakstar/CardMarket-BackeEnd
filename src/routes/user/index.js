@@ -24,7 +24,6 @@ router.post("/register", async (req, res) => {
         const user = new Users({
           name: name,
           email: email,
-          password: password,
           hashedPass: hashedPassword,
         });
         user
@@ -37,7 +36,6 @@ router.post("/register", async (req, res) => {
             });
           })
           .catch((error) => {
-            console.log(error);
             res.status(500).send({ message: "Error creating user", error });
           });
       })
