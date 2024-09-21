@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema({
   country: { type: String },
   postalCode: { type: Number },
   description: { type: String },
-  point_remain: { type: Number },
+  point_remain: { type: Number, default: 0 },
   obtain_cards: { type: Array },
 });
 
