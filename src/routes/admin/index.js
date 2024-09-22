@@ -87,7 +87,7 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     name: name,
     rarity: rarity,
     cashback: cashBack,
-    grade: grade
+    grade: grade,
   };
 
   if (req.file == null || req.file == undefined) {
@@ -308,29 +308,31 @@ router.get("/get_deliver", auth, async (req, res) => {
 
 router.post("/set_deliver_status", auth, async (req, res) => {
   const { id, user_id, status } = req.body;
+  const deliver = await CardDeliver.findOne({ _id: id });
+  
+  try {
+    if (status === "Delivering") {
+      deliver.status = "Delivered";
+      await deliver.save();
 
-  if (status == "delivering") {
-    const deliver = await CardDeliver.findOne({ _id: id });
-    Users.findOne({ _id: user_id })
-      .then((user) => {
-        user.obtain_cards.push(deliver);
-        user
-          .save()
-          .then(() => res.send({ status: 1 }))
-          .catch((err) => res.send({ status: 0, err: err }));
-      })
-      .catch((err) => res.send({ status: 0, msg: "Not Found User" }));
-    await CardDeliver.deleteOne({ _id: id });
-  } else
-    CardDeliver.findOne({ _id: id })
-      .then((deliver) => {
-        deliver.status = "delivering";
-        deliver
-          .save()
-          .then(() => res.send({ status: 1 }))
-          .catch((err) => res.send({ status: 0, err: err }));
-      })
-      .catch((err) => res.send({ status: 0, err: err }));
+      const user = await Users.findOne({ _id: user_id });
+      user.obtain_cards.push(deliver);
+      await user.save();
+
+      res.send({ status: 1, msg: "Changed status successfully" });
+    } else {
+      if (deliver) {
+        deliver.status = "Delivering";
+        const result = await deliver.save();
+
+        if (result) {
+          res.send({ status: 1, msg: "Changed status successfully" });
+        }
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 module.exports = router;
