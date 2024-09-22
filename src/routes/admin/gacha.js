@@ -36,7 +36,7 @@ router.post("/add", auth, uploadGacha.single("file"), async (req, res) => {
 router.post("/upload_bulk", auth, async (req, res) => {
   try {
     const { gachaId, prizes } = req.body;
-    
+
     let newPrizes = await adminSchemas.Prize.create(prizes);
     let gacha = await Gacha.findOne({ _id: gachaId });
 
@@ -176,88 +176,77 @@ router.delete("/:id", async (req, res) => {
 
 //handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaId, draw, user } = req.body;
+  try {
+    const { gachaId, drawCounts, user } = req.body;
 
-  if (user.role == "admin")
-    return res.send({ status: 0, msg: "Can't Draw as Admin" });
-  const userData = await User.findOne({ _id: user.user_id });
+    // Return if user is Admin
+    if (user.role === "admin")
+      return res.send({ status: 0, msg: "Can't Draw as Admin" });
 
-  Gacha.findOne({ _id: gachaId })
-    .then((gacha) => {
-      const drawPoint = gacha.price * draw;
-      //return if the point is not enough
-      if (userData.point_remain < drawPoint)
-        return res.send({ status: 0, msg: "point not enough" });
-      //return if the inventory is not enough
-      if (gacha.remain_prizes.length < draw)
-        return res.send({ status: 0, msg: "Not enough inventory" });
-      //gacha draw with droprate
-      let popPrize = [];
-      for (let i = 0; i < draw; i++) {
-        const index = Math.floor(Math.random() * gacha.remain_prizes.length);
-        popPrize.push(gacha.remain_prizes[index]); //poped prize
-        //remove popPrize from gacha remain_prize list
-        gacha.remain_prizes = gacha.remain_prizes.filter(
-          (prize) => prize._id != popPrize[i]._id
-        );
-        //add popPrize to gacha poped_prize
-        gacha.poped_prizes.push(gacha.remain_prizes[index]);
-      }
-      gacha
-        .save()
-        .then(() => {
-          adminSchemas.Prize.deleteMany({ _id: popPrize._id }) //remove from prizelist
-            .then(() => {
-              //new deliverData
-              const newDeliverData = new CardDeliver({
-                user_id: userData._id,
-                user_name: userData.name,
-                gacha_id: gacha._id,
-                gacha_name: gacha.name,
-                prizes: popPrize,
-                status: "pending",
-              });
-              newDeliverData.save().then(() => {
-                userData.point_remain -= drawPoint;
-                userData
-                  .save()
-                  .then(() => {
-                    //new point log data
-                    const newPointLog = new PointLog({
-                      user_id: userData._id,
-                      point_num: drawPoint,
-                      usage: "Gacha Draw",
-                      ioFlag: 0,
-                    });
-                    newPointLog
-                      .save()
-                      .then(() =>
-                        res.send({
-                          status: 1,
-                          msg: "gachaDraw Success.",
-                          prizes: popPrize,
-                        })
-                      )
-                      .catch((err) =>
-                        res.send({
-                          status: 0,
-                          msg: "Point log save failed.",
-                          err: err,
-                        })
-                      );
-                  })
-                  .catch((err) =>
-                    res.send({ status: 0, msg: "User save failed." })
-                  );
-              });
-            })
-            .catch((err) => res.send("remove Prizelist failed"));
-        })
-        .catch((err) =>
-          res.send({ status: 0, msg: "gacha save failed", err: err })
-        );
-    })
-    .catch({ status: 0, msg: "gacha not found" });
+    // Find Gacha to draw
+    const gacha = await Gacha.findOne({ _id: gachaId });
+
+    // Return if the inventory is not enough
+    if (gacha.remain_prizes.length < drawCounts)
+      return res.send({ status: 0, msg: "Not enough inventory" });
+
+    // Draw gach by rarity (random currently)
+    let popedPrizes = [];
+    for (let i = 0; i < drawCounts; i++) {
+      // Get popedPrizes list
+      const index = Math.floor(Math.random() * gacha.remain_prizes.length);
+      popedPrizes.push(gacha.remain_prizes[index]);
+
+      // Remove popedPrize from gacha remain_prize list
+      gacha.remain_prizes = gacha.remain_prizes.filter(
+        (prize) => prize._id != popedPrizes[i]._id
+      );
+    }
+    // Add popedPrize to gacha poped_prize
+    popedPrizes.map((popedPrize) => gacha.poped_prizes.push(popedPrize));
+
+    // Update Gacha
+    await gacha.save();
+
+    // Remove popedPrizes from the prize list
+    // const newPrize = await adminSchemas.Prize.deleteMany({ _id: popedPrizes._id });
+
+    // Find User draing gacha
+    const userData = await User.findOne({ _id: user.user_id });
+
+    // New Card Deliver Data
+    const newDeliverData = new CardDeliver({
+      user_id: userData._id,
+      user_name: userData.name,
+      gacha_id: gacha._id,
+      gacha_name: gacha.name,
+      prizes: popedPrizes,
+      status: "Pending",
+    });
+    await newDeliverData.save();
+
+    // Update user remain points
+    const drawPoints = gacha.price * drawCounts;
+    userData.point_remain -= drawPoints;
+    await userData.save();
+
+    // Add new points log
+    const newPointLog = new PointLog({
+      user_id: userData._id,
+      point_num: drawPoints,
+      usage: "Gacha Draw",
+      ioFlag: 0,
+    });
+    await newPointLog.save();
+
+    res.send({
+      status: 1,
+      msg: "Successfully drawing gacha.",
+      prizes: popedPrizes,
+    });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to draw", err: error });
+  }
 });
 
 module.exports = router;

@@ -123,10 +123,9 @@ router.post("/login", async (req, res) => {
 
 router.get("/get_user/:id", auth, (req, res) => {
   const id = req.params.id;
-  
+
   Users.findOne({ _id: id })
     .then((user) => {
-      console.log(user);
       res.send({
         status: 1,
         msg: "get User succeeded.",
@@ -163,11 +162,18 @@ router.post("/save_user", auth, (req, res) => {
 });
 
 //get deliver data by user id
-router.get("/get_deliver/:user_id", auth, (req, res) => {
+router.get("/get_deliver/:user_id", auth, async (req, res) => {
   const user_id = req.params.user_id;
-  CardDeliver.find({ user_id: user_id })
-    .then((data) => res.send({ status: 1, deliver: data }))
-    .catch((err) => res.send({ status: 0, err: err }));
+  const delievers = await CardDeliver.find({
+    user_id: user_id,
+    status: { $ne: "Delivered" },
+  });
+
+  if (delievers) {
+    res.send({ status: 1, deliver: delievers });
+  } else {
+    res.send({ status: 0, msg: "Something went wrong", err: err });
+  }
 });
 
 router.get("/get_cards/:user_id", auth, (req, res) => {
@@ -178,57 +184,52 @@ router.get("/get_cards/:user_id", auth, (req, res) => {
 });
 
 //return obtained prizes
-router.post("/return_prize", auth, (req, res) => {
-  const { deliver_id, prize_id, user } = req.body;
-  CardDeliver.findOne({ _id: deliver_id })
-    .then((deliver) => {
-      const returnPrize = deliver.prizes.find((prize) => prize._id == prize_id);
-      deliver.prizes.filter((prize) => prize._id !== prize_id); //remove ReturnedPrize from Delivering Card List
-      deliver
-        .save()
-        .then(async () => {
-          try {
-            //add ReturnedPrize to Prize list
-            const returnedPrize = {
-              name: returnPrize.name,
-              rarity: returnPrize.rarity,
-              cashback: returnPrize.cashback,
-              img_url: returnPrize.img_url,
-              status: returnPrize.status,
-            };
-            await adminSchemas.Prize.create(returnedPrize);
-          } catch (err) {
-            console.log("prize create error.", err);
-          }
-        })
-        .catch((err) => {
-          return res.send({ status: 0, msg: "Card return failed." });
-        });
-      //add ReturnedPrize to Gacha/remain_prizes
-      Gacha.findOne({ _id: deliver.gacha_id })
-        .then((gacha) => {
-          const poped_prize = gacha.poped_prizes.find(
-            (prize) => prize._id == prize_id
-          );
-          //ReturnedPrize have been being in Gacha/poped prize
-          gacha.poped_prizes.filter((prize) => prize._id != prize_id);
-          gacha.remain_prizes.push(poped_prize);
-          gacha
-            .save()
-            .then(() => {
-              res.send({ status: 1 });
-            })
-            .catch((err) =>
-              res.send({ status: 0, msg: "Gacha update failed.", err: err })
-            );
-        })
-        .catch((err) =>
-          res.send({ status: 0, msg: "Not found Gacha.", err: err })
-        );
-    })
-    .catch((err) =>
-      res.send({ status: 0, msg: "Deliver data not found.", err: err })
+router.post("/return_prize", auth, async (req, res) => {
+  try {
+    const { deliver_id, prize_id } = req.body;
+
+    // Find Card that has Returned Prize from Deliver List
+    const deliver = await CardDeliver.findOne({ _id: deliver_id });
+
+    // Remove ReturnedPrize from the prizes List of Pending Card
+    const updatedDeliverPrizes = deliver.prizes.filter(
+      (prize) => prize._id.toString() !== prize_id
     );
+    deliver.prizes = updatedDeliverPrizes;
+
+    if (deliver.prizes.length === 0) {
+      await deliver.deleteOne();
+    } else {
+      await deliver.save();
+    }
+
+    // Find Gacha that has ReturnedPrize from Gacha List
+    const gacha = await Gacha.findOne({ _id: deliver.gacha_id });
+
+    // Add ReturnedPrize into Remain Prizes List of Gacha
+    const popedPrize = gacha.poped_prizes.find(
+      (prize) => prize._id.toString() === prize_id
+    );
+    gacha.remain_prizes.push(popedPrize);
+
+    // Remove Returned Prize from PopedPrizes List of Gacha
+    const updatedPopedPrizes = gacha.poped_prizes.filter(
+      (prize) => prize._id.toString() !== prize_id
+    );
+    gacha.poped_prizes = updatedPopedPrizes;
+
+    // Save updated gacha
+    await gacha.save();
+
+    // Change PointRemain of User
+    const user = await Users.findOne({ _id: deliver.user_id });
+    user.point_remain += popedPrize.cashback;
+    await user.save();
+
+    res.send({ status: 1, msg: "Successfully returned your card." });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to return the card.", err: error });
+  }
 });
 
 module.exports = router;

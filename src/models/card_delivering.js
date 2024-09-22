@@ -6,7 +6,7 @@ const cardDeliverSchema = new mongoose.Schema({
   gacha_id: { type: String, required: true },
   gacha_name: { type: String, required: true },
   prizes: { type: Array, required: true },
-  status: { type: String, required: true },
+  status: { type: String, required: true, default: "Pending" },
   gacha_date: { type: Date, default: Date.now, required: true },
 });
 
