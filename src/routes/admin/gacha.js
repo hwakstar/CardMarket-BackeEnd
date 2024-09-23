@@ -220,6 +220,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       user_name: userData.name,
       gacha_id: gacha._id,
       gacha_name: gacha.name,
+      gacha_price: gacha.price,
       prizes: popedPrizes,
       status: "Pending",
     });

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const path = require("path");
+const moment = require("moment");
 
 const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
@@ -309,7 +310,7 @@ router.get("/get_deliver", auth, async (req, res) => {
 router.post("/set_deliver_status", auth, async (req, res) => {
   const { id, user_id, status } = req.body;
   const deliver = await CardDeliver.findOne({ _id: id });
-  
+
   try {
     if (status === "Delivering") {
       deliver.status = "Delivered";
@@ -326,12 +327,90 @@ router.post("/set_deliver_status", auth, async (req, res) => {
         const result = await deliver.save();
 
         if (result) {
-          res.send({ status: 1, msg: "Changed status successfully" });
+          res.send({ status: 1, msg: "Successfully Changed status." });
         }
       }
     }
   } catch (error) {
-    console.log(error);
+    res.send({ status: 0, msg: "Failed to change status." });
+  }
+});
+
+// get statistics data such as total income and gacha status
+router.get("/get_statistics", auth, async (req, res) => {
+  try {
+    const deliverCards = await CardDeliver.find();
+
+    let totalIncome = 0;
+    let pendings = 0;
+    let deliverings = 0;
+    let delieverd = 0;
+
+    deliverCards.map((deliverCard) => {
+      switch (deliverCard.status) {
+        case "Pending":
+          pendings += deliverCard.prizes.length;
+          break;
+        case "Delivering":
+          deliverings += deliverCard.prizes.length;
+          break;
+        case "Delivered":
+          delieverd += deliverCard.prizes.length;
+          totalIncome += deliverCard.prizes.length * deliverCard.gacha_price;
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    res.send({
+      status: 1,
+      totalIncome: totalIncome,
+      gachaData: [pendings, deliverings, delieverd],
+    });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to get data." });
+  }
+});
+
+// get statistics data such as total income and gacha status
+router.post("/getStatusIncome", auth, async (req, res) => {
+  try {
+    const { status, startDate } = req.body;
+
+    // make incomes array
+    const deliverCards = await CardDeliver.find({
+      status: status,
+      gacha_date: { $gte: startDate },
+    });
+
+    // Create an object to hold totals by date
+    const totalPriceByDate = {};
+
+    // Iterate over the deliverCards to sum prices by date
+    deliverCards.forEach((card) => {
+      const dateKey = moment(card.gacha_date).format("YYYY-MM-DD"); // Format date to YYYY-MM-DD
+
+      if (!totalPriceByDate[dateKey]) {
+        totalPriceByDate[dateKey] = 0; // Initialize if it doesn't exist
+      }
+
+      totalPriceByDate[dateKey] += card.gacha_price; // Add the price to the corresponding date
+    });
+
+    // Convert the result to an array if needed
+    const totalPriceArray = Object.entries(totalPriceByDate).map(
+      ([date, total]) => ({ date, total })
+    );
+
+    res.send({
+      status: 1,
+      startDate: startDate,
+      pendingIncomes: totalPriceArray,
+    });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to get data." });
   }
 });
 

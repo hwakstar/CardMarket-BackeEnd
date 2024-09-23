@@ -15,4 +15,4 @@ const gachaSchema = new mongoose.Schema({
 
 const Gacha = mongoose.model("Gacha", gachaSchema, "admin_gacha");
 
-module.exports = Gacha;
+module.exports = mongoose.model.Gacha || Gacha;
