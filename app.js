@@ -1,32 +1,11 @@
 const express = require("express");
-const dbConnect = require("./src/config/db/dbConnect");
+const DbConnect = require("./src/config/db/DbConnect");
 const cors = require("cors");
 const path = require("path");
+const bodyParser = require("body-parser");
 
 const app = express();
 const port = process.env.PORT || 5000;
-const bodyParser = require("body-parser");
-
-const admin = require("./src/routes/admin");
-const user = require("./src/routes/user");
-const gacha = require("./src/routes/admin/gacha");
-const point = require("./src/routes/user/point");
-const payment = require("./src/routes/payment");
-const mail = require("./src/routes/mail");
-
-// app.use((req, res, next) => {
-//   res.setHeader("Access-Control-Allow-Origin", "*");
-//   ``;
-//   res.setHeader(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
-//   );
-//   res.setHeader(
-//     "Access-Control-Allow-Methods",
-//     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-//   );
-//   next();
-// });
 
 const corsOptions = {
   origin: "*",
@@ -56,22 +35,34 @@ app.use(
   express.static(path.join(__dirname, "uploads/users"))
 );
 
-//router for admin business
+// Routers for Oripa
+const admin = require("./src/routes/admin");
+const user = require("./src/routes/user");
+const gacha = require("./src/routes/admin/gacha");
+const point = require("./src/routes/user/point");
+const payment = require("./src/routes/payment");
+const mail = require("./src/routes/mail");
+// Admin business router
 app.use("/admin", admin);
 app.use("/admin/gacha", gacha);
-//router for user task
+// User task router
 app.use("/user", user);
 app.use("/user/point", point);
 app.use("/mail", mail);
-//router for payment
+// Payment router
 app.use("/payment", payment);
 app.get("/status", (req, res) => {
   res.send({ msg: "Server is running." });
 });
+
+// Routers for Affiliate
+const affiliate_auth = require("./src/affiliate/routes/auth");
+// Auth router
+app.use("/api/affiliate/auth/", affiliate_auth);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
 // execute database connection
-dbConnect();
+DbConnect();
