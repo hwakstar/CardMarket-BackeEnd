@@ -15,7 +15,7 @@ const CardDeliver = require("../../models/card_delivering");
 const Users = require("../../models/user");
 const Gacha = require("../../models/gacha");
 
-const config = require("../../../config");
+const config = require("../../config");
 
 router.get("/admin_test", (req, res) => {
   res.send("amdin test is sucessful.");
