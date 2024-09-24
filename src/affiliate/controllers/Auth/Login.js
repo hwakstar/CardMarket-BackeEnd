@@ -13,7 +13,7 @@ const Login = expressAsyncHandler(async (req, res) => {
   if (await user.CheckPass(password)) {
     res.json({
       name: user.fullName,
-      token: getToken(user._id),
+      token: getToken({ user_id: user._id, fullName: user.fullName }),
       message: "Login Successful",
     });
   } else {
