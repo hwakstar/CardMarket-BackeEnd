@@ -8,6 +8,6 @@ const GetMembers = require("../../controllers/Members/GetMembers");
 const AuthHandler = require("../../middlewares/AuthHandler");
 
 // for development purposes
-router.get("/", AuthHandler, GetMembers);
+router.post("/", AuthHandler, GetMembers);
 
 module.exports = router;
