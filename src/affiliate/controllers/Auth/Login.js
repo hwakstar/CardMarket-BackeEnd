@@ -20,7 +20,12 @@ const Login = expressAsyncHandler(async (req, res) => {
         res.json({
           status: true,
           name: user.fullName,
-          token: getToken({ user_id: user._id, fullName: user.fullName }),
+          token: getToken({
+            user_id: user._id,
+            email: user.email,
+            fullName: user.fullName,
+            role: user.role,
+          }),
           message: "Login Successful",
         });
       } else {
