@@ -5,7 +5,7 @@ const getToken = require("../../utils/GetToken");
 const Users = require("../../models/UsersModel");
 
 const Register = expressAsyncHandler(async (req, res) => {
-  const { fullName, email, password, phoneNumber, country } = req.body;
+  const { fullName, email, password, phoneNumber, country, role } = req.body;
 
   try {
     const checkMail = await Users.findOne({ email });
@@ -21,6 +21,7 @@ const Register = expressAsyncHandler(async (req, res) => {
         password,
         phoneNumber,
         country,
+        role
       });
 
       const token = getToken({ user_id: user.id, fullName: user.fullName });

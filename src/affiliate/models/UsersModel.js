@@ -26,6 +26,7 @@ const UsersModel = mongoose.Schema(
     },
     role: {
       type: String,
+      default: "Affiliate"
     },
     affiliateId: {
       type: String,
