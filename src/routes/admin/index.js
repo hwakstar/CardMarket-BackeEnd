@@ -17,8 +17,27 @@ const Gacha = require("../../models/gacha");
 
 const config = require("../../config");
 
-router.get("/admin_test", (req, res) => {
-  res.send("amdin test is sucessful.");
+router.get("/get_admin/:id", auth, (req, res) => {
+  const id = req.params.id;
+
+  if (id) {
+    adminSchemas.Administrator.findOne({ _id: id })
+      .then((admin) => {
+        res.send({
+          status: 1,
+          msg: "get User succeeded.",
+          admin: {
+            user_id: admin._id,
+            name: admin.name,
+            email: admin.email,
+            authority: admin.authority,
+          },
+        });
+      })
+      .catch((err) =>
+        res.send({ status: 0, msg: "Get Admin failed.", err: err })
+      );
+  }
 });
 
 /* Category Management */
@@ -45,7 +64,9 @@ router.post("/add_category", auth, async (req, res) => {
       name: name,
       description: description,
     });
+
     const saveCategory = await newCategory.save();
+
     if (saveCategory) {
       res.send({ status: 1, msg: "New category added." });
     } else {
@@ -91,21 +112,21 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     grade: grade,
   };
 
-  if (req.file == null || req.file == undefined) {
-    return res.send({ status: 2, msg: "file is not selected." });
-  }
-
-  prizeData.img_url = `/uploads/prize/${req.file.filename}`;
-
-  if (id != "") {
+  if (id !== "") {
+    if (req.file) {
+      prizeData.img_url = `/uploads/prize/${req.file.filename}`;
+    }
     await adminSchemas.Prize.updateOne({ _id: id }, prizeData)
-      .then((res) => {
+      .then(() => {
         return res.send({ status: 1, msg: "Updated successfully." });
       })
       .catch((err) => {
         return res.send({ status: 0, msg: "Update failed" });
       });
   } else {
+    console.log(req.file);
+    prizeData.img_url = `/uploads/prize/${req.file.filename}`;
+
     const newPrize = new adminSchemas.Prize(prizeData);
     const saved = await newPrize.save();
 
@@ -137,6 +158,60 @@ router.get("/get_prize", auth, async (req, res) => {
     });
   }
 });
+
+//new point add or update point with point image uploading
+router.post(
+  "/point_upload",
+  auth,
+  uploadPoint.single("file"),
+  async (req, res) => {
+    const { id, pointNum, price } = req.body;
+
+    const pointData = {
+      point_num: pointNum,
+      price: price,
+    };
+
+    if (req.file?.filename !== undefined)
+      pointData.img_url = `/uploads/point/${req.file.filename}`;
+
+    if (id !== "" && id !== undefined) {
+      adminSchemas.Point.findOne({ _id: id })
+        .then(async (point) => {
+          try {
+            const filePath = path.join("./", point.img_url);
+            if (req.file) {
+              await deleteFile(filePath);
+            }
+          } catch (err) {
+            console.log("point image file deleting error", err);
+          }
+
+          adminSchemas.Point.updateOne({ _id: id }, pointData)
+            .then(() => res.send({ status: 2 }))
+            .catch((err) => res.send({ status: 0, err: err }));
+        })
+        .catch((err) => {
+          return res.send({ status: 0, err: err });
+        });
+    } else {
+      const newPoint = new adminSchemas.Point(pointData);
+      newPoint
+        .save()
+        .then(() => {
+          res.send({
+            status: 1,
+          });
+        })
+        .catch((err) =>
+          res.send({
+            status: 0,
+            err: err,
+          })
+        );
+    }
+  }
+);
 
 router.delete("/del_prize/:id", auth, async (req, res) => {
   const id = req.params.id;
@@ -170,55 +245,6 @@ router.get("/get_point", auth, async (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-//new point add or update point with point image uploading
-router.post(
-  "/point_upload",
-  auth,
-  uploadPoint.single("file"),
-  async (req, res) => {
-    const { id, pointNum, price } = req.body;
-    const pointData = {
-      point_num: pointNum,
-      price: price,
-    };
-    if (req.file?.filename != undefined)
-      pointData.img_url = `/uploads/point/${req.file.filename}`;
-
-    if (id != "" && id != undefined) {
-      adminSchemas.Point.findOne({ _id: id })
-        .then(async (point) => {
-          try {
-            const filePath = path.join("./", point.img_url);
-            await deleteFile(filePath);
-          } catch (err) {
-            console.log("point image file deleting error", err);
-          }
-          adminSchemas.Point.updateOne({ _id: id }, pointData)
-            .then(() => res.send({ status: 2 }))
-            .catch((err) => res.send({ status: 0, err: err }));
-        })
-        .catch((err) => {
-          return res.send({ status: 0, err: err });
-        });
-    } else {
-      const newPoint = new adminSchemas.Point(pointData);
-      newPoint
-        .save()
-        .then(() => {
-          res.send({
-            status: 1,
-          });
-        })
-        .catch((err) =>
-          res.send({
-            status: 0,
-            err: err,
-          })
-        );
-    }
-  }
-);
-
 //delete point with image deleting by id
 router.delete("/del_point/:id", auth, (req, res) => {
   const id = req.params.id;
@@ -248,30 +274,39 @@ router.get("/get_adminList", auth, (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-router.post("/add_admin", auth, (req, res) => {
-  const { adminId, name, email, password } = req.body;
+router.post("/add_admin", auth, async (req, res) => {
+  const { adminId, name, email, password, cuflag } = req.body;
 
-  const admin_data = {
-    name: name,
+  const isEmailExist = await adminSchemas.Administrator.findOne({
     email: email,
-    password: password,
-  };
+  });
 
-  authority = {};
-  const admin_authority = config.admin_authority;
-  for (key in admin_authority) {
-    let item = admin_authority[key];
-    authority[item] = 1; //set read authority by default
-  }
-  admin_data.authority = authority;
-  if (adminId == undefined || adminId == "") {
-    adminSchemas.Administrator.create(admin_data)
-      .then(() => res.send({ status: 1 }))
-      .catch((err) => res.send({ status: 0, err: err }));
+  if (!cuflag && isEmailExist) {
+    res.send({ status: 0, msg: "Email already exist. Try another." });
   } else {
-    adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data)
-      .then(() => res.send({ status: 2 }))
-      .catch((err) => res.send({ status: 0, err: err }));
+    const admin_data = {
+      name: name,
+      email: email,
+      password: password,
+    };
+
+    authority = {};
+    const admin_authority = config.admin_authority;
+    for (key in admin_authority) {
+      let item = admin_authority[key];
+      authority[item] = 1; //set read authority by default
+    }
+    admin_data.authority = authority;
+
+    if (adminId == undefined || adminId == "") {
+      adminSchemas.Administrator.create(admin_data)
+        .then(() => res.send({ status: 1 }))
+        .catch((err) => res.send({ status: 0, err: err }));
+    } else {
+      adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data)
+        .then(() => res.send({ status: 2 }))
+        .catch((err) => res.send({ status: 0, err: err }));
+    }
   }
 });
 
@@ -309,9 +344,10 @@ router.get("/get_deliver", auth, async (req, res) => {
 
 router.post("/set_deliver_status", auth, async (req, res) => {
   const { id, user_id, status } = req.body;
-  const deliver = await CardDeliver.findOne({ _id: id });
 
   try {
+    const deliver = await CardDeliver.findOne({ _id: id });
+
     if (status === "Delivering") {
       deliver.status = "Delivered";
       await deliver.save();

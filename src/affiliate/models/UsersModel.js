@@ -75,6 +75,6 @@ UsersModel.methods.CheckPass = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
 
-const Users = mongoose.model("affi_users", UsersModel);
+const Users = mongoose.model("affi_user", UsersModel);
 
 module.exports = Users;

@@ -124,20 +124,24 @@ router.post("/login", async (req, res) => {
 router.get("/get_user/:id", auth, (req, res) => {
   const id = req.params.id;
 
-  Users.findOne({ _id: id })
-    .then((user) => {
-      res.send({
-        status: 1,
-        msg: "get User succeeded.",
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          point_remain: user.point_remain,
-        },
-      });
-    })
-    .catch((err) => res.send({ status: 0, msg: "get User failed.", err: err }));
+  if (id) {
+    Users.findOne({ _id: id })
+      .then((user) => {
+        res.send({
+          status: 1,
+          msg: "get User succeeded.",
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            point_remain: user.point_remain,
+          },
+        });
+      })
+      .catch((err) =>
+        res.send({ status: 0, msg: "get User failed.", err: err })
+      );
+  }
 });
 
 router.get("/get_userList", auth, (req, res) => {
@@ -148,6 +152,7 @@ router.get("/get_userList", auth, (req, res) => {
 
 router.get("/get_point_log/:id", auth, (req, res) => {
   const id = req.params.id;
+
   PointLog.find({ user_id: id })
     .then((log) => res.send({ status: 1, pointLog: log }))
     .catch((err) => res.send({ status: 0, err: err }));
@@ -230,6 +235,14 @@ router.post("/return_prize", auth, async (req, res) => {
   } catch (error) {
     res.send({ status: 0, msg: "Failed to return the card.", err: error });
   }
+});
+
+router.delete("/del_user/:id", auth, (req, res) => {
+  const id = req.params.id;
+
+  Users.deleteOne({ _id: id })
+    .then(() => res.send({ status: 1 }))
+    .catch((err) => res.send({ status: 0, err: err }));
 });
 
 module.exports = router;
