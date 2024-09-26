@@ -24,6 +24,11 @@ const pointSchema = new Schema({
   img_url: { type: String, required: true },
 });
 
+const termsSchema = new Schema({
+  content: { type: String, required: true }, // Store large text here
+  createdAt: { type: Date, default: Date.now },
+});
+
 const AdminSchema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
@@ -34,12 +39,14 @@ const AdminSchema = new Schema({
 const Category = mongoose.model("Category", categorySchema, "admin_category");
 const Prize = mongoose.model("Prize", prizeSchema, "admin_prize");
 const Point = mongoose.model("model", pointSchema, "admin_point");
+const Terms = mongoose.model("Term", termsSchema, "terms");
 const Administrator = mongoose.model("Adminer", AdminSchema, "admin_adminer");
 
 const adminSchemas = {
   Category: Category,
   Prize: Prize,
   Point: Point,
+  Terms: Terms,
   Administrator: Administrator,
 };
 

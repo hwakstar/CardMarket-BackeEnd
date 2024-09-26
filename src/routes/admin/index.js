@@ -450,4 +450,31 @@ router.post("/getStatusIncome", auth, async (req, res) => {
   }
 });
 
+// save terms of service content
+router.post("/save_terms", auth, async (req, res) => {
+  const content = req.body.content;
+
+  try {
+    const terms = new adminSchemas.Terms({
+      content: content,
+    });
+    await terms.save();
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+// save terms of service content
+router.get("/get_terms", async (req, res) => {
+  try {
+    await adminSchemas.Terms.find();
+    const terms = await adminSchemas.Terms.findOne().sort({ createdAt: -1 });
+    res.send({ status: 1, terms: terms });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
 module.exports = router;
