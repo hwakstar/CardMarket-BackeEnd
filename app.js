@@ -18,8 +18,8 @@ app.use(bodyParser.json());
 
 // Serve the uploads folder statically
 app.use(
-  "/uploads/gacha_thumnail",
-  express.static(path.join(__dirname, "uploads/gacha_thumnail"))
+  "/uploads/gacha",
+  express.static(path.join(__dirname, "uploads/gacha"))
 );
 app.use(
   "/uploads/prize",

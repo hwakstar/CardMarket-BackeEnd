@@ -5,7 +5,6 @@ const isValid = require("../../utils/isValid");
 const Users = require("../../models/UsersModel");
 
 const ChangePsd = expressAsyncHandler(async (req, res) => {
-  console.log("Request Change Password");
   try {
     const user = req.user;
     await Users.findByIdAndUpdate();

@@ -7,12 +7,15 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/point_log");
 
 router.post("/purchase", auth, async (req, res) => {
-  const { user_id, point_num, price } = req.body;
+  const { user_id, point_num, price, email } = req.body;
+
   if (user_id == undefined)
     return res.status(401).json({ msg: "authorization denied" });
 
-  Users.findOne({ _id: user_id })
-    .then((user) => {
+  try {
+    const user = await Users.findOne({ _id: user_id });
+
+    if (user) {
       const newPointLog = new PointLog({
         user_id: user_id,
         point_num: point_num,
@@ -21,28 +24,19 @@ router.post("/purchase", auth, async (req, res) => {
         usage: "Purchase Point",
         ioFlag: 1,
       });
-      newPointLog
-        .save()
-        .then((data) => {
-          //   user.remain = data.point_num;
-          user.point_remain = user.point_remain
-            ? user.point_remain + point_num
-            : point_num;
-          user
-            .save()
-            // .updateOne({ _id: user_id }, { point_remain: point_num })
-            .then(() => {
-              res.send({ status: 1, msg: "Point Purchase Succeeded." });
-            })
-            .catch((err) => console.log("user update err", err));
-        })
-        .catch((err) =>
-          res.send({ status: 0, msg: "Point Purchase Failed.", err: err })
-        );
-    })
-    .catch((err) => {
-      return res.send({ status: 0, msg: "Thers is no your info.", err: err });
-    });
+
+      await newPointLog.save();
+
+      user.point_remain += point_num;
+      await user.save();
+
+      res.send({ status: 1, msg: "Point Purchase Succeeded." });
+    } else {
+      return res.send({ status: 0, msg: "Thers is no your info." });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "Point Purchase Failed.", error: error });
+  }
 });
 
 module.exports = router;

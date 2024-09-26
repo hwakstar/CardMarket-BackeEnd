@@ -1,4 +1,6 @@
 const express = require("express");
+const mongoose = require("mongoose");
+const { ObjectId } = require("mongodb");
 const path = require("path");
 const router = express.Router();
 
@@ -10,7 +12,7 @@ const deleteFile = require("../../utils/delete");
 const Gacha = require("../../models/gacha");
 const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/card_delivering");
-const User = require("../../models/user");
+const Users = require("../../models/user");
 const PointLog = require("../../models/point_log");
 
 //Gacha add
@@ -22,7 +24,7 @@ router.post("/add", auth, uploadGacha.single("file"), async (req, res) => {
     price: price,
     total_number: totalNum,
     category: category,
-    gacha_thumnail_url: `/uploads/gacha_thumnail/${req.file.filename}`,
+    gacha_thumnail_url: `/uploads/gacha/${req.file.filename}`,
     create_date: Date.now(),
   });
 
@@ -67,6 +69,7 @@ router.get("/", async (req, res) => {
 //get gacha by id
 router.get("/:id", async (req, res) => {
   const id = req.params.id;
+
   await Gacha.find({ _id: id })
     .then((gacha) => {
       res.send({ status: 1, gacha: gacha });
@@ -79,6 +82,7 @@ router.get("/:id", async (req, res) => {
 //get prizes setted to gacha by id
 router.get("/get_prize/:id", auth, (req, res) => {
   const id = req.params.id;
+
   Gacha.findOne({ _id: id })
     .then((gacha) => {
       res.send({ status: 1, prizeList: gacha.remain_prizes });
@@ -89,6 +93,7 @@ router.get("/get_prize/:id", auth, (req, res) => {
 //set gacah release
 router.get("/set_release/:id", auth, (req, res) => {
   const id = req.params.id;
+
   Gacha.findOne({ _id: id })
     .then((gacha) => {
       gacha.isRelease = !gacha.isRelease;
@@ -212,7 +217,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // const newPrize = await adminSchemas.Prize.deleteMany({ _id: popedPrizes._id });
 
     // Find User draing gacha
-    const userData = await User.findOne({ _id: user.user_id });
+    const userData = await Users.findOne({ _id: user.user_id });
 
     // New Card Deliver Data
     const newDeliverData = new CardDeliver({
