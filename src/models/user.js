@@ -13,6 +13,7 @@ const UserSchema = new mongoose.Schema({
   description: { type: String },
   point_remain: { type: Number, default: 0 },
   obtain_cards: { type: Array },
+  active: { type: Boolean, default: true },
 });
 
 const Users = mongoose.model("Users", UserSchema, "users");

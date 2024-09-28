@@ -29,7 +29,6 @@ router.get("/get_admin/:id", auth, (req, res) => {
           admin: {
             user_id: admin._id,
             name: admin.name,
-            email: admin.email,
             authority: admin.authority,
           },
         });

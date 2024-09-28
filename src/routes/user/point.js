@@ -7,7 +7,7 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/point_log");
 
 router.post("/purchase", auth, async (req, res) => {
-  const { user_id, point_num, price, email } = req.body;
+  const { user_id, point_num, price } = req.body;
 
   if (user_id == undefined)
     return res.status(401).json({ msg: "authorization denied" });

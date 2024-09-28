@@ -101,7 +101,6 @@ router.post("/login", async (req, res) => {
           user: {
             _id: user._id,
             name: user.name,
-            email: user.email,
             point_remain: user.point_remain,
           },
           token,
@@ -133,7 +132,6 @@ router.get("/get_user/:id", auth, (req, res) => {
           user: {
             _id: user._id,
             name: user.name,
-            email: user.email,
             point_remain: user.point_remain,
           },
         });
