@@ -58,7 +58,6 @@ router.post("/login", async (req, res) => {
       payload = {
         user_id: admin._id,
         name: admin.name,
-        email: admin.email,
         authority: admin.authority,
         role: "admin",
       };
@@ -67,13 +66,7 @@ router.post("/login", async (req, res) => {
       res.send({
         status: 1,
         msg: "Login Successful",
-        user: {
-          user_id: admin._id,
-          name: admin.name,
-          email: admin.email,
-          authority: admin.authority,
-          role: "admin",
-        },
+        user: payload,
         token,
       });
     } else {
@@ -82,34 +75,39 @@ router.post("/login", async (req, res) => {
   } else {
     try {
       const user = await Users.findOne({ email: email });
+
+      if (!user.active) {
+        return res.send({
+          status: 0,
+          msg: "Your account has withdrawn. Please log in with another account.",
+        });
+      }
+
       const checkPass = await bcrypt.compare(password, user.hashedPass);
-
-      if (checkPass) {
-        payload = {
-          user_id: user._id,
-          name: user.name,
-          email: user.email,
-        };
-
-        const token = jwt.sign(payload, "RANDOM-TOKEN", {
-          expiresIn: "1h",
-        });
-
-        res.send({
-          status: 1,
-          msg: "Login Successful",
-          user: {
-            _id: user._id,
-            name: user.name,
-            point_remain: user.point_remain,
-          },
-          token,
-        });
-      } else
+      if (!checkPass) {
         return res.send({
           status: 0,
           msg: "Password and Email is not correct.",
         });
+      }
+
+      payload = {
+        _id: user._id,
+        user_id: user._id,
+        name: user.name,
+        email: user.email,
+        point_remain: user.point_remain,
+      };
+      const token = jwt.sign(payload, "RANDOM-TOKEN", {
+        expiresIn: "1h",
+      });
+
+      res.send({
+        status: 1,
+        msg: "Login Successful",
+        user: payload,
+        token,
+      });
     } catch (error) {
       res.send({
         status: 0,
@@ -239,6 +237,14 @@ router.delete("/del_user/:id", auth, (req, res) => {
   const id = req.params.id;
 
   Users.deleteOne({ _id: id })
+    .then(() => res.send({ status: 1 }))
+    .catch((err) => res.send({ status: 0, err: err }));
+});
+
+router.post("/withdraw_user", auth, (req, res) => {
+  const user_id = req.body.user_id;
+
+  Users.updateOne({ _id: user_id }, { active: false })
     .then(() => res.send({ status: 1 }))
     .catch((err) => res.send({ status: 0, err: err }));
 });

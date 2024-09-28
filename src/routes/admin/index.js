@@ -123,7 +123,6 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
         return res.send({ status: 0, msg: "Update failed" });
       });
   } else {
-    console.log(req.file);
     prizeData.img_url = `/uploads/prize/${req.file.filename}`;
 
     const newPrize = new adminSchemas.Prize(prizeData);
