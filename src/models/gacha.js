@@ -8,6 +8,7 @@ const gachaSchema = new mongoose.Schema({
   remain_prizes: { type: Array },
   poped_prizes: { type: Array },
   last_prize: { type: Object },
+  last_effect: { type: Boolean, default: false },
   gacha_thumnail_url: { type: String, required: true },
   isRelease: { type: Boolean, default: false },
   create_date: { type: Date, default: Date.now },
