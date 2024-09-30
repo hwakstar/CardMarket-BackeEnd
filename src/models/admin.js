@@ -16,6 +16,8 @@ const prizeSchema = new Schema({
   img_url: { type: String },
   status: { type: String, default: "unset" }, //prize status- unset, set,
   grade: { type: Number },
+  type: { type: String, default: "" },
+  last_effect: { type: Boolean, default: false },
 });
 
 const pointSchema = new Schema({

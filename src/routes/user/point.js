@@ -21,7 +21,7 @@ router.post("/purchase", auth, async (req, res) => {
         point_num: point_num,
         price: price,
         date: Date.now(),
-        usage: "Purchase Point",
+        usage: "purchagePoints",
         ioFlag: 1,
       });
 
