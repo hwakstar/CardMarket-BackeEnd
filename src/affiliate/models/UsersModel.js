@@ -26,7 +26,7 @@ const UsersModel = mongoose.Schema(
     },
     role: {
       type: String,
-      default: "Affiliate"
+      default: "Affiliate",
     },
     affiliateId: {
       type: String,
@@ -34,6 +34,10 @@ const UsersModel = mongoose.Schema(
     postCount: {
       type: Number,
       default: 0,
+    },
+    rank: {
+      type: String,
+      default: "Normal",
     },
   },
   {

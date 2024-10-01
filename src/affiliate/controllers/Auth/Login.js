@@ -25,6 +25,8 @@ const Login = expressAsyncHandler(async (req, res) => {
             email: user.email,
             fullName: user.fullName,
             role: user.role,
+            aff_id: user._id,
+            rank: user.rank
           }),
           message: "Login Successful",
         });

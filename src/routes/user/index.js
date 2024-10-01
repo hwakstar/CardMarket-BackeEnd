@@ -10,40 +10,48 @@ const adminSchemas = require("../../models/admin");
 const PointLog = require("../../models/point_log");
 const CardDeliver = require("../../models/card_delivering");
 const Gacha = require("../../models/gacha");
+const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel");
 
 router.post("/register", async (req, res) => {
-  const { name, email, password } = req.body;
-  const isEmailExist = await Users.findOne({ email: email });
+  const { name, email, password, affId } = req.body;
 
-  if (isEmailExist) {
-    res.send({ status: 0, msg: "Email already exist." });
-  } else {
-    bcrypt
-      .hash(password, 10)
-      .then((hashedPassword) => {
-        const user = new Users({
-          name: name,
-          email: email,
-          hashedPass: hashedPassword,
-        });
-        user
-          .save()
-          .then((result) => {
-            res.send({
-              status: 1,
-              msg: "User Created Successfully",
-              result,
-            });
-          })
-          .catch((error) => {
-            res.status(500).send({ message: "Error creating user", error });
-          });
-      })
-      .catch((e) => {
-        res
-          .status(500)
-          .send({ message: "Password was not hashed successfully", e });
+  try {
+    // check email exist
+    const isEmailExist = await Users.findOne({ email: email });
+    if (isEmailExist) {
+      return res.send({ status: 0, msg: "Email already exist." });
+    }
+
+    // hass password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // create new user model
+    const newUser = new Users({
+      name: name,
+      email: email,
+      hashedPass: hashedPassword,
+      aff_id: affId,
+    });
+    // save new user into db
+    const result = await newUser.save();
+
+    // if new user is someone invited by affiliate
+    // add affiliate status for register counts
+    if (affId) {
+      const registerByLink = new RegisterByLinkModel({
+        aff_id: affId,
+        user_id: result._id
       });
+      await registerByLink.save();
+      // add Reward Points to affiliate
+    }
+
+    res.send({
+      status: 1,
+      msg: "User Created Successfully",
+      result,
+    });
+  } catch (error) {
+    res.status(500).send({ message: "Error creating user", error });
   }
 });
 
