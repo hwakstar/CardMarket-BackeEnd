@@ -9,22 +9,24 @@ const Register = expressAsyncHandler(async (req, res) => {
 
   try {
     const checkMail = await Users.findOne({ email });
+
     if (checkMail) {
       res.json({
         status: false,
         message: "Email already exists. Try with a different one.",
       });
     } else {
+      // create new affiliate user
       const user = await Users.create({
         fullName,
         email,
         password,
         phoneNumber,
         country,
-        role
+        role,
       });
 
-      const token = getToken({ user_id: user.id, fullName: user.fullName });
+      const token = getToken({ user_id: user._id, fullName: user.fullName });
 
       res.json({
         status: true,

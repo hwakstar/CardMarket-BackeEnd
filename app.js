@@ -58,9 +58,11 @@ app.get("/status", (req, res) => {
 // Routers for Affiliate
 const affiliate_auth = require("./src/affiliate/routes/auth");
 const affiliate_members = require("./src/affiliate/routes/members");
+const affiliate_status = require("./src/affiliate/routes/status");
 // Auth router
 app.use("/api/affiliate/auth/", affiliate_auth);
 app.use("/api/affiliate/members/", affiliate_members);
+app.use("/api/affiliate/status/", affiliate_status);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
