@@ -16,31 +16,31 @@ router.post("/purchase", auth, async (req, res) => {
     return res.status(401).json({ msg: "authorization denied" });
 
   try {
+    // update user remain points
     const user = await Users.findOne({ _id: user_id });
+    user.point_remain += point_num;
+    await user.save();
 
-    if (user) {
-      // add new point log
-      const newPointLog = new PointLog({
-        user_id: user_id,
-        user_name: user.name,
-        user_country: user.country,
-        point_num: point_num,
-        date: Date.now(),
-        usage: "purchagePoints",
-        ioFlag: 1,
-        aff_id: user.aff_id,
-      });
-      await newPointLog.save();
+    // add new point log
+    const newPointLogObj = {
+      user_id: user_id,
+      user_name: user.name,
+      user_country: user.country ? user.country : "",
+      point_num: point_num,
+      date: Date.now(),
+      usage: "purchagePoints",
+      ioFlag: 1,
+      aff_id: user.aff_id,
+    };
+    const newPointLog = new PointLog(newPointLogObj);
+    await newPointLog.save();
 
-      // update user remain points
-      user.point_remain += point_num;
-      await user.save();
-
+    // if user is someone invited by affliate
+    if (user.aff_id) {
       // get affiliate rewards fee by rank
       const affUser = await AffUsers.findOne({ _id: user.aff_id });
-      const affRank = affUser.rank;
       let rewardsFee;
-      switch (affRank) {
+      switch (affUser.rank) {
         case "Bronze":
           rewardsFee = 0.05;
           break;
@@ -57,14 +57,6 @@ router.post("/purchase", auth, async (req, res) => {
           rewardsFee = 0.03;
           break;
       }
-
-      // add rewards for affiliate
-      const newAffEarn = new AffEarn({
-        aff_id: user.aff_id,
-        reward: price * rewardsFee,
-        kind: "purchagePoints",
-      });
-      await newAffEarn.save();
 
       // add payment for affiliate
       const affPayment = await AffPayment.findOne({
@@ -85,10 +77,16 @@ router.post("/purchase", auth, async (req, res) => {
         await newAffPayment.save();
       }
 
-      res.send({ status: 1, msg: "Point Purchase Succeeded." });
-    } else {
-      return res.send({ status: 0, msg: "Thers is no your info." });
+      // add rewards for affiliate
+      const newAffEarn = new AffEarn({
+        aff_id: user.aff_id,
+        reward: price * rewardsFee,
+        kind: "purchagePoints",
+      });
+      await newAffEarn.save();
     }
+
+    res.send({ status: 1, msg: "Point Purchase Succeeded." });
   } catch (error) {
     res.send({ status: 0, msg: "Point Purchase Failed.", error: error });
   }

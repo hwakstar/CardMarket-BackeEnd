@@ -11,6 +11,7 @@ const PointLog = require("../../models/point_log");
 const CardDeliver = require("../../models/card_delivering");
 const Gacha = require("../../models/gacha");
 const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel");
+const AffUsers = require("../../affiliate/models/UsersModel");
 
 router.post("/register", async (req, res) => {
   const { name, email, password, affId } = req.body;
@@ -24,25 +25,31 @@ router.post("/register", async (req, res) => {
 
     // hass password
     const hashedPassword = await bcrypt.hash(password, 10);
-    // create new user model
-    const newUser = new Users({
+    // create new user object
+    const userObj = {
       name: name,
       email: email,
       hashedPass: hashedPassword,
-      aff_id: affId,
-    });
+    };
+    if (affId) userObj.aff_id = affId;
+    // create new user model
+    const newUser = new Users(userObj);
     // save new user into db
     const result = await newUser.save();
 
     // if new user is someone invited by affiliate
-    // add affiliate status for register counts
     if (affId) {
+      // add affiliate status for register counts
       const registerByLink = new RegisterByLinkModel({
         aff_id: affId,
-        user_id: result._id
+        user_id: result._id,
       });
       await registerByLink.save();
-      // add Reward Points to affiliate
+
+      // // add Reward Points to affiliate
+      // const affUser = await AffUsers.findOne({ _id: affId });
+      // const affRnak = affUser.rank;
+      // // get rank data
     }
 
     res.send({
