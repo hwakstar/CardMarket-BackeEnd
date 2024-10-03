@@ -13,6 +13,10 @@ const PaymentModel = mongoose.Schema(
     kind: {
       type: String,
     },
+    bank_address: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,
