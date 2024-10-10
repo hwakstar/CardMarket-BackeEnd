@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 
 const router = express.Router();
 
@@ -12,6 +13,9 @@ const CardDeliver = require("../../models/card_delivering");
 const Gacha = require("../../models/gacha");
 const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel");
 const AffUsers = require("../../affiliate/models/UsersModel");
+const Blogs = require("../../models/blog");
+
+const uploadBlog = require("../../utils/multer/blog_multer");
 
 router.post("/register", async (req, res) => {
   const { name, email, password, affId } = req.body;
@@ -262,6 +266,71 @@ router.post("/withdraw_user", auth, (req, res) => {
   Users.updateOne({ _id: user_id }, { active: false })
     .then(() => res.send({ status: 1 }))
     .catch((err) => res.send({ status: 0, err: err }));
+});
+
+// blog router
+router.post("/blog", auth, uploadBlog.single("file"), async (req, res) => {
+  const { author, title, content, parent_id } = req.body;
+
+  try {
+    const newBlog = new Blogs({
+      author,
+      title,
+      content,
+    });
+
+    if (parent_id) {
+      newBlog.parent_id = parent_id;
+    }
+
+    if (req.file?.filename !== undefined)
+      newBlog.img_url = `/uploads/blog/${req.file.filename}`;
+
+    await newBlog.save();
+
+    const blogs = await Blogs.find({ parent_id: undefined })
+      .sort({ createdAt: -1 })
+      .populate("author");
+
+    let comments;
+    if (parent_id) {
+      comments = await Blogs.find({ parent_id: parent_id })
+        .sort({ createdAt: -1 })
+        .populate("author");
+    }
+
+    res.send({
+      status: 1,
+      msg: `Successfully posted your ${parent_id ? "comment" : "blog"}.`,
+      blogs: blogs,
+      comments: comments,
+    });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to post blog.", err: error });
+  }
+});
+
+router.get("/blog/:blogId", async (req, res) => {
+  const blogId = req.params.blogId;
+  let blogs;
+  let comments;
+
+  if (blogId === "0") {
+    blogs = await Blogs.find({ parent_id: undefined })
+      .sort({ createdAt: -1 })
+      .populate("author");
+  } else {
+    blogs = await Blogs.findOne({ _id: blogId });
+    comments = await Blogs.find({ parent_id: blogId })
+      .sort({ createdAt: -1 })
+      .populate("author");
+  }
+
+  try {
+    res.send({ status: 1, blogs: blogs, comments: comments });
+  } catch (error) {
+    res.send({ status: 0, msg: "Something went wrong.", err: error });
+  }
 });
 
 module.exports = router;
