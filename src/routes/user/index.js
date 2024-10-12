@@ -149,6 +149,12 @@ router.get("/get_user/:id", auth, (req, res) => {
           user: {
             _id: user._id,
             name: user.name,
+            email: user.email,
+            address: user.address,
+            city: user.city,
+            country: user.country,
+            postal_code: user.postal_code,
+            description: user.description,
             point_remain: user.point_remain,
           },
         });
