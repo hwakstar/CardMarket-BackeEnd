@@ -272,7 +272,7 @@ router.get("/get_adminList", auth, (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-router.post("/add_admin", auth, async (req, res) => {
+router.post("/add_admin",  async (req, res) => {
   const { adminId, name, email, password, cuflag } = req.body;
 
   const isEmailExist = await adminSchemas.Administrator.findOne({
