@@ -15,8 +15,6 @@ const CardDeliver = require("../../models/card_delivering");
 const Users = require("../../models/user");
 const Gacha = require("../../models/gacha");
 
-const config = require("../../config");
-
 router.get("/get_admin/:id", auth, (req, res) => {
   const id = req.params.id;
 

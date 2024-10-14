@@ -137,6 +137,28 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/changePwd", auth, async (req, res) => {
+  const { currentPwd, newPwd } = req.body;
+
+  try {
+    const user = await Users.findOne({ _id: req.body.user._id });
+
+    // check current password
+    const checkPass = await bcrypt.compare(currentPwd, user.hashedPass);
+    if (!checkPass) {
+      return res.send({ status: 2 });
+    }
+
+    // hass password
+    const hashedPassword = await bcrypt.hash(newPwd, 10);
+    user.hashedPass = hashedPassword;
+    await user.save();
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, err: error });
+  }
+});
+
 router.get("/get_user/:id", auth, (req, res) => {
   const id = req.params.id;
 
@@ -153,7 +175,7 @@ router.get("/get_user/:id", auth, (req, res) => {
             address: user.address,
             city: user.city,
             country: user.country,
-            postal_code: user.postal_code,
+            postalCode: user.postalCode,
             description: user.description,
             point_remain: user.point_remain,
           },
@@ -180,11 +202,16 @@ router.get("/get_point_log/:id", auth, (req, res) => {
 });
 
 //save user data from user profile page
-router.post("/save_user", auth, (req, res) => {
+router.post("/update_user", auth, async (req, res) => {
   const userData = req.body;
-  Users.updateOne({ _id: userData._id }, userData)
-    .then(() => res.send({ status: 1 }))
-    .catch((err) => res.send({ status: 0, err: err }));
+
+  try {
+    await Users.updateOne({ _id: userData._id }, userData);
+    console.log(userData);
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, err: error });
+  }
 });
 
 //get deliver data by user id
