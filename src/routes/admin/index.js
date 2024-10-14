@@ -327,7 +327,6 @@ router.delete("/del_admin/:id", auth, (req, res) => {
 //change admin authority
 router.post("/chang_auth", auth, async (req, res) => {
   const { adminId, authority } = req.body;
-  console.log(authority);
 
   try {
     const admin = await adminSchemas.Administrator.findOne({ _id: adminId });
