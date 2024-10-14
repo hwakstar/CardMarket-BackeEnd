@@ -30,6 +30,7 @@ router.get("/get_admin/:id", auth, (req, res) => {
             user_id: admin._id,
             name: admin.name,
             authority: admin.authority,
+            role: "admin",
           },
         });
       })
@@ -124,10 +125,8 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
       });
   } else {
     prizeData.img_url = `/uploads/prize/${req.file.filename}`;
-
     const newPrize = new adminSchemas.Prize(prizeData);
     const saved = await newPrize.save();
-
     if (saved) {
       res.send({
         status: 1,
@@ -143,7 +142,7 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
 });
 
 router.get("/get_prize", auth, async (req, res) => {
-  const prize = await adminSchemas.Prize.find();
+  const prize = await adminSchemas.Prize.find({ status: "unset" });
 
   if (prize) {
     res.send({
@@ -272,39 +271,50 @@ router.get("/get_adminList", auth, (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-router.post("/add_admin",  async (req, res) => {
+router.post("/add_admin", async (req, res) => {
   const { adminId, name, email, password, cuflag } = req.body;
 
-  const isEmailExist = await adminSchemas.Administrator.findOne({
+  const admin_data = {
+    name: name,
     email: email,
-  });
+    password: password,
+  };
 
-  if (!cuflag && isEmailExist) {
-    res.send({ status: 0, msg: "Email already exist. Try another." });
-  } else {
-    const admin_data = {
-      name: name,
+  try {
+    // check email is exist
+    const isEmailExist = await adminSchemas.Administrator.findOne({
       email: email,
-      password: password,
-    };
-
-    authority = {};
-    const admin_authority = config.admin_authority;
-    for (key in admin_authority) {
-      let item = admin_authority[key];
-      authority[item] = 1; //set read authority by default
+    });
+    if (!cuflag && isEmailExist) {
+      return res.send({ status: 0, msg: "Email already exist. Try another." });
     }
-    admin_data.authority = authority;
 
-    if (adminId == undefined || adminId == "") {
-      adminSchemas.Administrator.create(admin_data)
-        .then(() => res.send({ status: 1 }))
-        .catch((err) => res.send({ status: 0, err: err }));
+    if (adminId === undefined || adminId === "") {
+      // make autority permission object
+      const authorities = {
+        administrators: { read: true, write: false, delete: false }, //authority for managing administrator
+        users: { read: true, write: false, delete: false }, //authority for managing users
+        category: { read: true, write: false, delete: false }, //authority for managing category
+        prize: { read: true, write: false, delete: false }, //authority for managing prize
+        gacha: { read: true, write: false, delete: false }, //authority for managing gacha
+        point: { read: true, write: false, delete: false }, //authority for managing point
+        delivering: { read: true, write: false, delete: false }, //authority for managing deliver
+        notion: { read: true, write: false, delete: false }, //authority for managing notion
+        userterms: { read: true, write: false, delete: false }, //authority for managing notion
+      };
+
+      admin_data.authority = authorities;
+
+      // create new administrator
+      await adminSchemas.Administrator.create(admin_data);
+      res.send({ status: 1 });
     } else {
-      adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data)
-        .then(() => res.send({ status: 2 }))
-        .catch((err) => res.send({ status: 0, err: err }));
+      // update administrator data
+      await adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data);
+      res.send({ status: 2 });
     }
+  } catch (error) {
+    res.send({ status: 0, err: error });
   }
 });
 
@@ -317,18 +327,18 @@ router.delete("/del_admin/:id", auth, (req, res) => {
 });
 
 //change admin authority
-router.post("/chang_auth", auth, (req, res) => {
+router.post("/chang_auth", auth, async (req, res) => {
   const { adminId, authority } = req.body;
+  console.log(authority);
 
-  adminSchemas.Administrator.findOne({ _id: adminId })
-    .then((admin) => {
-      admin.authority = authority;
-      admin
-        .save()
-        .then(() => res.send({ status: 1 }))
-        .catch(() => res.send({ status: 0 }));
-    })
-    .catch((err) => res.send({ status: 0, msg: "Not Found Admin", err: err }));
+  try {
+    const admin = await adminSchemas.Administrator.findOne({ _id: adminId });
+    admin.authority = authority;
+    await admin.save();
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed change autority", err: error });
+  }
 });
 
 //get deliver data
