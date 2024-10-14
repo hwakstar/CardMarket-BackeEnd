@@ -207,7 +207,6 @@ router.post("/update_user", auth, async (req, res) => {
 
   try {
     await Users.updateOne({ _id: userData._id }, userData);
-    console.log(userData);
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, err: error });
