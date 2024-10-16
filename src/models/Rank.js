@@ -1,25 +1,19 @@
 const mongoose = require("mongoose");
 
-const RankModel = mongoose.Schema(
+const RankSchema = mongoose.Schema(
   {
     name: {
       type: String,
       required: true,
     },
-    deposite_commission: {
+    bonus: {
       type: Number,
-      default: 3,
-      required: true,
-    },
-    register_commission: {
-      type: Number,
-      default: 2,
       required: true,
     },
     start_deposite: {
       type: Number,
     },
-    limit_deposite: {
+    end_deposite: {
       type: Number,
     },
     img_url: {
@@ -34,6 +28,6 @@ const RankModel = mongoose.Schema(
   }
 );
 
-const Earn = mongoose.model("affi_rank", RankModel);
+const Ranks = mongoose.model("Ranks", RankSchema, "rank");
 
-module.exports = Earn;
+module.exports = mongoose.model.RankSchema || Ranks;
