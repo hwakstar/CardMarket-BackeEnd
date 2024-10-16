@@ -487,7 +487,7 @@ router.get("/get_terms", async (req, res) => {
 // get all  rank
 router.get("/get_rank", auth, async (req, res) => {
   adminSchemas.Rank.find()
-    .sort("start_deposite")
+    .sort("start_amount")
     .then((ranks) => {
       return res.send({ status: 1, ranks: ranks });
     })
@@ -496,14 +496,14 @@ router.get("/get_rank", auth, async (req, res) => {
 
 // new rank add or update rank with rank image uploading
 router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
-  const { id, name, bonus, start_deposite, end_deposite } = req.body;
+  const { id, name, bonus, start_amount, end_amount } = req.body;
 
   try {
     const rankData = {
       name: name,
       bonus: bonus,
-      start_deposite: start_deposite,
-      end_deposite: end_deposite,
+      start_amount: start_amount,
+      end_amount: end_amount,
     };
 
     if (req.file?.filename !== undefined) {

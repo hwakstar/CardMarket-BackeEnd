@@ -29,8 +29,8 @@ const pointSchema = new Schema({
 const rankSchema = new Schema({
   name: { type: String, required: true },
   bonus: { type: Number, required: true },
-  start_deposite: { type: Number },
-  end_deposite: { type: Number },
+  start_amount: { type: Number },
+  end_amount: { type: Number },
   img_url: { type: String, required: true },
 });
 

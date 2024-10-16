@@ -10,10 +10,10 @@ const RankSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    start_deposite: {
+    start_amount: {
       type: Number,
     },
-    end_deposite: {
+    end_amount: {
       type: Number,
     },
     img_url: {

@@ -16,10 +16,10 @@ const RankModel = mongoose.Schema(
       default: 2,
       required: true,
     },
-    start_deposite: {
+    start_amount: {
       type: Number,
     },
-    limit_deposite: {
+    limit_amount: {
       type: Number,
     },
     img_url: {
