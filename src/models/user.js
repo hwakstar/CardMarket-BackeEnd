@@ -15,6 +15,10 @@ const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "ShippingAddress",
   },
+  rank_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Ranks",
+  },
 });
 
 const Users = mongoose.model("Users", UserSchema, "users");

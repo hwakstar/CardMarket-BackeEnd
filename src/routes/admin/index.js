@@ -6,6 +6,7 @@ const moment = require("moment");
 
 const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
+const uploadRank = require("../../utils/multer/rank_multer");
 const deleteFile = require("../../utils/delete");
 
 const auth = require("../../middleware/auth");
@@ -297,6 +298,7 @@ router.post("/add_admin", async (req, res) => {
         gacha: { read: true, write: false, delete: false }, //authority for managing gacha
         point: { read: true, write: false, delete: false }, //authority for managing point
         delivering: { read: true, write: false, delete: false }, //authority for managing deliver
+        rank: { read: true, write: false, delete: false }, //authority for managing rank
         notion: { read: true, write: false, delete: false }, //authority for managing notion
         userterms: { read: true, write: false, delete: false }, //authority for managing notion
       };
@@ -479,6 +481,71 @@ router.get("/get_terms", async (req, res) => {
     res.send({ status: 1, terms: terms });
   } catch (error) {
     res.send({ status: 0 });
+  }
+});
+
+// get all  rank
+router.get("/get_rank", auth, async (req, res) => {
+  adminSchemas.Rank.find()
+    .sort("start_deposite")
+    .then((ranks) => {
+      return res.send({ status: 1, ranks: ranks });
+    })
+    .catch((err) => res.send({ status: 0, err: err }));
+});
+
+// new rank add or update rank with rank image uploading
+router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
+  const { id, name, bonus, start_deposite, end_deposite } = req.body;
+
+  try {
+    const rankData = {
+      name: name,
+      bonus: bonus,
+      start_deposite: start_deposite,
+      end_deposite: end_deposite,
+    };
+
+    if (req.file?.filename !== undefined) {
+      rankData.img_url = `/uploads/rank/${req.file.filename}`;
+    }
+
+    if (id !== "" && id !== undefined) {
+      const rank = await adminSchemas.Rank.findOne({ _id: id });
+
+      if (rankData.img_url && rank.img_url) {
+        const filePath = path.join("./", rank.img_url);
+        await deleteFile(filePath);
+      }
+
+      await adminSchemas.Rank.updateOne({ _id: id }, rankData);
+      res.send({ status: 2 });
+    } else {
+      const newRank = new adminSchemas.Rank(rankData);
+      await newRank.save();
+      res.send({ status: 1 });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+
+//delete rank with image deleting by id
+router.delete("/del_rank/:id", auth, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const rank = await adminSchemas.Rank.findOne({ _id: id });
+
+    if (rank.img_url) {
+      const filePath = path.join("./", rank.img_url);
+      await deleteFile(filePath);
+    }
+
+    await adminSchemas.Rank.deleteOne({ _id: id });
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
   }
 });
 

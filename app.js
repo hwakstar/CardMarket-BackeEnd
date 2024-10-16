@@ -34,10 +34,8 @@ app.use(
   "/uploads/users",
   express.static(path.join(__dirname, "uploads/users"))
 );
-app.use(
-  "/uploads/blog",
-  express.static(path.join(__dirname, "uploads/blog"))
-);
+app.use("/uploads/blog", express.static(path.join(__dirname, "uploads/blog")));
+app.use("/uploads/rank", express.static(path.join(__dirname, "uploads/rank")));
 
 // Routers for Oripa
 const admin = require("./src/routes/admin");
