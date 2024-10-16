@@ -14,6 +14,7 @@ const Gacha = require("../../models/gacha");
 const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
+const ShippingAddress = require("../../models/shpping_address");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
 
@@ -116,6 +117,7 @@ router.post("/login", async (req, res) => {
         name: user.name,
         email: user.email,
         point_remain: user.point_remain,
+        shipAddress_id: user.shipAddress_id,
       };
       const token = jwt.sign(payload, "RANDOM-TOKEN", {
         expiresIn: "1h",
@@ -172,12 +174,8 @@ router.get("/get_user/:id", auth, (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
-            address: user.address,
-            city: user.city,
-            country: user.country,
-            postalCode: user.postalCode,
-            description: user.description,
             point_remain: user.point_remain,
+            shipAddress_id: user.shipAddress_id,
           },
         });
       })
@@ -362,6 +360,74 @@ router.get("/blog/:blogId", async (req, res) => {
     res.send({ status: 1, blogs: blogs, comments: comments });
   } catch (error) {
     res.send({ status: 0, msg: "Something went wrong.", err: error });
+  }
+});
+
+// Shipping Address
+// get all shipping address for logged user
+router.get("/shipping_address/:user_id", auth, async (req, res) => {
+  const user_id = req.params.user_id;
+
+  try {
+    const shippingAddress = await ShippingAddress.find({ user_id: user_id });
+    res.send({ status: 1, shippingAddress: shippingAddress });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+// add new shipping addresss for logged user
+router.post("/shipping_address", auth, async (req, res) => {
+  const { update, shipAddress } = req.body;
+
+  try {
+    if (update) {
+      const updateData = {
+        country: shipAddress.country,
+        lastName: shipAddress.lastName,
+        firstName: shipAddress.firstName,
+        lastNameKana: shipAddress.lastNameKana,
+        firstNameKana: shipAddress.firstNameKana,
+        postCode: shipAddress.postCode,
+        prefecture: shipAddress.prefecture,
+        address: shipAddress.address,
+        building: shipAddress.building,
+        phoneNumber: shipAddress.phoneNumber,
+      };
+
+      await ShippingAddress.updateOne({ _id: shipAddress._id }, updateData);
+    } else {
+      const newData = new ShippingAddress(shipAddress);
+      await newData.save();
+    }
+
+    res.send({ status: 1, update });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+// set shipping address for logged user
+router.post("/add_shipping_address", auth, async (req, res) => {
+  const { userId, shipAddress } = req.body;
+
+  try {
+    await Users.updateOne({ _id: userId }, { shipAddress_id: shipAddress });
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+// delete shipping address of user
+router.delete("/del_shipping_address/:id", auth, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    await ShippingAddress.deleteOne({ _id: id });
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, err: error });
   }
 });
 
