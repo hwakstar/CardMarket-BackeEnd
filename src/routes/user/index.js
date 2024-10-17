@@ -17,6 +17,7 @@ const Blogs = require("../../models/blog");
 const ShippingAddress = require("../../models/shpping_address");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
+const rankData = require("../../utils/rankData");
 
 router.post("/register", async (req, res) => {
   const { name, email, password, affId } = req.body;
@@ -98,6 +99,7 @@ router.post("/login", async (req, res) => {
     }
   } else {
     try {
+      // Find user have requested email
       const user = await Users.findOne({ email: email });
       if (!user) {
         return res.send({
@@ -106,6 +108,7 @@ router.post("/login", async (req, res) => {
         });
       }
 
+      // check user active status
       if (!user.active) {
         return res.send({
           status: 0,
@@ -113,6 +116,7 @@ router.post("/login", async (req, res) => {
         });
       }
 
+      // check password
       const checkPass = await bcrypt.compare(password, user.hashedPass);
       if (!checkPass) {
         return res.send({
@@ -121,22 +125,30 @@ router.post("/login", async (req, res) => {
         });
       }
 
-      payload = {
+      // make user data for token
+      const userData = {
         _id: user._id,
         name: user.name,
         email: user.email,
         point_remain: user.point_remain,
         shipAddress_id: user.shipAddress_id,
-        rank_id: user.rank_id,
+        address: user.address,
+        city: user.city,
+        country: user.country,
       };
-      const token = jwt.sign(payload, "RANDOM-TOKEN", {
+
+      // get rank data
+      const rank = await rankData(user._id, user.rank_id);
+      userData.rankData = rank;
+
+      const token = jwt.sign(userData, "RANDOM-TOKEN", {
         expiresIn: "1h",
       });
 
       res.send({
         status: 1,
         msg: "successLogin",
-        user: payload,
+        user: userData,
         token,
       });
     } catch (error) {
@@ -171,28 +183,34 @@ router.post("/changePwd", auth, async (req, res) => {
   }
 });
 
-router.get("/get_user/:id", auth, (req, res) => {
+router.get("/get_user/:id", auth, async (req, res) => {
   const id = req.params.id;
 
-  if (id) {
-    Users.findOne({ _id: id })
-      .then((user) => {
-        res.send({
-          status: 1,
-          msg: "get User succeeded.",
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            point_remain: user.point_remain,
-            shipAddress_id: user.shipAddress_id,
-            rank_id: user.rank_id,
-          },
-        });
-      })
-      .catch((err) =>
-        res.send({ status: 0, msg: "get User failed.", err: err })
-      );
+  try {
+    // create user data
+    const user = await Users.findOne({ _id: id });
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      point_remain: user.point_remain,
+      shipAddress_id: user.shipAddress_id,
+      address: user.address,
+      city: user.city,
+      country: user.country,
+    };
+
+    // get rank data
+    const rank = await rankData(user._id, user.rank_id);
+    userData.rankData = rank;
+
+    res.send({
+      status: 1,
+      msg: "get User succeeded.",
+      user: userData,
+    });
+  } catch (error) {
+    res.send({ status: 1, msg: "failedReq", error: error });
   }
 });
 

@@ -32,6 +32,7 @@ const rankSchema = new Schema({
   start_amount: { type: Number },
   end_amount: { type: Number },
   img_url: { type: String, required: true },
+  last: { type: Boolean, required: true },
 });
 
 const termsSchema = new Schema({
