@@ -86,7 +86,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
     // get payments data of affiliate
     const paymentsData = await PointLogs.find({
       aff_id: affId,
-      usage: "purchagePoints",
+      usage: "purchasePoints",
     });
     const todayPayments = sumPaymentsByCategory(paymentsData, isToday);
     const thisWeekPayments = sumPaymentsByCategory(paymentsData, isThisWeek);
