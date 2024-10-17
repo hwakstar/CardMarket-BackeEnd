@@ -1,3 +1,4 @@
+// affiliate deposite when user purchase points
 const mongoose = require("mongoose");
 
 const DepositModel = mongoose.Schema(

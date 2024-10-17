@@ -1,3 +1,4 @@
+// balance of affiliate
 const mongoose = require("mongoose");
 
 const PaymentModel = mongoose.Schema(

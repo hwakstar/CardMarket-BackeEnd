@@ -25,7 +25,7 @@ router.post("/register", async (req, res) => {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
     if (isEmailExist) {
-      return res.send({ status: 0, msg: "Email already exist." });
+      return res.send({ status: 0, msg: "exsitEmail" });
     }
 
     // hass password
@@ -59,11 +59,15 @@ router.post("/register", async (req, res) => {
 
     res.send({
       status: 1,
-      msg: "User Created Successfully",
+      msg: "successRegistered",
       result,
     });
   } catch (error) {
-    res.status(500).send({ message: "Error creating user", error });
+    res.send({
+      status: 0,
+      msg: "failedReq",
+      result,
+    });
   }
 });
 
@@ -95,11 +99,17 @@ router.post("/login", async (req, res) => {
   } else {
     try {
       const user = await Users.findOne({ email: email });
+      if (!user) {
+        return res.send({
+          status: 0,
+          msg: "invalidLoginInfo",
+        });
+      }
 
       if (!user.active) {
         return res.send({
           status: 0,
-          msg: "Your account has withdrawn. Please log in with another account.",
+          msg: "withdrawedAccount",
         });
       }
 
@@ -107,17 +117,17 @@ router.post("/login", async (req, res) => {
       if (!checkPass) {
         return res.send({
           status: 0,
-          msg: "Password and Email is not correct.",
+          msg: "invalidLoginInfo",
         });
       }
 
       payload = {
         _id: user._id,
-        user_id: user._id,
         name: user.name,
         email: user.email,
         point_remain: user.point_remain,
         shipAddress_id: user.shipAddress_id,
+        rank_id: user.rank_id,
       };
       const token = jwt.sign(payload, "RANDOM-TOKEN", {
         expiresIn: "1h",
@@ -125,14 +135,14 @@ router.post("/login", async (req, res) => {
 
       res.send({
         status: 1,
-        msg: "Login Successful",
+        msg: "successLogin",
         user: payload,
         token,
       });
     } catch (error) {
       res.send({
         status: 0,
-        msg: "Password and Email is not correct.",
+        msg: "failedReq",
         err: error,
       });
     }
@@ -176,6 +186,7 @@ router.get("/get_user/:id", auth, (req, res) => {
             email: user.email,
             point_remain: user.point_remain,
             shipAddress_id: user.shipAddress_id,
+            rank_id: user.rank_id,
           },
         });
       })
