@@ -1,3 +1,4 @@
+// earned reward whenever user register, purchase point and draw gacha
 const mongoose = require("mongoose");
 
 const EarnModel = mongoose.Schema(

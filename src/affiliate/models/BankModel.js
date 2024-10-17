@@ -8,7 +8,7 @@ const BankModel = mongoose.Schema(
     },
     transType: {
       type: String,
-      default: "other", // 1: Normal, 2: Bronze, 3: Silver, 4: Gold, 5: Platinum
+      default: "other",
       required: true,
     },
     nameOfFinacial: {
@@ -17,7 +17,7 @@ const BankModel = mongoose.Schema(
     },
     accountType: {
       type: String,
-      default: "ordinary", // means 3%
+      default: "ordinary",
       required: true,
     },
     accountNumber: {

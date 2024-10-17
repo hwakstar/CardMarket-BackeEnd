@@ -8,6 +8,8 @@ const GetClients = expressAsyncHandler(async (req, res) => {
     const affId = req.body.affId;
     const period = req.body.period;
 
+    console.log({ affId, period });
+
     let match = { aff_id: affId };
     if (period === "Today") {
       // Get the start and end of today

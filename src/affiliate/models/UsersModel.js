@@ -31,10 +31,6 @@ const UsersModel = mongoose.Schema(
     affiliateId: {
       type: String,
     },
-    postCount: {
-      type: Number,
-      default: 0,
-    },
     rank: {
       type: String,
       default: "Normal",
