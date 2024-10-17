@@ -30,8 +30,8 @@ router.post("/add", auth, uploadGacha.single("file"), async (req, res) => {
 
   const saved = await newGacha.save();
   if (saved) {
-    res.send({ status: 1, msg: "New Gacha Saved successfully." });
-  } else res.send({ status: 0, msg: "Gacha Save failed." });
+    res.send({ status: 1, msg: "successAdded" });
+  } else res.send({ status: 0, msg: "failedAdded" });
 });
 
 //set prizes from csv file
@@ -49,9 +49,9 @@ router.post("/upload_bulk", auth, async (req, res) => {
     } else gacha.remain_prizes = newPrizes;
 
     await gacha.save();
-    res.send({ status: 1, msg: "Upload prizes successfully." });
+    res.send({ status: 1, msg: "successAdded" });
   } catch (error) {
-    res.send({ status: 0, msg: "Upload prizes failed." });
+    res.send({ status: 0, msg: "failedAdded" });
   }
 });
 
@@ -129,7 +129,7 @@ router.post("/unset_prize", auth, (req, res) => {
               .save()
               .then(() => res.send({ status: 1 }))
               .catch((err) =>
-                res.send({ status: 0, msg: "Prize save failed.", err: err })
+                res.send({ status: 0, msg: "failedSaved", err: err })
               );
           });
         })
@@ -212,7 +212,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // return if drawpoints is less than remain points
     const drawPoints = gacha.price * drawCounts;
-    const userData = await Users.findOne({ _id: user.user_id });
+    const userData = await Users.findOne({ _id: user._id });
     if (userData.point_remain < drawPoints)
       return res.send({ status: 0, msg: 1 });
 

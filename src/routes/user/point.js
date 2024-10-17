@@ -94,9 +94,9 @@ router.post("/purchase", auth, async (req, res) => {
       await newAffEarn.save();
     }
 
-    res.send({ status: 1, msg: "Point Purchase Succeeded." });
+    res.send({ status: 1, msg: "Successfully purchased points." });
   } catch (error) {
-    res.send({ status: 0, msg: "Point Purchase Failed.", error: error });
+    res.send({ status: 0, msg: "Failed to purchase points.", error: error });
   }
 });
 

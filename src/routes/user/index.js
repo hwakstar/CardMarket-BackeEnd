@@ -90,7 +90,7 @@ router.post("/login", async (req, res) => {
 
       res.send({
         status: 1,
-        msg: "Login Successful",
+        msg: "successLogin",
         user: payload,
         token,
       });
@@ -251,7 +251,7 @@ router.get("/get_deliver/:user_id", auth, async (req, res) => {
   if (delievers) {
     res.send({ status: 1, deliver: delievers });
   } else {
-    res.send({ status: 0, msg: "Something went wrong", err: err });
+    res.send({ status: 0, msg: "failedReq", err: err });
   }
 });
 
@@ -305,9 +305,9 @@ router.post("/return_prize", auth, async (req, res) => {
     user.point_remain += popedPrize.cashback;
     await user.save();
 
-    res.send({ status: 1, msg: "Successfully returned your card." });
+    res.send({ status: 1, msg: "successReturn" });
   } catch (error) {
-    res.send({ status: 0, msg: "Failed to return the card.", err: error });
+    res.send({ status: 0, msg: "failedReturn", err: error });
   }
 });
 
@@ -360,7 +360,7 @@ router.post("/blog", auth, uploadBlog.single("file"), async (req, res) => {
 
     res.send({
       status: 1,
-      msg: `Successfully posted your ${parent_id ? "comment" : "blog"}.`,
+      msg: `${parent_id ? "successComment" : "successBlog"}.`,
       blogs: blogs,
       comments: comments,
     });
