@@ -496,7 +496,7 @@ router.get("/get_rank", auth, async (req, res) => {
 
 // new rank add or update rank with rank image uploading
 router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
-  const { id, name, bonus, start_amount, end_amount } = req.body;
+  const { id, name, bonus, start_amount, end_amount, last } = req.body;
 
   try {
     const rankData = {
@@ -504,6 +504,7 @@ router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
       bonus: bonus,
       start_amount: start_amount,
       end_amount: end_amount,
+      last: JSON.parse(last),
     };
 
     if (req.file?.filename !== undefined) {

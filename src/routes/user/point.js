@@ -29,7 +29,7 @@ router.post("/purchase", auth, async (req, res) => {
       user_country: user.country ? user.country : "",
       point_num: point_num,
       date: Date.now(),
-      usage: "purchagePoints",
+      usage: "purchasePoints",
       ioFlag: 1,
       aff_id: user.aff_id,
     };
@@ -89,7 +89,7 @@ router.post("/purchase", auth, async (req, res) => {
       const newAffEarn = new AffEarn({
         aff_id: user.aff_id,
         reward: price * rewardsFee,
-        kind: "purchagePoints",
+        kind: "purchasePoints",
       });
       await newAffEarn.save();
     }
