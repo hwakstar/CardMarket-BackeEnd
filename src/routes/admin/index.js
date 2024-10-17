@@ -67,9 +67,9 @@ router.post("/add_category", auth, async (req, res) => {
     const saveCategory = await newCategory.save();
 
     if (saveCategory) {
-      res.send({ status: 1, msg: "New category added." });
+      res.send({ status: 1, msg: "successAdded" });
     } else {
-      res.send({ status: 0, msg: "Failed to add." });
+      res.send({ status: 0, msg: "failedAdded" });
     }
   }
 });
@@ -83,9 +83,7 @@ router.post("/edit_category", auth, async (req, res) => {
       category.description = description;
       category
         .save()
-        .then(() =>
-          res.send({ status: 1, msg: "Category updated successfully." })
-        );
+        .then(() => res.send({ status: 1, msg: "successUpdated" }));
     })
     .catch((err) =>
       res.send({ status: 0, msg: "category update failed.", err: err })
@@ -96,7 +94,7 @@ router.delete("/del_category/:id", auth, async (req, res) => {
   const id = req.params.id;
 
   adminSchemas.Category.deleteOne({ _id: id }).then((cat) =>
-    res.send({ status: 1, msg: "Deleted!" })
+    res.send({ status: 1, msg: "successDeleted" })
   );
 });
 
@@ -117,10 +115,10 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     }
     await adminSchemas.Prize.updateOne({ _id: id }, prizeData)
       .then(() => {
-        return res.send({ status: 1, msg: "Updated successfully." });
+        return res.send({ status: 1, msg: "successUpdated" });
       })
       .catch((err) => {
-        return res.send({ status: 0, msg: "Update failed" });
+        return res.send({ status: 0, msg: "failedUpdated" });
       });
   } else {
     prizeData.img_url = `/uploads/prize/${req.file.filename}`;
@@ -129,12 +127,12 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
     if (saved) {
       res.send({
         status: 1,
-        msg: "New prize added",
+        msg: "successAdded",
       });
     } else {
       res.send({
         status: 0,
-        msg: "Prize save failed.",
+        msg: "failedAdded",
       });
     }
   }
@@ -221,10 +219,10 @@ router.delete("/del_prize/:id", auth, async (req, res) => {
       try {
         await deleteFile(filePath);
         prize.deleteOne();
-        res.send({ status: 1, msg: "prize deleted successfully." });
+        res.send({ status: 1, msg: "successDeleted" });
       } catch (err) {
         console.error("Error deleting file:", err);
-        res.status(500).send({ status: 0, msg: "Error deleting file" });
+        res.status(500).send({ status: 0, msg: "failedDeleted" });
       }
     })
     .catch((err) => res.send({ status: 0, msg: "prize find error", err: err }));
@@ -336,7 +334,7 @@ router.post("/chang_auth", auth, async (req, res) => {
     await admin.save();
     res.send({ status: 1 });
   } catch (error) {
-    res.send({ status: 0, msg: "Failed change autority", err: error });
+    res.send({ status: 0, msg: "failedUpdated", err: error });
   }
 });
 
@@ -363,14 +361,14 @@ router.post("/set_deliver_status", auth, async (req, res) => {
       user.obtain_cards.push(deliver);
       await user.save();
 
-      res.send({ status: 1, msg: "Changed status successfully" });
+      res.send({ status: 1, msg: "successUpdated" });
     } else {
       if (deliver) {
         deliver.status = "Delivering";
         const result = await deliver.save();
 
         if (result) {
-          res.send({ status: 1, msg: "Successfully Changed status." });
+          res.send({ status: 1, msg: "successUpdated" });
         }
       }
     }
