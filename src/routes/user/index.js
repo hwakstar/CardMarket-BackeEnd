@@ -210,7 +210,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
       user: userData,
     });
   } catch (error) {
-    res.send({ status: 1, msg: "failedReq", error: error });
+    res.send({ status: 0, msg: "failedReq", error: error });
   }
 });
 
