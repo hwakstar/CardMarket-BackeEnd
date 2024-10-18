@@ -35,6 +35,13 @@ const rankSchema = new Schema({
   last: { type: Boolean, required: true },
 });
 
+const themeSchema = new Schema({
+  brand: { type: String },
+  logoUrl: { type: String },
+  bgColor: { type: String },
+  textColor: { type: String },
+});
+
 const termsSchema = new Schema({
   content: { type: String, required: true }, // Store large text here
   createdAt: { type: Date, default: Date.now },
@@ -52,6 +59,7 @@ const Prize = mongoose.model("Prize", prizeSchema, "admin_prize");
 const Point = mongoose.model("Point", pointSchema, "admin_point");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");
+const Themes = mongoose.model("Theme", themeSchema, "themes");
 const Administrator = mongoose.model("Adminer", AdminSchema, "admin_adminer");
 
 const adminSchemas = {
@@ -60,6 +68,7 @@ const adminSchemas = {
   Point: Point,
   Rank: Rank,
   Terms: Terms,
+  Themes: Themes,
   Administrator: Administrator,
 };
 
