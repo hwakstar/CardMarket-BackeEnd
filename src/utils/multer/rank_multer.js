@@ -10,6 +10,6 @@ const storage = multer.diskStorage({
   },
 });
 
-const rankPoint = multer({ storage });
+const uploadRank = multer({ storage });
 
-module.exports = rankPoint;
+module.exports = uploadRank;

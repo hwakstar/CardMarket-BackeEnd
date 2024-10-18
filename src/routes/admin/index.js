@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt");
 const path = require("path");
 const moment = require("moment");
 
 const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
 const uploadRank = require("../../utils/multer/rank_multer");
+const uploadLogo = require("../../utils/multer/logo_multer");
 const deleteFile = require("../../utils/delete");
 
 const auth = require("../../middleware/auth");
@@ -543,6 +543,96 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
 
     await adminSchemas.Rank.deleteOne({ _id: id });
     res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+
+// change theme logo
+router.post(
+  "/changeLogo",
+  auth,
+  uploadLogo.single("file"),
+  async (req, res) => {
+    try {
+      let logoUrl;
+      if (req.file?.filename !== undefined) {
+        logoUrl = `/uploads/logo/${req.file.filename}`;
+      }
+
+      const themes = await adminSchemas.Themes.find();
+      if (themes.length === 0) {
+        // create new theme data
+        const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
+        await newTheme.save();
+      } else {
+        if (logoUrl && themes[0].logoUrl) {
+          const filePath = path.join("./", themes[0].logoUrl);
+          await deleteFile(filePath);
+        }
+
+        await adminSchemas.Themes.updateOne(
+          { _id: themes[0] },
+          { logoUrl: logoUrl }
+        );
+      }
+
+      res.send({ status: 1 });
+    } catch (error) {
+      res.send({ status: 0, msg: error });
+    }
+  }
+);
+
+// change theme brand
+router.post("/changeBrand", auth, async (req, res) => {
+  const { brand } = req.body;
+
+  try {
+    const themes = await adminSchemas.Themes.find();
+    if (themes.length === 0) {
+      // create new theme data
+      const newTheme = adminSchemas.Themes({ brand: brand });
+      await newTheme.save();
+    } else {
+      await adminSchemas.Themes.updateOne({ _id: themes[0] }, { brand: brand });
+    }
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+
+// change theme color
+router.post("/changeBgColor", auth, async (req, res) => {
+  const { bgColor } = req.body;
+  console.log(bgColor);
+
+  try {
+    const themes = await adminSchemas.Themes.find();
+    if (themes.length === 0) {
+      // create new theme data
+      const newTheme = adminSchemas.Themes({ bgColor: bgColor });
+      await newTheme.save();
+    } else {
+      await adminSchemas.Themes.updateOne(
+        { _id: themes[0] },
+        { bgColor: bgColor }
+      );
+    }
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+
+// get theme data
+router.get("/getThemeData", async (req, res) => {
+  try {
+    const themes = await adminSchemas.Themes.find();
+    res.send({ status: 1, theme: themes[0] });
   } catch (error) {
     res.send({ status: 0, msg: error });
   }
