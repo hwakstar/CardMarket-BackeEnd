@@ -8,7 +8,6 @@ const PointLog = require("../../models/point_log");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const AffEarn = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
-const AffDeposit = require("../../affiliate/models/DepositModel");
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -38,7 +37,7 @@ router.post("/purchase", auth, async (req, res) => {
 
     // if user is someone invited by affliate
     if (user.aff_id) {
-      // get affiliate rewards fee by rank
+      // get affiliate rewards fee by affiliate rank
       const affUser = await AffUsers.findOne({ _id: user.aff_id });
       let rewardsFee;
       switch (affUser.rank) {
@@ -58,13 +57,6 @@ router.post("/purchase", auth, async (req, res) => {
           rewardsFee = 0.03;
           break;
       }
-
-      // add deposit for affiliate
-      const affDeposit = await new AffDeposit({
-        aff_id: user.aff_id,
-        amount: price,
-      });
-      await affDeposit.save();
 
       // add payment for affiliate
       const affPayment = await AffPayment.findOne({

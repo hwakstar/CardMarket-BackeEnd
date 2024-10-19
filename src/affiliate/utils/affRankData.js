@@ -1,33 +1,33 @@
-const AdminSchema = require("../models/admin");
-const UserSchema = require("../models/user");
-const PoingLogSchema = require("../models/point_log");
+const PoingLogModel = require("../../models/point_log");
+const UserModel = require("../models/UsersModel");
+const RankModel = require("../models/RankModel");
 
-const rankData = async (user_id, rank_id) => {
+const affRankData = async (user_id, rank_id) => {
   let userRank;
 
   // get all point logs
-  const pointLogs = await PoingLogSchema.find();
+  const pointLogs = await PoingLogModel.find();
 
   // calculate rank period
   const today = new Date();
-  // Last day of the current month
-  const lastDayOfCurrentMonth = new Date(
-    today.getFullYear(),
-    today.getMonth() + 1,
-    0
-  );
   // First day of last months ago
   const firstDayOfLastMonths = new Date(
     today.getFullYear(),
     today.getMonth() - 1,
     1
   );
+  // Last day of the current month
+  const lastDayOfCurrentMonth = new Date(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    0
+  );
 
   // Calculate the total purchased points amount for 2 months ago
   const totalPointsAmount = pointLogs
     .filter(
       (item) =>
-        item.user_id === user_id.toString() &&
+        item.aff_id === user_id.toString() &&
         item.usage === "purchasePoints" &&
         item.createdAt >= firstDayOfLastMonths &&
         item.createdAt <= lastDayOfCurrentMonth
@@ -40,7 +40,7 @@ const rankData = async (user_id, rank_id) => {
     // if first day, calculate new rank automatically
     // get data end_amount is greater than totalPointsAmount
     // and start_amount is less or same than totalPointsAmount
-    const newRank = await AdminSchema.Rank.find({
+    const newRank = await RankModel.find({
       $or: [
         {
           last: false,
@@ -56,17 +56,16 @@ const rankData = async (user_id, rank_id) => {
 
     // update newRank of user
     userRank = newRank[0];
-    await UserSchema.updateOne({ _id: user_id }, { rank_id: userRank._id });
+    await UserModel.updateOne({ _id: user_id }, { rank: userRank._id });
   } else {
     // if not first day, get current user rank
     if (rank_id) {
-      userRank = await AdminSchema.Rank.findOne({ _id: rank_id });
+      userRank = await RankModel.findOne({ _id: rank_id });
     } else {
-      userRank = await AdminSchema.Rank.findOne({ start_amount: 0 });
+      userRank = await RankModel.findOne({ start_amount: 0 });
     }
   }
-
   return { rank: userRank, totalPointsAmount: totalPointsAmount };
 };
 
-module.exports = rankData;
+module.exports = affRankData;
