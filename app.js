@@ -37,6 +37,7 @@ app.use(
 app.use("/uploads/blog", express.static(path.join(__dirname, "uploads/blog")));
 app.use("/uploads/rank", express.static(path.join(__dirname, "uploads/rank")));
 app.use("/uploads/logo", express.static(path.join(__dirname, "uploads/logo")));
+app.use("/uploads/affRank", express.static(path.join(__dirname, "uploads/affRank")));
 
 // Routers for Oripa
 const admin = require("./src/routes/admin");
@@ -62,10 +63,12 @@ app.get("/status", (req, res) => {
 const affiliate_auth = require("./src/affiliate/routes/auth");
 const affiliate_members = require("./src/affiliate/routes/members");
 const affiliate_status = require("./src/affiliate/routes/status");
+const affiliate_admin = require("./src/affiliate/routes/admin");
 // Auth router
 app.use("/api/affiliate/auth/", affiliate_auth);
 app.use("/api/affiliate/members/", affiliate_members);
 app.use("/api/affiliate/status/", affiliate_status);
+app.use("/api/affiliate/admin/", affiliate_admin);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

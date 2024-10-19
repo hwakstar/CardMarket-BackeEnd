@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 // controllers
-const AddClicks = require("../../controllers/Status/AddClicks");
-const GetStatistics = require("../../controllers/Status/GetStatistics");
-const GetClients = require("../../controllers/Status/GetClients");
+const AddClicks = require("../controllers/Status/AddClicks");
+const GetStatistics = require("../controllers/Status/GetStatistics");
+const GetClients = require("../controllers/Status/GetClients");
 
 // middlewares
-const AuthHandler = require("../../middlewares/AuthHandler");
+const AuthHandler = require("../middlewares/AuthHandler");
 
 // add click event for affiliate, when user click invited url link
 router.post("/addClicks", AddClicks);
