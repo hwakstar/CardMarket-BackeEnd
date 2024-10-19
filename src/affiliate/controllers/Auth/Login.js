@@ -1,8 +1,9 @@
 const expressAsyncHandler = require("express-async-handler");
 
-const getToken = require("../../utils/GetToken");
-
 const Users = require("../../models/UsersModel");
+
+const getToken = require("../../utils/GetToken");
+const AffRankData = require("../../utils/affRankData");
 
 const Login = expressAsyncHandler(async (req, res) => {
   const { affiliateId, password } = req.body;
@@ -17,6 +18,10 @@ const Login = expressAsyncHandler(async (req, res) => {
       });
     } else {
       if (await user.CheckPass(password)) {
+        // get rank data
+        const rank = await AffRankData(user._id, user.rank_id);
+        // userData.rankData = rank;
+
         res.json({
           status: true,
           name: user.fullName,
@@ -26,6 +31,7 @@ const Login = expressAsyncHandler(async (req, res) => {
             fullName: user.fullName,
             role: user.role,
             rank: user.rank,
+            totalPointsAmount: rank.totalPointsAmount,
           }),
           message: "Login Successful",
         });
