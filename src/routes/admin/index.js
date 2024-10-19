@@ -538,6 +538,7 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
 
     if (rank.img_url) {
       const filePath = path.join("./", rank.img_url);
+      console.log(filePath);
       await deleteFile(filePath);
     }
 
@@ -607,7 +608,6 @@ router.post("/changeBrand", auth, async (req, res) => {
 // change theme color
 router.post("/changeBgColor", auth, async (req, res) => {
   const { bgColor } = req.body;
-  console.log(bgColor);
 
   try {
     const themes = await adminSchemas.Themes.find();
