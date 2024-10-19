@@ -17,7 +17,7 @@ const Blogs = require("../../models/blog");
 const ShippingAddress = require("../../models/shpping_address");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
-const rankData = require("../../utils/rankData");
+const userRankData = require("../../utils/userRnkData");
 
 router.post("/register", async (req, res) => {
   const { name, email, password, affId } = req.body;
@@ -138,7 +138,7 @@ router.post("/login", async (req, res) => {
       };
 
       // get rank data
-      const rank = await rankData(user._id, user.rank_id);
+      const rank = await userRankData(user._id, user.rank_id);
       userData.rankData = rank;
 
       const token = jwt.sign(userData, "RANDOM-TOKEN", {
@@ -201,7 +201,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
     };
 
     // get rank data
-    const rank = await rankData(user._id, user.rank_id);
+    const rank = await userRankData(user._id, user.rank_id);
     userData.rankData = rank;
 
     res.send({
