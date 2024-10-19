@@ -3,38 +3,14 @@ const bcrypt = require("bcrypt");
 
 const UsersModel = mongoose.Schema(
   {
-    fullName: {
-      type: String,
-      required: [true, "Please enter your full name."],
-    },
-    email: {
-      type: String,
-      unique: true,
-      requried: [true, "Please enter your email."],
-    },
-    password: {
-      type: String,
-      required: [true, "Please enter a new password"],
-    },
-    phoneNumber: {
-      type: String,
-      required: [true, "Please enter a your phone number."],
-    },
-    country: {
-      type: String,
-      required: [true, "Please enter a your coutnry"],
-    },
-    role: {
-      type: String,
-      default: "Affiliate",
-    },
-    affiliateId: {
-      type: String,
-    },
-    rank: {
-      type: String,
-      default: "Normal",
-    },
+    fullName: { type: String, required: true },
+    email: { type: String, unique: true, requried: true },
+    password: { type: String, required: true },
+    phoneNumber: { type: String, required: true },
+    country: { type: String, required: true },
+    role: { type: String, default: "Affiliate" },
+    affiliateId: { type: String },
+    rank: { type: String },
   },
   {
     timestamps: true,
