@@ -38,6 +38,10 @@ app.use("/uploads/blog", express.static(path.join(__dirname, "uploads/blog")));
 app.use("/uploads/rank", express.static(path.join(__dirname, "uploads/rank")));
 app.use("/uploads/logo", express.static(path.join(__dirname, "uploads/logo")));
 app.use(
+  "/uploads/carousel",
+  express.static(path.join(__dirname, "uploads/carousel"))
+);
+app.use(
   "/uploads/affRank",
   express.static(path.join(__dirname, "uploads/affRank"))
 );

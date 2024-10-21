@@ -54,12 +54,18 @@ const AdminSchema = new Schema({
   authority: { type: Object }, //1: read, 2: write, 3: delete
 });
 
+const carouselSchema = new Schema({
+  link: { type: String, required: true },
+  img_url: { type: String, required: true },
+});
+
 const Category = mongoose.model("Category", categorySchema, "admin_category");
 const Prize = mongoose.model("Prize", prizeSchema, "admin_prize");
 const Point = mongoose.model("Point", pointSchema, "admin_point");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
+const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
 const Administrator = mongoose.model("Adminer", AdminSchema, "admin_adminer");
 
 const adminSchemas = {
@@ -69,6 +75,7 @@ const adminSchemas = {
   Rank: Rank,
   Terms: Terms,
   Themes: Themes,
+  Carousels: Carousels,
   Administrator: Administrator,
 };
 
