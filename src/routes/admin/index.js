@@ -674,7 +674,7 @@ router.post(
   }
 );
 
-router.get("/get_carousels", auth, async (req, res) => {
+router.get("/get_carousels", async (req, res) => {
   try {
     const carousels = await adminSchemas.Carousels.find();
     return res.send({ status: 1, carousels: carousels });
