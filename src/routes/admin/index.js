@@ -538,7 +538,6 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
 
     if (rank.img_url) {
       const filePath = path.join("./", rank.img_url);
-      console.log(filePath);
       await deleteFile(filePath);
     }
 
