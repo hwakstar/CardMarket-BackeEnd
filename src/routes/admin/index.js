@@ -7,6 +7,7 @@ const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
 const uploadRank = require("../../utils/multer/rank_multer");
 const uploadLogo = require("../../utils/multer/logo_multer");
+const uploadCarousel = require("../../utils/multer/carousel_multer");
 const deleteFile = require("../../utils/delete");
 
 const auth = require("../../middleware/auth");
@@ -178,7 +179,7 @@ router.post(
               await deleteFile(filePath);
             }
           } catch (err) {
-            console.log("point image file deleting error", err);
+            console.log(err);
           }
 
           adminSchemas.Point.updateOne({ _id: id }, pointData)
@@ -249,7 +250,7 @@ router.delete("/del_point/:id", auth, (req, res) => {
       try {
         await deleteFile(filePath);
       } catch (err) {
-        console.log("point iamge deleting error", err);
+        console.log(err);
       }
       point
         .deleteOne()
@@ -291,6 +292,7 @@ router.post("/add_admin", async (req, res) => {
       const authorities = {
         administrators: { read: true, write: false, delete: false }, //authority for managing administrator
         users: { read: true, write: false, delete: false }, //authority for managing users
+        carousel: { read: true, write: false, delete: false }, //authority for managing carousel
         category: { read: true, write: false, delete: false }, //authority for managing category
         prize: { read: true, write: false, delete: false }, //authority for managing prize
         gacha: { read: true, write: false, delete: false }, //authority for managing gacha
@@ -634,6 +636,66 @@ router.get("/getThemeData", async (req, res) => {
     res.send({ status: 1, theme: themes[0] });
   } catch (error) {
     res.send({ status: 0, msg: error });
+  }
+});
+
+// carousel
+
+//new point add or update point with point image uploading
+router.post(
+  "/carousel",
+  auth,
+  uploadCarousel.single("file"),
+  async (req, res) => {
+    const { id, link } = req.body;
+    const carouselData = { link: link };
+
+    try {
+      if (req.file?.filename !== undefined)
+        carouselData.img_url = `/uploads/carousel/${req.file.filename}`;
+
+      if (id !== "" && id !== undefined) {
+        const carousel = await adminSchemas.Carousels.findOne({ _id: id });
+        const filePath = path.join("./", carousel.img_url);
+        if (req.file) {
+          await deleteFile(filePath);
+        }
+
+        await adminSchemas.Carousels.updateOne({ _id: id }, carouselData);
+        res.send({ status: 2 });
+      } else {
+        const newCarousel = new adminSchemas.Carousels(carouselData);
+        await newCarousel.save();
+        res.send({ status: 1 });
+      }
+    } catch (error) {
+      res.send({ status: 0 });
+    }
+  }
+);
+
+router.get("/get_carousels", auth, async (req, res) => {
+  try {
+    const carousels = await adminSchemas.Carousels.find();
+    return res.send({ status: 1, carousels: carousels });
+  } catch (error) {
+    res.send({ status: 0, err: err });
+  }
+});
+
+router.delete("/del_carousel/:id", auth, async (req, res) => {
+  const id = req.params.id;
+  try {
+    const carousel = await adminSchemas.Carousels.findOne({ _id: id });
+
+    if (carousel.img_url) {
+      const filePath = path.join("./", carousel.img_url);
+      if (filePath) await deleteFile(filePath);
+    }
+    await carousel.deleteOne();
+    return res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, err: error });
   }
 });
 
