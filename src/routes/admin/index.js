@@ -633,7 +633,11 @@ router.post("/changeBgColor", auth, async (req, res) => {
 router.get("/getThemeData", async (req, res) => {
   try {
     const themes = await adminSchemas.Themes.find();
-    res.send({ status: 1, theme: themes[0] });
+    if (themes.length > 0) {
+      res.send({ status: 1, theme: themes[0] });
+    } else {
+      res.send({ status: 0, msg: error });
+    }
   } catch (error) {
     res.send({ status: 0, msg: error });
   }
