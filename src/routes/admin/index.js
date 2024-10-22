@@ -286,7 +286,6 @@ router.post("/add_admin", async (req, res) => {
     if (!cuflag && isEmailExist) {
       return res.send({ status: 0, msg: "Email already exist. Try another." });
     }
-
     if (adminId === undefined || adminId === "") {
       // make autority permission object
       const authorities = {
@@ -302,9 +301,7 @@ router.post("/add_admin", async (req, res) => {
         notion: { read: true, write: false, delete: false }, //authority for managing notion
         userterms: { read: true, write: false, delete: false }, //authority for managing notion
       };
-
       admin_data.authority = authorities;
-
       // create new administrator
       await adminSchemas.Administrator.create(admin_data);
       res.send({ status: 1 });
