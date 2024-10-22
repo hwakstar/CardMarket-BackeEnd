@@ -91,9 +91,9 @@ app.use("/api/affiliate/status/", affiliate_status);
 app.use("/api/affiliate/admin/", affiliate_admin);
 
 // The "catchall" handler: for any request that doesn't match one above, send back the React app.
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "Oripa", "index.html"));
-});
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(__dirname, "Oripa", "index.html"));
+// });
 
 // Create HTTPS server
 const PORT = 5000;
