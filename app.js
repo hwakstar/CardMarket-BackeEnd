@@ -96,9 +96,8 @@ app.use("/api/affiliate/admin/", affiliate_admin);
 // });
 
 // Create HTTPS server
-const PORT = 5000;
-// https.createServer(options, app).listen(PORT, () => {
-//   console.log(`HTTPS Server running on https://localhost:${PORT}`);
+// https.createServer(options, app).listen(port, () => {
+//   console.log(`HTTPS Server running on https://localhost:${port}`);
 // });
 
 app.listen(port, () => {
