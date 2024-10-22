@@ -9,11 +9,11 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Load SSL certificate and key
-const options = {
-  key: fs.readFileSync("server.key"),
-  cert: fs.readFileSync("server.cert"),
-};
+// // Load SSL certificate and key
+// const options = {
+//   key: fs.readFileSync("server.key"),
+//   cert: fs.readFileSync("server.cert"),
+// };
 
 const corsOptions = {
   origin: "*",
@@ -97,8 +97,12 @@ app.use("/api/affiliate/admin/", affiliate_admin);
 
 // Create HTTPS server
 const PORT = 5000;
-https.createServer(options, app).listen(PORT, () => {
-  console.log(`HTTPS Server running on https://localhost:${PORT}`);
+// https.createServer(options, app).listen(PORT, () => {
+//   console.log(`HTTPS Server running on https://localhost:${PORT}`);
+// });
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
 // execute database connection
