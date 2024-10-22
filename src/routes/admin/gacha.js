@@ -24,7 +24,7 @@ router.post("/add", auth, uploadGacha.single("file"), async (req, res) => {
     price: price,
     total_number: totalNum,
     category: category,
-    gacha_thumnail_url: `/uploads/gacha/${req.file.filename}`,
+    gacha_thumnail_url: `uploads/gacha/${req.file.filename}`,
     create_date: Date.now(),
   });
 

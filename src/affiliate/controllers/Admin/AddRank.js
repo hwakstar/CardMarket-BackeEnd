@@ -24,7 +24,7 @@ const AddRank = expressAsyncHandler(async (req, res) => {
     };
 
     if (req.file?.filename !== undefined) {
-      affRankData.img_url = `/uploads/affRank/${req.file.filename}`;
+      affRankData.img_url = `uploads/affRank/${req.file.filename}`;
     }
 
     if (id !== "" && id !== undefined) {
