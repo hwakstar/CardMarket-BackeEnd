@@ -112,7 +112,7 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
 
   if (id !== "") {
     if (req.file) {
-      prizeData.img_url = `/uploads/prize/${req.file.filename}`;
+      prizeData.img_url = `uploads/prize/${req.file.filename}`;
     }
     await adminSchemas.Prize.updateOne({ _id: id }, prizeData)
       .then(() => {
@@ -122,7 +122,7 @@ router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
         return res.send({ status: 0, msg: "failedUpdated" });
       });
   } else {
-    prizeData.img_url = `/uploads/prize/${req.file.filename}`;
+    prizeData.img_url = `uploads/prize/${req.file.filename}`;
     const newPrize = new adminSchemas.Prize(prizeData);
     const saved = await newPrize.save();
     if (saved) {
@@ -168,7 +168,7 @@ router.post(
     };
 
     if (req.file?.filename !== undefined)
-      pointData.img_url = `/uploads/point/${req.file.filename}`;
+      pointData.img_url = `uploads/point/${req.file.filename}`;
 
     if (id !== "" && id !== undefined) {
       adminSchemas.Point.findOne({ _id: id })
@@ -505,7 +505,7 @@ router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
     };
 
     if (req.file?.filename !== undefined) {
-      rankData.img_url = `/uploads/rank/${req.file.filename}`;
+      rankData.img_url = `uploads/rank/${req.file.filename}`;
     }
 
     if (id !== "" && id !== undefined) {
@@ -556,7 +556,7 @@ router.post(
     try {
       let logoUrl;
       if (req.file?.filename !== undefined) {
-        logoUrl = `/uploads/logo/${req.file.filename}`;
+        logoUrl = `uploads/logo/${req.file.filename}`;
       }
 
       const themes = await adminSchemas.Themes.find();
@@ -653,7 +653,7 @@ router.post(
 
     try {
       if (req.file?.filename !== undefined)
-        carouselData.img_url = `/uploads/carousel/${req.file.filename}`;
+        carouselData.img_url = `uploads/carousel/${req.file.filename}`;
 
       if (id !== "" && id !== undefined) {
         const carousel = await adminSchemas.Carousels.findOne({ _id: id });

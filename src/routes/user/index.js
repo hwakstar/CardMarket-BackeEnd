@@ -343,7 +343,7 @@ router.post("/blog", auth, uploadBlog.single("file"), async (req, res) => {
     }
 
     if (req.file?.filename !== undefined)
-      newBlog.img_url = `/uploads/blog/${req.file.filename}`;
+      newBlog.img_url = `uploads/blog/${req.file.filename}`;
 
     await newBlog.save();
 
