@@ -1,11 +1,19 @@
 const express = require("express");
 const DbConnect = require("./src/config/db/DbConnect");
 const cors = require("cors");
+const https = require("https");
+const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Load SSL certificate and key
+const options = {
+  key: fs.readFileSync("server.key"),
+  cert: fs.readFileSync("server.cert"),
+};
 
 const corsOptions = {
   origin: "*",
@@ -15,6 +23,11 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+
+// Oripa frontend
+app.use(express.static(path.join(__dirname, "Oripa")));
+// Affiliate frontend
+app.use(express.static(path.join(__dirname, "Affiliate")));
 
 // Serve the uploads folder statically
 app.use(
@@ -77,8 +90,15 @@ app.use("/api/affiliate/members/", affiliate_members);
 app.use("/api/affiliate/status/", affiliate_status);
 app.use("/api/affiliate/admin/", affiliate_admin);
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+// The "catchall" handler: for any request that doesn't match one above, send back the React app.
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "Oripa", "index.html"));
+});
+
+// Create HTTPS server
+const PORT = 5000;
+https.createServer(options, app).listen(PORT, () => {
+  console.log(`HTTPS Server running on https://localhost:${PORT}`);
 });
 
 // execute database connection
