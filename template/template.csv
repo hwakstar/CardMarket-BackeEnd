@@ -1,16 +1,11 @@
 No,name,rarity,cashback,img_url,status,grade
-1,Prize1,100,1000,/uploads/prize/prize (1).jpg,set,2
-2,Prize2,101,1001,/uploads/prize/prize (2).jpg,set,1
-3,Prize3,102,1002,/uploads/prize/prize (3).jpg,set,3
-4,Prize4,103,1003,/uploads/prize/prize (4).jpg,set,1
-5,Prize5,104,1004,/uploads/prize/prize (5).jpg,set,4
-6,Prize6,105,1005,/uploads/prize/prize (6).jpg,set,2
-7,Prize7,106,1006,/uploads/prize/prize (7).jpg,set,3
-8,Prize8,107,1007,/uploads/prize/prize (8).jpg,set,4
-9,Prize9,108,1008,/uploads/prize/prize (9).jpg,set,1
-10,Prize10,109,1009,/uploads/prize/prize (10).jpg,set,2
-11,Prize11,110,1010,/uploads/prize/prize (11).jpg,set,4
-12,Prize12,111,1011,/uploads/prize/prize (12).jpg,set,3
-13,Prize13,112,1012,/uploads/prize/prize (13).jpg,set,2
-14,Prize14,113,1013,/uploads/prize/prize (14).jpg,set,1
-15,Prize15,114,1014,/uploads/prize/prize (15).jpg,set,4
+1,Prize1,100,1000,uploads/prize/prize (1).jpg,set,2
+2,Prize2,101,1001,uploads/prize/prize (2).jpg,set,1
+3,Prize3,102,1002,uploads/prize/prize (3).jpg,set,3
+4,Prize4,103,1003,uploads/prize/prize (4).jpg,set,1
+5,Prize5,104,1004,uploads/prize/prize (5).jpg,set,4
+6,Prize6,105,1005,uploads/prize/prize (6).jpg,set,2
+7,Prize7,106,1006,uploads/prize/prize (7).jpg,set,3
+8,Prize8,107,1007,uploads/prize/prize (8).jpg,set,4
+9,Prize9,108,1008,uploads/prize/prize (9).jpg,set,1
+10,Prize10,109,1009,uploads/prize/prize (10).jpg,set,2
