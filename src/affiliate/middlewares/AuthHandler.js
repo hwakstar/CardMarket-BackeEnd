@@ -8,7 +8,7 @@ const AuthHandler = expressAsyncHandler(async (req, res, next) => {
   let token;
 
   if (!req.headers.authorization?.startsWith("Bearer"))
-    throw new Error("Please provide the bearer token");
+    return res.status(401).json({ msg: "Please provide the bearer token" });
 
   try {
     token = req.headers.authorization.replace("Bearer ", "");
@@ -21,10 +21,10 @@ const AuthHandler = expressAsyncHandler(async (req, res, next) => {
       req.user = user;
       next();
     } else {
-      throw new Error("You don't have permission to have access");
+      return res.status(401).json({ msg: "No token, authorization denied" });
     }
   } catch (error) {
-    throw new Error("Token expired! Login again");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
