@@ -485,7 +485,8 @@ router.get("/get_terms", async (req, res) => {
   }
 });
 
-// get all  rank
+// Rank
+// get all
 router.get("/get_rank", auth, async (req, res) => {
   adminSchemas.Rank.find()
     .sort("start_amount")
@@ -494,8 +495,7 @@ router.get("/get_rank", auth, async (req, res) => {
     })
     .catch((err) => res.send({ status: 0, err: err }));
 });
-
-// new rank add or update rank with rank image uploading
+// add or update
 router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
   const { id, name, bonus, start_amount, end_amount, last } = req.body;
 
@@ -531,8 +531,7 @@ router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
     res.send({ status: 0, msg: error });
   }
 });
-
-//delete rank with image deleting by id
+//delete
 router.delete("/del_rank/:id", auth, async (req, res) => {
   const id = req.params.id;
 
@@ -551,7 +550,49 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
   }
 });
 
-// change theme logo
+// theme
+// change brand
+router.post("/changeBrand", auth, async (req, res) => {
+  const { brand } = req.body;
+
+  try {
+    const themes = await adminSchemas.Themes.find();
+    if (themes.length === 0) {
+      // create new theme data
+      const newTheme = adminSchemas.Themes({ brand: brand });
+      await newTheme.save();
+    } else {
+      await adminSchemas.Themes.updateOne({ _id: themes[0] }, { brand: brand });
+    }
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+// change color
+router.post("/changeBgColor", auth, async (req, res) => {
+  const { bgColor } = req.body;
+
+  try {
+    const themes = await adminSchemas.Themes.find();
+    if (themes.length === 0) {
+      // create new theme data
+      const newTheme = adminSchemas.Themes({ bgColor: bgColor });
+      await newTheme.save();
+    } else {
+      await adminSchemas.Themes.updateOne(
+        { _id: themes[0] },
+        { bgColor: bgColor }
+      );
+    }
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }
+});
+// change logo
 router.post(
   "/changeLogo",
   auth,
@@ -586,51 +627,7 @@ router.post(
     }
   }
 );
-
-// change theme brand
-router.post("/changeBrand", auth, async (req, res) => {
-  const { brand } = req.body;
-
-  try {
-    const themes = await adminSchemas.Themes.find();
-    if (themes.length === 0) {
-      // create new theme data
-      const newTheme = adminSchemas.Themes({ brand: brand });
-      await newTheme.save();
-    } else {
-      await adminSchemas.Themes.updateOne({ _id: themes[0] }, { brand: brand });
-    }
-
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0, msg: error });
-  }
-});
-
-// change theme color
-router.post("/changeBgColor", auth, async (req, res) => {
-  const { bgColor } = req.body;
-
-  try {
-    const themes = await adminSchemas.Themes.find();
-    if (themes.length === 0) {
-      // create new theme data
-      const newTheme = adminSchemas.Themes({ bgColor: bgColor });
-      await newTheme.save();
-    } else {
-      await adminSchemas.Themes.updateOne(
-        { _id: themes[0] },
-        { bgColor: bgColor }
-      );
-    }
-
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0, msg: error });
-  }
-});
-
-// get theme data
+// get theme
 router.get("/getThemeData", async (req, res) => {
   try {
     const themes = await adminSchemas.Themes.find();
@@ -645,8 +642,7 @@ router.get("/getThemeData", async (req, res) => {
 });
 
 // carousel
-
-//new point add or update point with point image uploading
+// add or update
 router.post(
   "/carousel",
   auth,
@@ -678,7 +674,7 @@ router.post(
     }
   }
 );
-
+// get all
 router.get("/get_carousels", async (req, res) => {
   try {
     const carousels = await adminSchemas.Carousels.find();
@@ -687,7 +683,7 @@ router.get("/get_carousels", async (req, res) => {
     res.send({ status: 0, err: err });
   }
 });
-
+// delete
 router.delete("/del_carousel/:id", auth, async (req, res) => {
   const id = req.params.id;
   try {

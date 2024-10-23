@@ -84,11 +84,13 @@ const affiliate_auth = require("./src/affiliate/routes/auth");
 const affiliate_members = require("./src/affiliate/routes/members");
 const affiliate_status = require("./src/affiliate/routes/status");
 const affiliate_admin = require("./src/affiliate/routes/admin");
+const affiliate_link = require("./src/affiliate/routes/link");
 // Auth router
 app.use("/api/affiliate/auth/", affiliate_auth);
 app.use("/api/affiliate/members/", affiliate_members);
 app.use("/api/affiliate/status/", affiliate_status);
 app.use("/api/affiliate/admin/", affiliate_admin);
+app.use("/api/affiliate/link/", affiliate_link);
 
 // The "catchall" handler: for any request that doesn't match one above, send back the React app.
 // app.get("/", (req, res) => {

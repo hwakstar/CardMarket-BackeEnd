@@ -4,7 +4,7 @@ const RankModel = mongoose.Schema(
   {
     name: { type: String },
     url: { type: String },
-    target_url: { type: String },
+    title: { type: String },
     aff_id: { type: String },
   },
   {
