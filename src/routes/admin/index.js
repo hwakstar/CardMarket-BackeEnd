@@ -279,15 +279,23 @@ router.post("/add_admin", async (req, res) => {
   };
 
   try {
-    // check email is exist
-    const isEmailExist = await adminSchemas.Administrator.findOne({
-      email: email,
-    });
-    if (!cuflag && isEmailExist) {
-      return res.send({ status: 0, msg: "Email already exist. Try another." });
-    }
-    if (adminId === undefined || adminId === "") {
-      // make autority permission object
+    if (cuflag) {
+      // update administrator data
+      await adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data);
+      res.send({ status: 2 });
+    } else {
+      // check email is exist
+      const isEmailExist = await adminSchemas.Administrator.findOne({
+        email: email,
+      });
+
+      if (isEmailExist) {
+        return res.send({
+          status: 0,
+          msg: "Email already exist. Try another.",
+        });
+      }
+
       const authorities = {
         administrators: { read: true, write: false, delete: false }, //authority for managing administrator
         users: { read: true, write: false, delete: false }, //authority for managing users
@@ -305,10 +313,6 @@ router.post("/add_admin", async (req, res) => {
       // create new administrator
       await adminSchemas.Administrator.create(admin_data);
       res.send({ status: 1 });
-    } else {
-      // update administrator data
-      await adminSchemas.Administrator.updateOne({ _id: adminId }, admin_data);
-      res.send({ status: 2 });
     }
   } catch (error) {
     res.send({ status: 0, err: error });
