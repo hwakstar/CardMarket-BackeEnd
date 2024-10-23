@@ -15,6 +15,7 @@ const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel"
 const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
 const ShippingAddress = require("../../models/shpping_address");
+const AffRanks = require("../../affiliate/models/RankModel");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
@@ -52,23 +53,22 @@ router.post("/register", async (req, res) => {
       });
       await registerByLink.save();
 
-      // // add Reward Points to affiliate
-      // const affUser = await AffUsers.findOne({ _id: affId });
-      // const affRnak = affUser.rank;
-      // // get rank data
+      // get affiliate's rank data
+      const affUser = await AffUsers.findOne({ _id: affId });
+      let affRank;
+      if (affUser.rank) {
+        affRank = await AffRanks.findOne({ _id: affUser.affiliateId });
+      } else {
+        affRank = await AffRanks.findOne({ start_amount: 0 });
+      }
+      // add register fee to affiliate
+      const registerCommission = affRank.register_commission;
+      console.log(registerCommission);
     }
 
-    res.send({
-      status: 1,
-      msg: "successRegistered",
-      result,
-    });
+    res.send({ status: 1, msg: "successRegistered", result });
   } catch (error) {
-    res.send({
-      status: 0,
-      msg: "failedReq",
-      result,
-    });
+    res.send({ status: 0, msg: "failedReq", result });
   }
 });
 
