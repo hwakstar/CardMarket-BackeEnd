@@ -16,12 +16,14 @@ const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
 const ShippingAddress = require("../../models/shpping_address");
 const AffRanks = require("../../affiliate/models/RankModel");
+const EarnModel = require("../../affiliate/models/EarnModel");
+const AffPayment = require("../../affiliate/models/PaymentModel");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 
 router.post("/register", async (req, res) => {
-  const { name, email, password, affId } = req.body;
+  const { name, email, password, affId, linkId } = req.body;
 
   try {
     // check email exist
@@ -45,10 +47,11 @@ router.post("/register", async (req, res) => {
     const result = await newUser.save();
 
     // if new user is someone invited by affiliate
-    if (affId) {
+    if (affId && linkId) {
       // add affiliate status for register counts
       const registerByLink = new RegisterByLinkModel({
         aff_id: affId,
+        link_id: linkId,
         user_id: result._id,
       });
       await registerByLink.save();
@@ -57,18 +60,46 @@ router.post("/register", async (req, res) => {
       const affUser = await AffUsers.findOne({ _id: affId });
       let affRank;
       if (affUser.rank) {
-        affRank = await AffRanks.findOne({ _id: affUser.affiliateId });
+        affRank = await AffRanks.findOne({ _id: affUser.rank });
       } else {
         affRank = await AffRanks.findOne({ start_amount: 0 });
       }
-      // add register fee to affiliate
+
+      // add register reward to affiliate
       const registerCommission = affRank.register_commission;
-      console.log(registerCommission);
+
+      // add payment for affiliate
+      const affPayment = await AffPayment.findOne({
+        aff_id: affId,
+        kind: "Withdrawable",
+      });
+      if (affPayment) {
+        // update withdrawable balance
+        affPayment.price += registerCommission;
+        await affPayment.save();
+      } else {
+        // create new withdrawable balance
+        const newAffPayment = new AffPayment({
+          aff_id: affId,
+          price: registerCommission,
+          kind: "Withdrawable",
+        });
+        await newAffPayment.save();
+      }
+
+      // add deposit rewards to affiliate
+      const newAffEarn = new EarnModel({
+        aff_id: affId,
+        link_id: linkId,
+        reward: registerCommission,
+        kind: "register",
+      });
+      await newAffEarn.save();
     }
 
-    res.send({ status: 1, msg: "successRegistered", result });
+    res.send({ status: 1, msg: "successRegistered" });
   } catch (error) {
-    res.send({ status: 0, msg: "failedReq", result });
+    res.send({ status: 0, msg: "failedReq" });
   }
 });
 

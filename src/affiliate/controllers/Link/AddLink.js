@@ -4,7 +4,6 @@ const LinkModel = require("../../models/LinkModel");
 
 const AddLink = expressAsyncHandler(async (req, res) => {
   try {
-    console.log(req.body);
     const newLink = new LinkModel(req.body);
     await newLink.save();
 

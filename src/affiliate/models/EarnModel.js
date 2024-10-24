@@ -3,19 +3,10 @@ const mongoose = require("mongoose");
 
 const EarnModel = mongoose.Schema(
   {
-    aff_id: {
-      type: String,
-      required: true,
-    },
-    reward: {
-      type: Number,
-      require: true,
-      default: 0,
-    },
-    kind: {
-      type: String,
-      require: true,
-    },
+    aff_id: { type: String, required: true },
+    link_id: { type: String },
+    reward: { type: Number, require: true, default: 0 },
+    kind: { type: String, require: true },
   },
   {
     timestamps: true,

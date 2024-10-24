@@ -3,7 +3,7 @@ const expressAsyncHandler = require("express-async-handler");
 const ClickLinkModel = require("../../models/ClickLinkModel");
 const RegisterByLinkModel = require("../../models/RegisterByLinkModel");
 const PointLogs = require("../../../models/point_log");
-const AffEarn = require("../../models/EarnModel");
+const EarnModel = require("../../models/EarnModel");
 
 const isToday = (date) => {
   const today = new Date();
@@ -97,7 +97,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
     );
 
     // get earns data of affiliate
-    const earnsData = await AffEarn.find({ aff_id: affId });
+    const earnsData = await EarnModel.find({ aff_id: affId });
     const todayEarns = sumEarnsByCategory(earnsData, isToday);
     const thisWeekEarns = sumEarnsByCategory(earnsData, isThisWeek);
     const thisMonthEarns = sumEarnsByCategory(earnsData, isThisMonth);
