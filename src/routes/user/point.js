@@ -6,8 +6,9 @@ const auth = require("../../middleware/auth");
 const Users = require("../../models/user");
 const PointLog = require("../../models/point_log");
 const AffUsers = require("../../affiliate/models/UsersModel");
-const AffEarn = require("../../affiliate/models/EarnModel");
+const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
+const AffRanks = require("../../affiliate/models/RankModel");
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -37,26 +38,16 @@ router.post("/purchase", auth, async (req, res) => {
 
     // if user is someone invited by affliate
     if (user.aff_id) {
-      // get affiliate rewards fee by affiliate rank
+      // get affiliate's rank
       const affUser = await AffUsers.findOne({ _id: user.aff_id });
-      let rewardsFee;
-      switch (affUser.rank) {
-        case "Bronze":
-          rewardsFee = 0.05;
-          break;
-        case "Silver":
-          rewardsFee = 0.07;
-          break;
-        case "Gold":
-          rewardsFee = 0.09;
-          break;
-        case "Platinum":
-          rewardsFee = 0.1;
-          break;
-        default:
-          rewardsFee = 0.03;
-          break;
+      let affRank;
+      if (affUser.rank) {
+        affRank = await AffRanks.findOne({ _id: affUser.rank });
+      } else {
+        affRank = await AffRanks.findOne({ start_amount: 0 });
       }
+      // get deposit reward to affiliate
+      const depositCommission = affRank.deposite_commission;
 
       // add payment for affiliate
       const affPayment = await AffPayment.findOne({
@@ -65,22 +56,22 @@ router.post("/purchase", auth, async (req, res) => {
       });
       if (affPayment) {
         // update withdrawable balance
-        affPayment.price += price * rewardsFee;
+        affPayment.price += (price * depositCommission) / 100;
         await affPayment.save();
       } else {
         // create new withdrawable balance
         const newAffPayment = new AffPayment({
           aff_id: user.aff_id,
-          price: price * rewardsFee,
+          price: (price * depositCommission) / 100,
           kind: "Withdrawable",
         });
         await newAffPayment.save();
       }
 
-      // add rewards for affiliate
-      const newAffEarn = new AffEarn({
+      // add deposit rewards to affiliate
+      const newAffEarn = new EarnModel({
         aff_id: user.aff_id,
-        reward: price * rewardsFee,
+        reward: (price * depositCommission) / 100,
         kind: "purchasePoints",
       });
       await newAffEarn.save();

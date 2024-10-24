@@ -2,14 +2,9 @@ const mongoose = require("mongoose");
 
 const RegisterByLinkModel = mongoose.Schema(
   {
-    aff_id: {
-      type: String,
-      required: true,
-    },
-    user_id: {
-      type: String,
-      required: true,
-    },
+    aff_id: { type: String, required: true },
+    link_id: { type: String, required: true },
+    user_id: { type: String, required: true },
   },
   {
     timestamps: true,
