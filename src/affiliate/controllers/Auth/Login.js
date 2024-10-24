@@ -14,36 +14,38 @@ const Login = expressAsyncHandler(async (req, res) => {
     if (!user) {
       res.json({
         status: false,
-        message: "Affiliate ID or Password not correct.",
+        message: "wrongUser",
       });
     } else {
       if (await user.CheckPass(password)) {
         // get rank data
-        const rank = await AffRankData(user._id, user.rank_id);
-        // userData.rankData = rank;
+        const rankData = await AffRankData(user._id, user.rank);
+
+        // make token
+        const token = getToken({
+          id: user._id,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+          rank: rankData.updatedRankId,
+          totalPointsAmount: rankData.totalPointsAmount,
+        });
 
         res.json({
           status: true,
           name: user.fullName,
-          token: getToken({
-            id: user._id,
-            email: user.email,
-            fullName: user.fullName,
-            role: user.role,
-            rank: user.rank,
-            totalPointsAmount: rank.totalPointsAmount,
-          }),
-          message: "Login Successful",
+          token: token,
+          message: "successLogin",
         });
       } else {
         res.json({
           status: false,
-          message: "Affiliate ID or Password not correct.",
+          message: "wrongUser",
         });
       }
     }
   } catch (error) {
-    res.json({ error, message: "Login unsuccessful" });
+    res.json({ error, status: false, message: "failedLogin" });
   }
 });
 
