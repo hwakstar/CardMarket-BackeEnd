@@ -23,7 +23,7 @@ const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 
 router.post("/register", async (req, res) => {
-  const { name, email, password, affId, linkId } = req.body;
+  const { name, country, email, password, affId, linkId } = req.body;
 
   try {
     // check email exist
@@ -38,6 +38,7 @@ router.post("/register", async (req, res) => {
     // create new user object
     const userObj = {
       name: name,
+      country: country,
       email: email,
       hashedPass: hashedPassword,
     };
