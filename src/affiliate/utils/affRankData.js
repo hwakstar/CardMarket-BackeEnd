@@ -3,7 +3,7 @@ const UserModel = require("../models/UsersModel");
 const RankModel = require("../models/RankModel");
 
 const affRankData = async (user_id, rank_id) => {
-  let userRank;
+  let updatedRankId;
 
   // get all point logs
   const pointLogs = await PoingLogModel.find();
@@ -38,8 +38,6 @@ const affRankData = async (user_id, rank_id) => {
   const isFirstDayOfMonth = today.getDate() === 1;
   if (isFirstDayOfMonth) {
     // if first day, calculate new rank automatically
-    // get data end_amount is greater than totalPointsAmount
-    // and start_amount is less or same than totalPointsAmount
     const newRank = await RankModel.find({
       $or: [
         {
@@ -55,17 +53,13 @@ const affRankData = async (user_id, rank_id) => {
     });
 
     // update newRank of user
-    userRank = newRank[0];
-    await UserModel.updateOne({ _id: user_id }, { rank: userRank._id });
+    updatedRankId = newRank[0]._id;
+    await UserModel.updateOne({ _id: user_id }, { rank: updatedRankId });
   } else {
     // if not first day, get current user rank
-    if (rank_id) {
-      userRank = await RankModel.findOne({ _id: rank_id });
-    } else {
-      userRank = await RankModel.findOne({ start_amount: 0 });
-    }
+    updatedRankId = rank_id;
   }
-  return { rank: userRank, totalPointsAmount: totalPointsAmount };
+  return { updatedRankId: updatedRankId, totalPointsAmount: totalPointsAmount };
 };
 
 module.exports = affRankData;

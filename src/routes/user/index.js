@@ -34,17 +34,23 @@ router.post("/register", async (req, res) => {
 
     // hass password
     const hashedPassword = await bcrypt.hash(password, 10);
+
     // create new user object
     const userObj = {
       name: name,
       email: email,
       hashedPass: hashedPassword,
     };
+
+    // add affiliate id if user introduced by affiliate
     if (affId) userObj.aff_id = affId;
-    // create new user model
-    const newUser = new Users(userObj);
+
+    // add new rank id
+    const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
+    userObj.rank_id = userRank._id;
+
     // save new user into db
-    const result = await newUser.save();
+    const newUser = await new Users(userObj).save();
 
     // if new user is someone invited by affiliate
     if (affId && linkId) {
@@ -52,7 +58,7 @@ router.post("/register", async (req, res) => {
       const registerByLink = new RegisterByLinkModel({
         aff_id: affId,
         link_id: linkId,
-        user_id: result._id,
+        user_id: newUser._id,
       });
       await registerByLink.save();
 
@@ -169,7 +175,7 @@ router.post("/login", async (req, res) => {
       };
 
       // get rank data
-      const rank = await userRankData(user._id, user.rank_id);
+      const rank = await userRankData(user._id);
       userData.rankData = rank;
 
       const token = jwt.sign(userData, "RANDOM-TOKEN", {

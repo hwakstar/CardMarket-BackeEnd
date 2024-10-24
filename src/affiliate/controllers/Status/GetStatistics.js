@@ -108,7 +108,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
 
     // make statistics objects
     const todayStatistics = {
-      period: "Today",
+      period: "today",
       payment: todayPayments,
       clicks: todayClicks,
       regist: todayRegisters,
@@ -116,7 +116,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
       earn: todayEarns,
     };
     const thisWeekStatistics = {
-      period: "This Week",
+      period: "thisWeek",
       payment: thisWeekPayments,
       clicks: thisWeekClicks,
       regist: thisWeekRegisters,
@@ -124,7 +124,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
       earn: thisWeekEarns,
     };
     const thisMonthStatistics = {
-      period: "This Month",
+      period: "thisMonth",
       payment: thisMonthPayments,
       clicks: thisMonthClicks,
       regist: thisMonthRegisters,
@@ -132,7 +132,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
       earn: thisMonthEarns,
     };
     const TotalStatistics = {
-      period: "Total",
+      period: "total",
       payment: totalPayments,
       clicks: totalClicks,
       regist: totalRegisters,

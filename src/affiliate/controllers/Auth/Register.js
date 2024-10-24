@@ -3,6 +3,7 @@ const expressAsyncHandler = require("express-async-handler");
 const getToken = require("../../utils/GetToken");
 
 const Users = require("../../models/UsersModel");
+const RankModel = require("../../models/RankModel");
 
 const Register = expressAsyncHandler(async (req, res) => {
   const { fullName, email, password, phoneNumber, country, role } = req.body;
@@ -11,32 +12,38 @@ const Register = expressAsyncHandler(async (req, res) => {
     const checkMail = await Users.findOne({ email });
 
     if (checkMail) {
-      res.json({
-        status: false,
-        message: "Email already exists. Try with a different one.",
-      });
+      res.json({ status: false, message: "existEmail" });
     } else {
+      // add new rank id
+      const userRank = await RankModel.findOne({ start_amount: 0 });
+
       // create new affiliate user
-      const user = await Users.create({
+      const newUser = await Users.create({
         fullName,
         email,
         password,
         phoneNumber,
         country,
         role,
+        rank: userRank._id,
       });
 
-      const token = getToken({ user_id: user._id, fullName: user.fullName });
+      // make token
+      const token = getToken({
+        user_id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+      });
 
       res.json({
         status: true,
         token,
-        message: "Registration successful",
-        id: user.affiliateId,
+        message: "successRegister",
+        id: newUser.affiliateId,
       });
     }
   } catch (error) {
-    res.json({ error, message: "Registration unsuccessful" });
+    res.json({ error, status: false, message: "failedRegister" });
   }
 });
 

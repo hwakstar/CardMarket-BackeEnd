@@ -2,7 +2,7 @@ const AdminSchema = require("../models/admin");
 const UserSchema = require("../models/user");
 const PoingLogSchema = require("../models/point_log");
 
-const userRankData = async (user_id, rank_id) => {
+const userRankData = async (user_id) => {
   // calculate total purchased points amount
   const result = await PoingLogSchema.aggregate([
     {
@@ -20,7 +20,7 @@ const userRankData = async (user_id, rank_id) => {
   ]);
   const totalPointsAmount = result.length ? result[0].totalPoints : 0;
 
-  // calculate user rank as totalPointsAmount
+  // update user rank as totalPointsAmount
   const userRank = await AdminSchema.Rank.find({
     $or: [
       {

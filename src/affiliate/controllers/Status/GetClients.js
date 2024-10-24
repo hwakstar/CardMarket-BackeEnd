@@ -1,7 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 
 const PointLogs = require("../../../models/point_log");
-const Users = require("../../../models/user");
 
 const GetClients = expressAsyncHandler(async (req, res) => {
   try {
