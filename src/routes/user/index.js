@@ -11,7 +11,7 @@ const adminSchemas = require("../../models/admin");
 const PointLog = require("../../models/point_log");
 const CardDeliver = require("../../models/card_delivering");
 const Gacha = require("../../models/gacha");
-const RegisterByLinkModel = require("../../affiliate/models/RegisterByLinkModel");
+const RegisterModel = require("../../affiliate/models/RegisterModel");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
 const ShippingAddress = require("../../models/shpping_address");
@@ -56,7 +56,7 @@ router.post("/register", async (req, res) => {
     // if new user is someone invited by affiliate
     if (affId && linkId) {
       // add affiliate status for register counts
-      const registerByLink = new RegisterByLinkModel({
+      const registerByLink = new RegisterModel({
         aff_id: affId,
         link_id: linkId,
         user_id: newUser._id,

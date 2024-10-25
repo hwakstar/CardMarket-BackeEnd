@@ -6,7 +6,8 @@ const Users = require("../../models/UsersModel");
 const RankModel = require("../../models/RankModel");
 
 const Register = expressAsyncHandler(async (req, res) => {
-  const { fullName, email, password, phoneNumber, country, role } = req.body;
+  const { fullName, email, password, phoneNumber, country, role, type } =
+    req.body;
 
   try {
     const checkMail = await Users.findOne({ email });
@@ -39,6 +40,7 @@ const Register = expressAsyncHandler(async (req, res) => {
         status: true,
         token,
         message: "successRegister",
+        type: type,
         id: newUser.affiliateId,
       });
     }

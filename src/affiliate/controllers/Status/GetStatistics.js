@@ -1,7 +1,7 @@
 const expressAsyncHandler = require("express-async-handler");
 
 const ClickLinkModel = require("../../models/ClickLinkModel");
-const RegisterByLinkModel = require("../../models/RegisterByLinkModel");
+const RegisterModel = require("../../models/RegisterModel");
 const PointLogs = require("../../../models/point_log");
 const EarnModel = require("../../models/EarnModel");
 
@@ -71,7 +71,7 @@ const GetStatistics = expressAsyncHandler(async (req, res) => {
     const totalClicks = clicksData.length;
 
     // get registers data
-    const registersData = await RegisterByLinkModel.find({ aff_id: affId });
+    const registersData = await RegisterModel.find({ aff_id: affId });
     const todayRegisters = registersData.filter((item) =>
       isToday(new Date(item.createdAt))
     ).length;
