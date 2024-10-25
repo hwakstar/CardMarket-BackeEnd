@@ -2,7 +2,7 @@ const expressAsyncHandler = require("express-async-handler");
 
 const PointLogs = require("../../../models/point_log");
 
-const GetClients = expressAsyncHandler(async (req, res) => {
+const GetDepositeStatus = expressAsyncHandler(async (req, res) => {
   try {
     const affId = req.body.affId;
     const period = req.body.period;
@@ -44,7 +44,7 @@ const GetClients = expressAsyncHandler(async (req, res) => {
       match.createdAt = { $gte: startOfMonth, $lte: endOfMonth };
     }
 
-    const clientData = await PointLogs.aggregate([
+    const deposits = await PointLogs.aggregate([
       {
         // Match records by user_id
         $match: match,
@@ -60,10 +60,10 @@ const GetClients = expressAsyncHandler(async (req, res) => {
       },
     ]);
 
-    res.json({ status: true, msg: "Success", clientData: clientData });
+    res.json({ status: true, msg: "Success", deposits: deposits });
   } catch (error) {
     res.json({ error, message: "Update Status Unsuccessful" });
   }
 });
 
-module.exports = GetClients;
+module.exports = GetDepositeStatus;

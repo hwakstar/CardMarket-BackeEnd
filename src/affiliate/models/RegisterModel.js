@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const RegisterByLinkModel = mongoose.Schema(
+const RegisterModel = mongoose.Schema(
   {
     aff_id: { type: String, required: true },
     link_id: { type: String, required: true },
@@ -13,6 +13,6 @@ const RegisterByLinkModel = mongoose.Schema(
   }
 );
 
-const RegisterByLink = mongoose.model("affi_register", RegisterByLinkModel);
+const RegisterByLink = mongoose.model("affi_register", RegisterModel);
 
 module.exports = RegisterByLink;
