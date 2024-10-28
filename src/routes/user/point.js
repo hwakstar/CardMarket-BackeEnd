@@ -9,6 +9,7 @@ const AffUsers = require("../../affiliate/models/UsersModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
 const AffRanks = require("../../affiliate/models/RankModel");
+const AffRankData = require("../../affiliate/utils/affRankData");
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -75,6 +76,12 @@ router.post("/purchase", auth, async (req, res) => {
         kind: "purchasePoints",
       });
       await newAffEarn.save();
+
+      // update aff rank and notify to affiliate by using mail
+      const rankData = await AffRankData(user.aff_id, affUser.rank);
+      if (affUser.rank !== rankData.updatedRankId) {
+        console.log("updated aff rank and send mail to affiliate");
+      }
     }
 
     res.send({ status: 1, msg: "Successfully purchased points." });
