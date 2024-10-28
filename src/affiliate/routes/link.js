@@ -16,7 +16,7 @@ router.post("/deleteRank", AuthHandler, DeleteLink);
 
 // get statistic of affiliate
 router.post("/addLink", AuthHandler, AddLink);
-router.get("/getLinks", AuthHandler, GetLinks);
+router.post("/getLinks", AuthHandler, GetLinks);
 router.post("/deleteLink", AuthHandler, DeleteLink);
 
 module.exports = router;

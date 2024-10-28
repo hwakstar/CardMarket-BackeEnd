@@ -59,6 +59,7 @@ const affRankData = async (user_id, rank_id) => {
     // if not first day, get current user rank
     updatedRankId = rank_id;
   }
+  
   return { updatedRankId: updatedRankId, totalPointsAmount: totalPointsAmount };
 };
 
