@@ -18,6 +18,10 @@ const PaymentModel = mongoose.Schema(
       type: String,
       default: null,
     },
+    bank_id: {
+      type: String,
+      default: null,
+    },
     withdrawnDate: {
       type: Date,
     },
