@@ -430,7 +430,6 @@ router.get("/blog/:blogId", async (req, res) => {
   }
 });
 
-// Shipping Address
 // get all shipping address for logged user
 router.get("/shipping_address/:user_id", auth, async (req, res) => {
   const user_id = req.params.user_id;

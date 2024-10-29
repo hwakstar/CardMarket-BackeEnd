@@ -22,6 +22,7 @@ const RequestWithdraw = expressAsyncHandler(async (req, res) => {
       aff_id: aff_id,
       price: amount,
       kind: "Pending",
+      bank_id: bankInfo._id,
       bank_address: bankInfo.accountNumber,
     });
     await newPayment.save();
