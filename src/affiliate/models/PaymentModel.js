@@ -18,6 +18,9 @@ const PaymentModel = mongoose.Schema(
       type: String,
       default: null,
     },
+    withdrawnDate: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

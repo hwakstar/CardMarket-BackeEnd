@@ -16,7 +16,7 @@ const GetMembers = expressAsyncHandler(async (req, res) => {
 
     res.json({ status: true, members, msg: "Success" });
   } catch (error) {
-    res.json({ error, message: "Get members unsuccessful" });
+    res.json({ status: true, error });
   }
 });
 

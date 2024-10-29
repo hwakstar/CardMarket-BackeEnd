@@ -17,7 +17,7 @@ const GetAffRank = expressAsyncHandler(async (req, res) => {
       msg: "Success",
     });
   } catch (error) {
-    res.json({ error, message: "Get members unsuccessful" });
+    res.json({ status: true, error });
   }
 });
 

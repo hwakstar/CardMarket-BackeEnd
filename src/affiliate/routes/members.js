@@ -9,6 +9,8 @@ const GetBankInfo = require("../controllers/Members/GetBankInfo");
 const AddBankAcc = require("../controllers/Members/AddBankAcc");
 const RequestWithdraw = require("../controllers/Members/RequestWithdraw");
 const DeleteMember = require("../controllers/Members/DeleteMember");
+const GetAffBalance = require("../controllers/Members/GetAffBalance");
+const GetAffPayHistory = require("../controllers/Members/GetAffPayHistory");
 
 // middlewares
 const AuthHandler = require("../middlewares/AuthHandler");
@@ -24,5 +26,8 @@ router.post("/getBankInfo", AuthHandler, GetBankInfo);
 router.post("/requestWithdraw", AuthHandler, RequestWithdraw);
 
 router.post("/deleteMember", AuthHandler, DeleteMember);
+
+router.post("/getAffBalance", AuthHandler, GetAffBalance);
+router.post("/getAffPayHistory", AuthHandler, GetAffPayHistory);
 
 module.exports = router;
