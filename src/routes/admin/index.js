@@ -551,26 +551,6 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
 });
 
 /* Theme management */
-// change brand
-router.post("/changeBrand", auth, async (req, res) => {
-  const { brand } = req.body;
-
-  try {
-    const themes = await adminSchemas.Themes.find();
-    if (themes.length === 0) {
-      // create new theme data
-      const newTheme = adminSchemas.Themes({ brand: brand });
-      await newTheme.save();
-    } else {
-      await adminSchemas.Themes.updateOne({ _id: themes[0] }, { brand: brand });
-    }
-
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0, msg: error });
-  }
-});
-
 // change color
 router.post("/changeBgColor", auth, async (req, res) => {
   const { bgColor } = req.body;

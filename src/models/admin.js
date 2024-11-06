@@ -39,10 +39,8 @@ const rankSchema = new Schema({
 
 // Theme
 const themeSchema = new Schema({
-  brand: { type: String },
   logoUrl: { type: String },
   bgColor: { type: String },
-  textColor: { type: String },
 });
 
 // Terms of service
