@@ -18,5 +18,5 @@ const pointLogSchema = new mongoose.Schema(
   }
 );
 
-const PointLog = mongoose.model("PointLog", pointLogSchema, "point_log");
+const PointLog = mongoose.model("PointLog", pointLogSchema, "pointLog");
 module.exports = mongoose.model.PointLog || PointLog;

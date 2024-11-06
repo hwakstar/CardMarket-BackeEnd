@@ -1,4 +1,4 @@
-const PoingLogModel = require("../../models/point_log");
+const PoingLogModel = require("../../models/pointLog");
 const UserModel = require("../models/UsersModel");
 const RankModel = require("../models/RankModel");
 

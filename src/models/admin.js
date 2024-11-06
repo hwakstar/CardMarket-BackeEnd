@@ -1,31 +1,33 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-//gacha category schema
+// Gacha's main category
 const categorySchema = new Schema({
-  name: { type: String, required: true },
-  description: { type: String, required: true },
-  display_order: { type: Number, required: true, default: 0 },
+  jpName: { type: String, required: true },
+  enName: { type: String, required: true },
+  ch1Name: { type: String, required: true },
+  ch2Name: { type: String, required: true },
+  vtName: { type: String, required: true },
 });
 
-//remain prize list
+// Prize
 const prizeSchema = new Schema({
+  img_url: { type: String },
   name: { type: String },
   rarity: { type: Number },
   cashback: { type: Number },
-  img_url: { type: String },
-  status: { type: String, default: "unset" }, //prize status- unset, set,
-  grade: { type: Number },
-  type: { type: String, default: "" },
-  last_effect: { type: Boolean, default: true },
+  kind: { type: String },
+  status: { type: Boolean, default: false },
 });
 
+// Point
 const pointSchema = new Schema({
   point_num: { type: Number, required: true },
   price: { type: Number, required: true },
   img_url: { type: String, required: true },
 });
 
+// User rank
 const rankSchema = new Schema({
   name: { type: String, required: true },
   bonus: { type: Number, required: true },
@@ -35,6 +37,7 @@ const rankSchema = new Schema({
   last: { type: Boolean, required: true },
 });
 
+// Theme
 const themeSchema = new Schema({
   brand: { type: String },
   logoUrl: { type: String },
@@ -42,31 +45,35 @@ const themeSchema = new Schema({
   textColor: { type: String },
 });
 
+// Terms of service
 const termsSchema = new Schema({
-  content: { type: String, required: true }, // Store large text here
+  content: { type: String, required: true },
+  lang: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
-const AdminSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  authority: { type: Object }, //1: read, 2: write, 3: delete
-});
-
+// Carousel
 const carouselSchema = new Schema({
   link: { type: String, required: true },
   img_url: { type: String, required: true },
 });
 
-const Category = mongoose.model("Category", categorySchema, "admin_category");
-const Prize = mongoose.model("Prize", prizeSchema, "admin_prize");
-const Point = mongoose.model("Point", pointSchema, "admin_point");
+// Admin
+const AdminSchema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+  authority: { type: Object },
+});
+
+const Category = mongoose.model("Category", categorySchema, "category");
+const Prize = mongoose.model("Prize", prizeSchema, "prize");
+const Point = mongoose.model("Point", pointSchema, "point");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
 const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
-const Administrator = mongoose.model("Adminer", AdminSchema, "admin_adminer");
+const Administrator = mongoose.model("Admin", AdminSchema, "admin");
 
 const adminSchemas = {
   Category: Category,

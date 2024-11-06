@@ -14,6 +14,7 @@ const cardDeliverSchema = new mongoose.Schema({
 const CardDeliver = mongoose.model(
   "CardDeliver",
   cardDeliverSchema,
-  "card_deliver"
+  "cardDeliver"
 );
+
 module.exports = mongoose.model.CardDeliver || CardDeliver;

@@ -13,7 +13,7 @@ const deleteFile = require("../../utils/delete");
 const auth = require("../../middleware/auth");
 
 const adminSchemas = require("../../models/admin");
-const CardDeliver = require("../../models/card_delivering");
+const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
 const Gacha = require("../../models/gacha");
 
@@ -42,36 +42,31 @@ router.get("/get_admin/:id", auth, (req, res) => {
 
 /* Category Management */
 router.get("/get_category", async (req, res) => {
-  const category = await adminSchemas.Category.find().sort("display_order");
+  const category = await adminSchemas.Category.find();
 
   if (category) {
-    res.send({
-      status: 1,
-      category: category,
-    });
+    res.send({ status: 1, category: category });
   } else {
-    res.send({
-      status: 0,
-    });
+    res.send({ status: 0 });
   }
 });
 
 router.post("/add_category", auth, async (req, res) => {
-  const { name, description } = req.body;
+  const { catId, jpName, enName, ch1Name, ch2Name, vtName } = req.body;
 
-  if (name && description) {
-    const newCategory = new adminSchemas.Category({
-      name: name,
-      description: description,
-    });
+  try {
+    const categoryData = { catId, jpName, enName, ch1Name, ch2Name, vtName };
 
-    const saveCategory = await newCategory.save();
-
-    if (saveCategory) {
-      res.send({ status: 1, msg: "successAdded" });
+    if (catId) {
+      await adminSchemas.Category.updateOne({ _id: catId }, categoryData);
+      res.send({ status: 2 });
     } else {
-      res.send({ status: 0, msg: "failedAdded" });
+      const newCategory = new adminSchemas.Category(categoryData);
+      await newCategory.save();
+      res.send({ status: 1 });
     }
+  } catch (error) {
+    res.send({ status: 0 });
   }
 });
 
@@ -100,61 +95,83 @@ router.delete("/del_category/:id", auth, async (req, res) => {
 });
 
 /* Prize Management */
-router.post("/prize_upload", uploadPrize.single("file"), async (req, res) => {
-  const { id, name, rarity, cashBack, grade } = req.body;
-
+router.post("/prize", uploadPrize.single("file"), async (req, res) => {
   const prizeData = {
-    name: name,
-    rarity: rarity,
-    cashback: cashBack,
-    grade: grade,
+    name: req.body.name,
+    rarity: req.body.rarity,
+    cashback: req.body.cashBack,
+    kind: req.body.kind,
   };
 
-  if (id !== "") {
-    if (req.file) {
-      prizeData.img_url = `uploads/prize/${req.file.filename}`;
-    }
-    await adminSchemas.Prize.updateOne({ _id: id }, prizeData)
-      .then(() => {
-        return res.send({ status: 1, msg: "successUpdated" });
-      })
-      .catch((err) => {
-        return res.send({ status: 0, msg: "failedUpdated" });
-      });
-  } else {
-    prizeData.img_url = `uploads/prize/${req.file.filename}`;
-    const newPrize = new adminSchemas.Prize(prizeData);
-    const saved = await newPrize.save();
-    if (saved) {
-      res.send({
-        status: 1,
-        msg: "successAdded",
-      });
+  try {
+    if (req.body.id) {
+      if (req.file) {
+        const prize = await adminSchemas.Prize.findOne({ _id: req.body.id });
+
+        const filename = prize.img_url;
+        const filePath = path.join("./", filename);
+        await deleteFile(filePath);
+
+        prizeData.img_url = `uploads/prize/${req.file.filename}`;
+      }
+
+      const result = await adminSchemas.Prize.updateOne(
+        { _id: req.body.id },
+        prizeData
+      );
+
+      if (result) {
+        res.send({ status: 1, msg: "successUpdated" });
+      } else {
+        res.send({ status: 0, msg: "failedUpdated" });
+      }
     } else {
-      res.send({
-        status: 0,
-        msg: "failedAdded",
-      });
+      prizeData.img_url = `uploads/prize/${req.file.filename}`;
+
+      const newPrize = new adminSchemas.Prize(prizeData);
+      const result = await newPrize.save();
+
+      if (result) {
+        res.send({ status: 1, msg: "successAdded" });
+      } else {
+        res.send({ status: 0, msg: "failedAdded" });
+      }
     }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
   }
 });
 
-router.get("/get_prize", auth, async (req, res) => {
-  const prize = await adminSchemas.Prize.find({ status: "unset" });
+router.get("/prize", auth, async (req, res) => {
+  try {
+    const prizes = await adminSchemas.Prize.find({ status: false });
 
-  if (prize) {
-    res.send({
-      status: 1,
-      prize: prize,
-    });
-  } else {
-    res.send({
-      status: 0,
-    });
+    res.send({ status: 1, prizes: prizes });
+  } catch (error) {
+    res.send({ status: 0 });
   }
 });
 
-//new point add or update point with point image uploading
+router.delete("/prize/:id", auth, async (req, res) => {
+  try {
+    const prize = await adminSchemas.Prize.findOne({ _id: req.params.id });
+
+    const filename = prize.img_url;
+    const filePath = path.join("./", filename);
+
+    try {
+      await deleteFile(filePath);
+      prize.deleteOne();
+      res.send({ status: 1, msg: "successDeleted" });
+    } catch (err) {
+      res.send({ status: 0, msg: "failedDeleted" });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
+
+/* Point Management */
 router.post(
   "/point_upload",
   auth,
@@ -208,29 +225,6 @@ router.post(
   }
 );
 
-router.delete("/del_prize/:id", auth, async (req, res) => {
-  const id = req.params.id;
-
-  adminSchemas.Prize.findOne({ _id: id })
-    .then(async (prize) => {
-      if (prize.status == "set")
-        return res.send({ status: 0, msg: "Can't delete setted prize" });
-      const filename = prize.img_url;
-      const filePath = path.join("./", filename);
-      try {
-        await deleteFile(filePath);
-        prize.deleteOne();
-        res.send({ status: 1, msg: "successDeleted" });
-      } catch (err) {
-        console.error("Error deleting file:", err);
-        res.status(500).send({ status: 0, msg: "failedDeleted" });
-      }
-    })
-    .catch((err) => res.send({ status: 0, msg: "prize find error", err: err }));
-});
-
-/* Point management */
-//get all registered point
 router.get("/get_point", auth, async (req, res) => {
   adminSchemas.Point.find()
     .sort("point_num")
@@ -240,7 +234,6 @@ router.get("/get_point", auth, async (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-//delete point with image deleting by id
 router.delete("/del_point/:id", auth, (req, res) => {
   const id = req.params.id;
 
@@ -262,7 +255,7 @@ router.delete("/del_point/:id", auth, (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-/* administator management */
+/* Administator management */
 router.get("/get_adminList", auth, (req, res) => {
   adminSchemas.Administrator.find()
     .then((admin) => res.send({ status: 1, adminList: admin }))
@@ -306,7 +299,7 @@ router.post("/add_admin", async (req, res) => {
         point: { read: true, write: false, delete: false }, //authority for managing point
         delivering: { read: true, write: false, delete: false }, //authority for managing deliver
         rank: { read: true, write: false, delete: false }, //authority for managing rank
-        notion: { read: true, write: false, delete: false }, //authority for managing notion
+        // notion: { read: true, write: false, delete: false }, //authority for managing notion
         userterms: { read: true, write: false, delete: false }, //authority for managing notion
       };
       admin_data.authority = authorities;
@@ -327,7 +320,6 @@ router.delete("/del_admin/:id", auth, (req, res) => {
     .catch((err) => res.send({ status: 0, err: err }));
 });
 
-//change admin authority
 router.post("/chang_auth", auth, async (req, res) => {
   const { adminId, authority } = req.body;
 
@@ -341,7 +333,7 @@ router.post("/chang_auth", auth, async (req, res) => {
   }
 });
 
-//get deliver data
+/* Deliever management */
 router.get("/get_deliver", auth, async (req, res) => {
   CardDeliver.find()
     .then((deliver) => {
@@ -461,9 +453,11 @@ router.post("/getStatusIncome", auth, async (req, res) => {
 // save terms of service content
 router.post("/save_terms", auth, async (req, res) => {
   const content = req.body.content;
+  const lang = req.body.lang;
 
   try {
     const terms = new adminSchemas.Terms({
+      lang: lang,
       content: content,
     });
     await terms.save();
@@ -475,17 +469,21 @@ router.post("/save_terms", auth, async (req, res) => {
 });
 
 // save terms of service content
-router.get("/get_terms", async (req, res) => {
+router.get("/terms/:lang", async (req, res) => {
+  const lang = req.params.lang;
+
   try {
-    await adminSchemas.Terms.find();
-    const terms = await adminSchemas.Terms.findOne().sort({ createdAt: -1 });
+    const terms = await adminSchemas.Terms.findOne({ lang: lang }).sort({
+      createdAt: -1,
+    });
+
     res.send({ status: 1, terms: terms });
   } catch (error) {
     res.send({ status: 0 });
   }
 });
 
-// Rank
+/* Rank management */
 // get all
 router.get("/get_rank", auth, async (req, res) => {
   adminSchemas.Rank.find()
@@ -495,6 +493,7 @@ router.get("/get_rank", auth, async (req, res) => {
     })
     .catch((err) => res.send({ status: 0, err: err }));
 });
+
 // add or update
 router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
   const { id, name, bonus, start_amount, end_amount, last } = req.body;
@@ -531,6 +530,7 @@ router.post("/rank_save", auth, uploadRank.single("file"), async (req, res) => {
     res.send({ status: 0, msg: error });
   }
 });
+
 //delete
 router.delete("/del_rank/:id", auth, async (req, res) => {
   const id = req.params.id;
@@ -550,7 +550,7 @@ router.delete("/del_rank/:id", auth, async (req, res) => {
   }
 });
 
-// theme
+/* Theme management */
 // change brand
 router.post("/changeBrand", auth, async (req, res) => {
   const { brand } = req.body;
@@ -570,6 +570,7 @@ router.post("/changeBrand", auth, async (req, res) => {
     res.send({ status: 0, msg: error });
   }
 });
+
 // change color
 router.post("/changeBgColor", auth, async (req, res) => {
   const { bgColor } = req.body;
@@ -592,6 +593,7 @@ router.post("/changeBgColor", auth, async (req, res) => {
     res.send({ status: 0, msg: error });
   }
 });
+
 // change logo
 router.post(
   "/changeLogo",
@@ -627,6 +629,7 @@ router.post(
     }
   }
 );
+
 // get theme
 router.get("/getThemeData", async (req, res) => {
   try {
@@ -641,7 +644,7 @@ router.get("/getThemeData", async (req, res) => {
   }
 });
 
-// carousel
+/* Carousel management */
 // add or update
 router.post(
   "/carousel",
@@ -674,6 +677,7 @@ router.post(
     }
   }
 );
+
 // get all
 router.get("/get_carousels", async (req, res) => {
   try {
@@ -683,6 +687,7 @@ router.get("/get_carousels", async (req, res) => {
     res.send({ status: 0, err: err });
   }
 });
+
 // delete
 router.delete("/del_carousel/:id", auth, async (req, res) => {
   const id = req.params.id;
