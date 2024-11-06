@@ -9,8 +9,8 @@ const deleteFile = require("../../utils/delete");
 
 const Gacha = require("../../models/gacha");
 const adminSchemas = require("../../models/admin");
-const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
+const CardDeliver = require("../../models/cardDeliver");
 const PointLog = require("../../models/pointLog");
 
 // add gacha
@@ -94,36 +94,30 @@ router.post("/set_prize", auth, async (req, res) => {
 
   try {
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
+    const gacha = await Gacha.findOne({ _id: gachaId });
+
     prize.status = true;
     await prize.save();
 
-    const gacha = await Gacha.findOne({ _id: gachaId });
-    switch (prize.kind) {
-      case "round_number_prize":
-        gacha.round_prizes.push(prize);
-        break;
+    if (
+      prize.kind === "last_prize" &&
+      gacha.remain_prizes.some((prize) => prize.kind === "last_prize")
+    ) {
+      const lastPrize = gacha.remain_prizes.find(
+        (prize) => prize.kind === "last_prize"
+      );
+      await adminSchemas.Prize.updateOne(
+        { _id: lastPrize._id },
+        { status: false }
+      );
+      gacha.total_number -= 1;
 
-      case "last_prize":
-        if (gacha.last_prizes.length > 0) {
-          const lastPrize = gacha.last_prizes[0];
-          await adminSchemas.Prize.updateOne(
-            { _id: lastPrize._id.toString() },
-            { status: false }
-          );
-          gacha.last_prizes = [];
-          gacha.total_number -= 1;
-        }
-        gacha.last_prizes.push(prize);
-        break;
-
-      case "extra_prize":
-        gacha.extra_prizes.push(prize);
-        break;
-
-      default:
-        gacha.grade_prizes.push(prize);
-        break;
+      const noLastPrize = gacha.remain_prizes.filter(
+        (prize) => prize.kind !== "last_prize"
+      );
+      gacha.remain_prizes = noLastPrize;
     }
+    gacha.remain_prizes.push(prize);
     gacha.total_number += 1;
     await gacha.save();
 
@@ -143,29 +137,10 @@ router.post("/unset_prize", auth, async (req, res) => {
     await prize.save();
 
     const gacha = await Gacha.findOne({ _id: gachaId });
-    switch (prize.kind) {
-      case "last_prize":
-        let lastPrizes = gacha.last_prizes;
-        lastPrizes = lastPrizes.filter((data) => data._id != prizeId);
-        gacha.last_prizes = lastPrizes;
-        break;
-      case "extra_prize":
-        let extraPrizes = gacha.extra_prizes;
-        extraPrizes = extraPrizes.filter((data) => data._id != prizeId);
-        gacha.extra_prizes = extraPrizes;
-        break;
-      case "round_number_prize":
-        let roundPrizes = gacha.round_prizes;
-        roundPrizes = roundPrizes.filter((data) => data._id != prizeId);
-        gacha.round_prizes = roundPrizes;
-        break;
-
-      default:
-        let gradePrizes = gacha.grade_prizes;
-        gradePrizes = gradePrizes.filter((data) => data._id != prizeId);
-        gacha.grade_prizes = gradePrizes;
-        break;
-    }
+    const remainPrizes = gacha.remain_prizes.filter(
+      (data) => data._id != prizeId
+    );
+    gacha.remain_prizes = remainPrizes;
     gacha.total_number -= 1;
     gacha.save();
 
@@ -173,38 +148,6 @@ router.post("/unset_prize", auth, async (req, res) => {
   } catch (error) {
     res.send({ status: 0, msg: error });
   }
-
-  // Gacha.findOne({ _id: gachaId })
-  //   .then((gacha) => {
-  //     if (last) {
-  //       gacha.last_effect = true;
-  //       gacha.last_prize = {};
-  //     } else {
-  //       let prize = gacha.remain_prizes;
-  //       prize = prize.filter((data) => data._id != prizeId);
-  //       gacha.remain_prizes = prize;
-  //     }
-
-  //     gacha
-  //       .save()
-  //       .then(() => {
-  //         adminSchemas.Prize.findOne({ _id: prizeId }).then((selPrize) => {
-  //           selPrize.status = "unset";
-  //           selPrize.type = "";
-  //           selPrize.last_effect = true;
-  //           selPrize
-  //             .save()
-  //             .then(() => res.send({ status: 1 }))
-  //             .catch((err) =>
-  //               res.send({ status: 0, msg: "failedSaved", err: err })
-  //             );
-  //         });
-  //       })
-  //       .catch((err) =>
-  //         res.send({ status: 0, msg: "gacha save failed.", err: err })
-  //       );
-  //   })
-  //   .catch((err) => res.send({ status: 0, msg: "gacha not found", err: err }));
 });
 
 // set prizes from csv file
@@ -226,20 +169,17 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaId, drawCounts, drawDate, user } = req.body;
-  console.log(drawDate);
-  console.log(new Date());
+  const { gachaId, drawCounts, user } = req.body;
 
   try {
+    // get draw date time of server
+    const drawDate = new Date();
+
     // Find Gacha to draw
     const gacha = await Gacha.findOne({ _id: gachaId });
 
     // get total number of remain prizes
-    const totalRemainPrizesNum =
-      gacha.grade_prizes.length +
-      gacha.extra_prizes.length +
-      gacha.round_prizes.length +
-      gacha.last_prizes.length;
+    const totalRemainPrizesNum = gacha.remain_prizes.length;
 
     // get number of drawing prizes
     const drawPrizesNum =

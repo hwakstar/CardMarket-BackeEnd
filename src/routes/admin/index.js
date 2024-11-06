@@ -144,7 +144,9 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
 
 router.get("/prize", auth, async (req, res) => {
   try {
-    const prizes = await adminSchemas.Prize.find({ status: false });
+    const prizes = await adminSchemas.Prize.find({ status: false }).sort({
+      createdAt: -1,
+    });
 
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
