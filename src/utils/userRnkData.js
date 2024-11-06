@@ -1,6 +1,6 @@
 const AdminSchema = require("../models/admin");
 const UserSchema = require("../models/user");
-const PoingLogSchema = require("../models/point_log");
+const PoingLogSchema = require("../models/pointLog");
 
 const userRankData = async (user_id) => {
   // calculate total purchased points amount

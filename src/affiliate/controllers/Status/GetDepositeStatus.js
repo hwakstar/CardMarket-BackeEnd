@@ -1,6 +1,6 @@
 const expressAsyncHandler = require("express-async-handler");
 
-const PointLogs = require("../../../models/point_log");
+const PointLogs = require("../../../models/pointLog");
 
 const GetDepositeStatus = expressAsyncHandler(async (req, res) => {
   try {

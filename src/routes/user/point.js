@@ -4,7 +4,7 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 
 const Users = require("../../models/user");
-const PointLog = require("../../models/point_log");
+const PointLog = require("../../models/pointLog");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");

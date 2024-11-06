@@ -2,7 +2,7 @@ const expressAsyncHandler = require("express-async-handler");
 
 const ClickLinkModel = require("../../models/ClickLinkModel");
 const RegisterModel = require("../../models/RegisterModel");
-const PointLogs = require("../../../models/point_log");
+const PointLogs = require("../../../models/pointLog");
 const EarnModel = require("../../models/EarnModel");
 
 const isToday = (date) => {

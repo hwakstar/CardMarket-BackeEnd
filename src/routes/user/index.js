@@ -8,13 +8,13 @@ const router = express.Router();
 const auth = require("../../middleware/auth");
 const Users = require("../../models/user");
 const adminSchemas = require("../../models/admin");
-const PointLog = require("../../models/point_log");
-const CardDeliver = require("../../models/card_delivering");
+const PointLog = require("../../models/pointLog");
+const CardDeliver = require("../../models/cardDeliver");
 const Gacha = require("../../models/gacha");
 const RegisterModel = require("../../affiliate/models/RegisterModel");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
-const ShippingAddress = require("../../models/shpping_address");
+const ShippingAddress = require("../../models/shipAddress");
 const AffRanks = require("../../affiliate/models/RankModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
@@ -31,10 +31,10 @@ router.post("/register", async (req, res) => {
     if (isEmailExist) {
       return res.send({ status: 0, msg: "exsitEmail" });
     }
-
+    
     // hass password
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     // create new user object
     const userObj = {
       name: name,
@@ -42,7 +42,7 @@ router.post("/register", async (req, res) => {
       email: email,
       hashedPass: hashedPassword,
     };
-
+    
     // add affiliate id if user introduced by affiliate
     if (affId) userObj.aff_id = affId;
 
