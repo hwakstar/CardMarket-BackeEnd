@@ -169,34 +169,25 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaId, drawCounts, user } = req.body;
+  const { gachaId, counts, user } = req.body;
 
   try {
-    // get draw date time of server
-    const drawDate = new Date();
-
     // Find Gacha to draw
     const gacha = await Gacha.findOne({ _id: gachaId });
 
     // get total number of remain prizes
-    const totalRemainPrizesNum = gacha.remain_prizes.length;
-
+    const remainPrizesNum = gacha.remain_prizes.length;
     // get number of drawing prizes
-    const drawPrizesNum =
-      drawCounts === "all" ? totalRemainPrizesNum : drawCounts;
-
+    const drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
     // get poins of drwing prizes
     const drawPoints = gacha.price * drawPrizesNum;
-
-    // get ramain poins of user
-    // return if remain points is less than drawing points
-    const userData = await Users.findOne({ _id: user._id });
-    if (userData.point_remain < drawPoints)
-      return res.send({ status: 0, msg: 0 });
+    // get draw date time of server
+    const drawDate = new Date();
 
     // return if remain prizes is less than drawing prizes
-    if (totalRemainPrizesNum < drawCounts)
-      return res.send({ status: 0, msg: 1 });
+    if (remainPrizesNum < drawPrizesNum) return res.send({ status: 0, msg: 0 });
+    // return if remain points is less than drawing points
+    if (user.point_remain < drawPoints) return res.send({ status: 0, msg: 1 });
 
     // Draw prize of gach by rarity (random currently) and add it into poped prize
     // let drawedPrizes = [];
@@ -231,8 +222,6 @@ router.post("/draw_gacha", auth, async (req, res) => {
     //       (prize) => prize._id != drawedPrizes[i]._id
     //     );
     //   }
-    //   // add poped prizes into gacha poped prize list
-    //   drawedPrizes.map((drawedPrize) => gacha.poped_prizes.push(drawedPrize));
     // }
 
     // // Update Gacha
@@ -258,7 +247,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // const newPointLog = new PointLog({
     //   user_id: userData._id,
     //   point_num: drawPoints,
-    //   usage: "gacha_draw",
+    //   usage: "drawGacha",
     //   ioFlag: 0,
     // });
     // await newPointLog.save();

@@ -31,10 +31,10 @@ router.post("/register", async (req, res) => {
     if (isEmailExist) {
       return res.send({ status: 0, msg: "exsitEmail" });
     }
-    
+
     // hass password
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     // create new user object
     const userObj = {
       name: name,
@@ -42,7 +42,7 @@ router.post("/register", async (req, res) => {
       email: email,
       hashedPass: hashedPassword,
     };
-    
+
     // add affiliate id if user introduced by affiliate
     if (affId) userObj.aff_id = affId;
 
