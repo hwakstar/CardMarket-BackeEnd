@@ -12,13 +12,6 @@ const gachaSchema = new mongoose.Schema(
     total_number: { type: Number, default: 0 },
     isRelease: { type: Boolean, default: false },
     remain_prizes: { type: Array },
-    poped_prizes: { type: Array },
-    // grade_prizes: { type: Array },
-    // extra_prizes: { type: Array },
-    // round_prizes: { type: Array },
-    // last_prizes: { type: Array },
-    // last_prize: { type: Object },
-    // last_effect: { type: Boolean, default: true },
   },
   {
     timestamps: true,
