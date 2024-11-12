@@ -1,7 +1,9 @@
 const express = require("express");
-const router = express.Router();
 const path = require("path");
 const moment = require("moment");
+const jwt = require("jsonwebtoken");
+
+const router = express.Router();
 
 const uploadPrize = require("../../utils/multer/prize_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
@@ -16,6 +18,30 @@ const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
 const Gacha = require("../../models/gacha");
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const admin = await adminSchemas.Administrator.findOne({ email: email });
+
+    if (admin && password == admin.password) {
+      const payload = {
+        user_id: admin._id,
+        name: admin.name,
+        authority: admin.authority,
+        role: "admin",
+      };
+      const token = jwt.sign(payload, "RANDOM-TOKEN", { expiresIn: "1h" });
+
+      res.send({ status: 1, msg: "successLogin", user: payload, token });
+    } else {
+      res.send({ status: 0, msg: "Password and Email is not correct." });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq", err: error });
+  }
+});
 
 router.get("/get_admin/:id", auth, (req, res) => {
   const id = req.params.id;

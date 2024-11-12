@@ -15,10 +15,11 @@ const PointLog = require("../../models/pointLog");
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
-  const { name, price, category, kind, awardRarity, order } = req.body;
+  const { type, name, price, category, kind, awardRarity, order } = req.body;
 
   try {
     const newGacha = new Gacha({
+      type: type,
       name: name,
       price: price,
       category: category,
@@ -227,8 +228,14 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // // Update Gacha
     // await gacha.save();
 
-    // // New Card Deliver Data
-    // const newDeliverData = new CardDeliver({
+    // New Card Deliver Data
+    const userData = await Users.findOne({ _id: user._id });
+
+    // Update remain points of user
+    // userData.point_remain -= drawPoints;
+    // await userData.save();
+
+    // const newDeliver = new CardDeliver({
     //   user_id: userData._id,
     //   user_name: userData.name,
     //   gacha_id: gacha._id,
@@ -237,18 +244,13 @@ router.post("/draw_gacha", auth, async (req, res) => {
     //   prizes: drawedPrizes,
     //   status: "Pending",
     // });
-    // await newDeliverData.save();
+    // await newDeliver.save();
 
-    // // Update user remain points
-    // userData.point_remain -= drawPoints;
-    // await userData.save();
-
-    // // Add new points log
+    // Add new points log
     // const newPointLog = new PointLog({
     //   user_id: userData._id,
     //   point_num: drawPoints,
     //   usage: "drawGacha",
-    //   ioFlag: 0,
     // });
     // await newPointLog.save();
 

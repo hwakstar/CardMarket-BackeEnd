@@ -5,8 +5,7 @@ const PaymentModel = require("../../models/PaymentModel");
 const GetAffBalance = expressAsyncHandler(async (req, res) => {
   try {
     const affBalance = await PaymentModel.find({ aff_id: req.body.aff_id });
-
-    if (affBalance.length === 0) {
+    if (affBalance.lenght === 0) {
       return res.json({
         status: true,
         pendingPrices: 0,
@@ -20,12 +19,12 @@ const GetAffBalance = expressAsyncHandler(async (req, res) => {
     const sumOfPendingPrices = affBalance
       .filter((item) => item.kind === "Pending")
       .reduce((sum, item) => sum + item.price, 0);
-    const sumOfWithdrawablePrices = affBalance.find(
-      (item) => item.kind === "Withdrawable"
-    ).price;
-    const sumOfWithdrawnPrices = affBalance.find(
-      (item) => item.kind === "Withdrawn"
-    ).price;
+    const sumOfWithdrawablePrices = affBalance
+      .filter((item) => item.kind === "Withdrawable")
+      .reduce((sum, item) => sum + item.price, 0);
+    const sumOfWithdrawnPrices = affBalance
+      .filter((item) => item.kind === "Withdrawn")
+      .reduce((sum, item) => sum + item.price, 0);
 
     res.json({
       status: true,

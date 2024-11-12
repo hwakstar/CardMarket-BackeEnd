@@ -1,7 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const multer = require("multer");
 
 const router = express.Router();
 
@@ -112,90 +111,37 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  let payload;
 
-  const admin = await adminSchemas.Administrator.findOne({ email: email });
+  try {
+    const user = await Users.findOne({ email: email });
 
-  if (admin) {
-    if (password == admin.password) {
-      payload = {
-        user_id: admin._id,
-        name: admin.name,
-        authority: admin.authority,
-        role: "admin",
-      };
-      const token = jwt.sign(payload, "RANDOM-TOKEN", { expiresIn: "1h" });
+    if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
+    if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
 
-      res.send({
-        status: 1,
-        msg: "successLogin",
-        user: payload,
-        token,
-      });
-    } else {
-      res.send({ status: 0, msg: "Password and Email is not correct." });
-    }
-  } else {
-    try {
-      // Find user have requested email
-      const user = await Users.findOne({ email: email });
-      if (!user) {
-        return res.send({
-          status: 0,
-          msg: "invalidLoginInfo",
-        });
-      }
+    const checkPass = await bcrypt.compare(password, user.hashedPass);
+    if (!checkPass) return res.send({ status: 0, msg: "invalidLoginInfo" });
 
-      // check user active status
-      if (!user.active) {
-        return res.send({
-          status: 0,
-          msg: "withdrawedAccount",
-        });
-      }
+    // make user data for token
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      point_remain: user.point_remain,
+      shipAddress_id: user.shipAddress_id,
+      address: user.address,
+      city: user.city,
+      country: user.country,
+    };
 
-      // check password
-      const checkPass = await bcrypt.compare(password, user.hashedPass);
-      if (!checkPass) {
-        return res.send({
-          status: 0,
-          msg: "invalidLoginInfo",
-        });
-      }
+    // get rank data
+    const rank = await userRankData(user._id);
+    userData.rankData = rank;
 
-      // make user data for token
-      const userData = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        point_remain: user.point_remain,
-        shipAddress_id: user.shipAddress_id,
-        address: user.address,
-        city: user.city,
-        country: user.country,
-      };
+    const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "1h" });
 
-      // get rank data
-      const rank = await userRankData(user._id);
-      userData.rankData = rank;
-
-      const token = jwt.sign(userData, "RANDOM-TOKEN", {
-        expiresIn: "1h",
-      });
-
-      res.send({
-        status: 1,
-        msg: "successLogin",
-        user: userData,
-        token,
-      });
-    } catch (error) {
-      res.send({
-        status: 0,
-        msg: "failedReq",
-        err: error,
-      });
-    }
+    res.send({ status: 1, msg: "successLogin", user: userData, token });
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq", err: error });
   }
 });
 
@@ -430,7 +376,7 @@ router.get("/blog/:blogId", async (req, res) => {
   }
 });
 
-// get all shipping address for logged user
+// get all shipping address of user
 router.get("/shipping_address/:user_id", auth, async (req, res) => {
   const user_id = req.params.user_id;
 
@@ -442,7 +388,7 @@ router.get("/shipping_address/:user_id", auth, async (req, res) => {
   }
 });
 
-// add new shipping addresss for logged user
+// add or update shipping addresss of user
 router.post("/shipping_address", auth, async (req, res) => {
   const { update, shipAddress } = req.body;
 
@@ -459,6 +405,15 @@ router.post("/shipping_address", auth, async (req, res) => {
         address: shipAddress.address,
         building: shipAddress.building,
         phoneNumber: shipAddress.phoneNumber,
+        addressLine1: shipAddress.addressLine1,
+        addressLine2: shipAddress.addressLine2,
+        districtCity: shipAddress.districtCity,
+        cityTown: shipAddress.cityTown,
+        cityDistrict: shipAddress.cityDistrict,
+        islandCity: shipAddress.islandCity,
+        suburbCity: shipAddress.suburbCity,
+        state: shipAddress.state,
+        stateProvinceRegion: shipAddress.stateProvinceRegion,
       };
 
       await ShippingAddress.updateOne({ _id: shipAddress._id }, updateData);
@@ -473,12 +428,12 @@ router.post("/shipping_address", auth, async (req, res) => {
   }
 });
 
-// set shipping address for logged user
-router.post("/add_shipping_address", auth, async (req, res) => {
-  const { userId, shipAddress } = req.body;
+// set shipping address of user
+router.post("/set_shipping_address", auth, async (req, res) => {
+  const { userId, shipAddressId } = req.body;
 
   try {
-    await Users.updateOne({ _id: userId }, { shipAddress_id: shipAddress });
+    await Users.updateOne({ _id: userId }, { shipAddress_id: shipAddressId });
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0 });
