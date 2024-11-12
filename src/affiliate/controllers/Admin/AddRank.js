@@ -1,6 +1,8 @@
+const path = require("path");
 const expressAsyncHandler = require("express-async-handler");
 
 const AffRankModel = require("../../models/RankModel");
+const deleteFile = require("../../../utils/delete");
 
 const AddRank = expressAsyncHandler(async (req, res) => {
   const {
@@ -14,7 +16,7 @@ const AddRank = expressAsyncHandler(async (req, res) => {
   } = req.body;
 
   try {
-    const affRankData = {
+    const reqData = {
       name: name,
       deposite_commission: deposite_commission,
       register_commission: register_commission,
@@ -24,22 +26,22 @@ const AddRank = expressAsyncHandler(async (req, res) => {
     };
 
     if (req.file?.filename !== undefined) {
-      affRankData.img_url = `uploads/affRank/${req.file.filename}`;
+      reqData.img_url = `uploads/affRank/${req.file.filename}`;
     }
 
     if (id !== "" && id !== undefined) {
       const affRank = await AffRankModel.findOne({ _id: id });
 
-      if (affRankData.img_url && affRank.img_url) {
+      if (reqData.img_url && affRank.img_url) {
         const filePath = path.join("./", affRank.img_url);
         await deleteFile(filePath);
       }
 
-      await AffRankModel.updateOne({ _id: id }, affRankData);
+      await AffRankModel.updateOne({ _id: id }, reqData);
       res.send({ status: true, type: 2 });
     } else {
-      const affRank = new AffRankModel(affRankData);
-      await affRank.save();
+      const newAffRank = new AffRankModel(reqData);
+      await newAffRank.save();
       res.send({ status: true, type: 1 });
     }
   } catch (error) {

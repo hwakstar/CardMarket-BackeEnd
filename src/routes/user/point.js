@@ -31,7 +31,6 @@ router.post("/purchase", auth, async (req, res) => {
       point_num: point_num,
       date: Date.now(),
       usage: "purchasePoints",
-      ioFlag: 1,
       aff_id: user.aff_id,
     };
     const newPointLog = new PointLog(newPointLogObj);

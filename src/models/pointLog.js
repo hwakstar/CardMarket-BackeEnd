@@ -8,7 +8,6 @@ const pointLogSchema = new mongoose.Schema(
     point_num: { type: Number, required: true },
     date: { type: Date, default: Date.now },
     usage: { type: String },
-    ioFlag: { type: Number, require: true },
     aff_id: { type: String },
   },
   {
