@@ -32,12 +32,12 @@ const RequestWithdraw = expressAsyncHandler(async (req, res) => {
     const sumOfPendingPrices = updatedAffPayment
       .filter((item) => item.kind === "Pending")
       .reduce((sum, item) => sum + item.price, 0);
-    const sumOfWithdrawablePrices = updatedAffPayment.find(
-      (item) => item.kind === "Withdrawable"
-    ).price;
-    const sumOfWithdrawnPrices = updatedAffPayment.find(
-      (item) => item.kind === "Withdrawn"
-    ).price;
+    const sumOfWithdrawablePrices = updatedAffPayment
+      .filter((item) => item.kind === "Withdrawable")
+      .reduce((sum, item) => sum + item.price, 0);
+    const sumOfWithdrawnPrices = updatedAffPayment
+      .filter((item) => item.kind === "Withdrawn")
+      .reduce((sum, item) => sum + item.price, 0);
 
     res.json({
       status: true,
