@@ -1,8 +1,8 @@
-No,name,rarity,cashback,img_url,kind
-1,Prize 1,90,600,uploads/prize/prize (1).jpg,first
-2,Prize 2,91,601,uploads/prize/prize (2).jpg,second
-3,Prize 3,92,602,uploads/prize/prize (3).jpg,third
-4,Prize 4,93,603,uploads/prize/prize (4).jpg,fourth
-5,Prize 5,94,604,uploads/prize/prize (5).jpg,last_prize
-6,Prize 6,95,605,uploads/prize/prize (6).jpg,extra_prize
-7,Prize 7,96,606,uploads/prize/prize (7).jpg,round_number_prize
+No,name,cashback,img_url,kind,trackingNumber,deliveryCompany
+1,Prize 1,600,uploads/prize/prize (1).jpg,first,card-0001,Yamato Com
+2,Prize 2,601,uploads/prize/prize (2).jpg,second,card-0002,Tokyo Com
+3,Prize 3,602,uploads/prize/prize (3).jpg,third,card-0003,Yamato Com
+4,Prize 4,603,uploads/prize/prize (4).jpg,fourth,card-0004,Ono Com
+5,Prize 5,604,uploads/prize/prize (5).jpg,last_prize,card-0005,Tokyo Com
+6,Prize 6,605,uploads/prize/prize (6).jpg,extra_prize,card-0006,Tokyo Com
+7,Prize 7,606,uploads/prize/prize (7).jpg,round_number_prize,card-0007,Yamato Com

@@ -124,10 +124,12 @@ router.delete("/del_category/:id", auth, async (req, res) => {
 router.post("/prize", uploadPrize.single("file"), async (req, res) => {
   const prizeData = {
     name: req.body.name,
-    rarity: req.body.rarity,
     cashback: req.body.cashBack,
     kind: req.body.kind,
+    trackingNumber: req.body.trackingNumber,
+    deliveryCompany: req.body.deliveryCompany,
   };
+  console.log(prizeData);
 
   try {
     if (req.body.id) {

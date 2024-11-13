@@ -14,9 +14,10 @@ const categorySchema = new Schema({
 const prizeSchema = new Schema({
   img_url: { type: String },
   name: { type: String },
-  rarity: { type: Number },
   cashback: { type: Number },
   kind: { type: String },
+  trackingNumber: { type: String },
+  deliveryCompany: { type: String },
   status: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });

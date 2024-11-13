@@ -188,10 +188,13 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // return if remain prizes is less than drawing prizes
     if (remainPrizesNum < drawPrizesNum) return res.send({ status: 0, msg: 0 });
     // return if remain points is less than drawing points
-    if (user.point_remain < drawPoints) return res.send({ status: 0, msg: 1 });
+    const userData = await Users.findOne({ _id: user._id });
+    if (userData.point_remain < drawPoints)
+      return res.send({ status: 0, msg: 1 });
 
-    // Draw prize of gach by rarity (random currently) and add it into poped prize
-    // let drawedPrizes = [];
+    let drawedPrizes = [];
+
+    // Real Mode here
     // // if draw counts and remain prize counts are the same
     // if (drawCounts === remainPrizeCounts) {
     //   // if gacha has last prize, add last prize into drawedPrizes
@@ -225,16 +228,40 @@ router.post("/draw_gacha", auth, async (req, res) => {
     //   }
     // }
 
-    // // Update Gacha
-    // await gacha.save();
+    // Test Mode
+    // Draw prize of gach by rarity (random currently) and add it into poped prize
 
-    // New Card Deliver Data
-    const userData = await Users.findOne({ _id: user._id });
+    for (let i = 0; i < drawPrizesNum; i++) {
+      // Get drawedPrizes list randomly
+      const index = Math.floor(Math.random() * gacha.remain_prizes.length);
+      drawedPrizes.push(gacha.remain_prizes[index]);
+
+      // Add drawedPrizes into popoed_prizes
+      gacha.poped_prizes.push(gacha.remain_prizes[index]);
+
+      // Remove drawedPrize from gacha remain_prizes
+      gacha.remain_prizes = gacha.remain_prizes.filter(
+        (prize) => prize._id != drawedPrizes[i]._id
+      );
+    }
+    console.log(gacha);
+
+    // Update Gacha
+    // await gacha.save();
 
     // Update remain points of user
     // userData.point_remain -= drawPoints;
     // await userData.save();
 
+    // Add new points log
+    // const newPointLog = new PointLog({
+    //   user_id: userData._id,
+    //   point_num: drawPoints,
+    //   usage: "drawGacha",
+    // });
+    // await newPointLog.save();
+
+    // New Card Deliver Data
     // const newDeliver = new CardDeliver({
     //   user_id: userData._id,
     //   user_name: userData.name,
@@ -246,20 +273,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // });
     // await newDeliver.save();
 
-    // Add new points log
-    // const newPointLog = new PointLog({
-    //   user_id: userData._id,
-    //   point_num: drawPoints,
-    //   usage: "drawGacha",
-    // });
-    // await newPointLog.save();
-
-    res.send({
-      status: 1,
-      // prizes: drawedPrizes,
-      // existLastFlag: existLastFlag,
-      // lastEffect: lastEffect,
-    });
+    res.send({ status: 1, prizes: drawedPrizes });
   } catch (error) {
     res.send({ status: 0 });
   }
