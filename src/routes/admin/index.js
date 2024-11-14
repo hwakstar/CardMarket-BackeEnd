@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 
 const router = express.Router();
 
@@ -10,6 +11,7 @@ const uploadPoint = require("../../utils/multer/point_multer");
 const uploadRank = require("../../utils/multer/rank_multer");
 const uploadLogo = require("../../utils/multer/logo_multer");
 const uploadCarousel = require("../../utils/multer/carousel_multer");
+const uploadPrizeVideo = require("../../utils/multer/prizevideo_multer");
 const deleteFile = require("../../utils/delete");
 
 const auth = require("../../middleware/auth");
@@ -17,6 +19,7 @@ const auth = require("../../middleware/auth");
 const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
+const PrizeVideo = require("../../models/prizeVideo");
 const Gacha = require("../../models/gacha");
 
 router.post("/login", async (req, res) => {
@@ -320,17 +323,17 @@ router.post("/add_admin", async (req, res) => {
       }
 
       const authorities = {
-        administrators: { read: true, write: false, delete: false }, //authority for managing administrator
-        users: { read: true, write: false, delete: false }, //authority for managing users
-        carousel: { read: true, write: false, delete: false }, //authority for managing carousel
-        category: { read: true, write: false, delete: false }, //authority for managing category
-        prize: { read: true, write: false, delete: false }, //authority for managing prize
-        gacha: { read: true, write: false, delete: false }, //authority for managing gacha
-        point: { read: true, write: false, delete: false }, //authority for managing point
-        delivering: { read: true, write: false, delete: false }, //authority for managing deliver
-        rank: { read: true, write: false, delete: false }, //authority for managing rank
-        // notion: { read: true, write: false, delete: false }, //authority for managing notion
-        userterms: { read: true, write: false, delete: false }, //authority for managing notion
+        administrators: { read: true, write: false, delete: false },
+        users: { read: true, write: false, delete: false },
+        carousel: { read: true, write: false, delete: false },
+        category: { read: true, write: false, delete: false },
+        prizeVideo: { read: true, write: false, delete: false },
+        prize: { read: true, write: false, delete: false },
+        gacha: { read: true, write: false, delete: false },
+        point: { read: true, write: false, delete: false },
+        delivering: { read: true, write: false, delete: false },
+        rank: { read: true, write: false, delete: false },
+        userterms: { read: true, write: false, delete: false },
       };
       admin_data.authority = authorities;
       // create new administrator
@@ -709,6 +712,57 @@ router.delete("/del_carousel/:id", auth, async (req, res) => {
       if (filePath) await deleteFile(filePath);
     }
     await carousel.deleteOne();
+    return res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, err: error });
+  }
+});
+
+/* Prize video management */
+// add or update
+router.post(
+  "/prizeVideo",
+  auth,
+  uploadPrizeVideo.single("file"),
+  async (req, res) => {
+    const vidData = { kind: req.body.kind };
+
+    try {
+      if (req.file) vidData.url = `uploads/prizeVideo/${req.file.filename}`;
+
+      const newPrizeVideo = new PrizeVideo(vidData);
+      await newPrizeVideo.save();
+      res.send({ status: 1 });
+    } catch (error) {
+      res.send({ status: 0 });
+    }
+  }
+);
+
+// get all
+router.get("/get_prizeVideos", async (req, res) => {
+  try {
+    const prizeVideos = await PrizeVideo.find();
+
+    return res.send({ status: 1, prizeVideos: prizeVideos });
+  } catch (error) {
+    res.send({ status: 0, err: err });
+  }
+});
+
+// delete
+router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const prizeVideo = await PrizeVideo.findOne({ _id: id });
+
+    if (prizeVideo.url) {
+      const filePath = path.join("./", prizeVideo.url);
+      if (filePath) await deleteFile(filePath);
+    }
+    await prizeVideo.deleteOne();
+
     return res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, err: error });

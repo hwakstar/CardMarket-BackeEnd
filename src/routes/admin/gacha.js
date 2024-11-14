@@ -235,33 +235,35 @@ router.post("/draw_gacha", auth, async (req, res) => {
       // Get drawedPrizes list randomly
       const index = Math.floor(Math.random() * gacha.remain_prizes.length);
       drawedPrizes.push(gacha.remain_prizes[index]);
-
-      // Add drawedPrizes into popoed_prizes
-      gacha.poped_prizes.push(gacha.remain_prizes[index]);
-
-      // Remove drawedPrize from gacha remain_prizes
-      gacha.remain_prizes = gacha.remain_prizes.filter(
-        (prize) => prize._id != drawedPrizes[i]._id
-      );
     }
-    console.log(gacha);
 
-    // Update Gacha
+    // // Update Gacha
     // await gacha.save();
 
     // Update remain points of user
-    // userData.point_remain -= drawPoints;
-    // await userData.save();
+    userData.point_remain -= drawPoints;
+    await userData.save();
 
     // Add new points log
-    // const newPointLog = new PointLog({
-    //   user_id: userData._id,
-    //   point_num: drawPoints,
-    //   usage: "drawGacha",
-    // });
-    // await newPointLog.save();
+    const newPointLog = new PointLog({
+      aff_id: userData.aff_id,
+      user_id: userData._id,
+      user_name: userData.name,
+      user_country: userData.country,
+      point_num: drawPoints,
+      usage: "drawGacha",
+    });
+    await newPointLog.save();
 
-    // New Card Deliver Data
+    // // Add drawedPrizes into popoed_prizes
+    // gacha.poped_prizes.push(gacha.remain_prizes[index]);
+
+    // // Remove drawedPrize from gacha remain_prizes
+    // gacha.remain_prizes = gacha.remain_prizes.filter(
+    //   (prize) => prize._id != drawedPrizes[i]._id
+    // );
+
+    // // New Card Deliver Data
     // const newDeliver = new CardDeliver({
     //   user_id: userData._id,
     //   user_name: userData.name,
