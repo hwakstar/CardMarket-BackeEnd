@@ -19,6 +19,7 @@ const port = process.env.PORT || 5000;
 const corsOptions = {
   origin: "*",
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   optionSuccessStatus: 200,
 };
 
@@ -58,6 +59,10 @@ app.use(
 app.use(
   "/uploads/affRank",
   express.static(path.join(__dirname, "uploads/affRank"))
+);
+app.use(
+  "/uploads/prizeVideo",
+  express.static(path.join(__dirname, "uploads/prizeVideo"))
 );
 
 // Routers for Oripa
