@@ -2,13 +2,12 @@ const mongoose = require("mongoose");
 
 const pointLogSchema = new mongoose.Schema(
   {
+    aff_id: { type: String },
     user_id: { type: String, required: true },
     user_name: { type: String },
     user_country: { type: String },
     point_num: { type: Number, required: true },
-    date: { type: Date, default: Date.now },
     usage: { type: String },
-    aff_id: { type: String },
   },
   {
     timestamps: true,
