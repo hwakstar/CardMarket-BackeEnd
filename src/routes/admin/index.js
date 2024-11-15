@@ -728,11 +728,21 @@ router.post(
     const vidData = { kind: req.body.kind };
 
     try {
+      const existVidData = await PrizeVideo.findOne({ kind: req.body.kind });
+
+      if (existVidData) {
+        const filePath = path.join("./", existVidData.url);
+        if (filePath) await deleteFile(filePath);
+
+        await existVidData.deleteOne();
+      }
+
       if (req.file) vidData.url = `uploads/prizeVideo/${req.file.filename}`;
 
       const newPrizeVideo = new PrizeVideo(vidData);
       await newPrizeVideo.save();
-      res.send({ status: 1 });
+
+      existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
       res.send({ status: 0 });
     }

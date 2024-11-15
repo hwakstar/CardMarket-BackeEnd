@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cardDeliverSchema = new mongoose.Schema(
   {
     user_id: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
-    prizes: { type: Array, required: true },
+    prize: { type: Object, required: true },
     status: { type: String, required: true, default: "Pending" },
   },
   {
