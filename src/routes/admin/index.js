@@ -20,7 +20,6 @@ const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
 const PrizeVideo = require("../../models/prizeVideo");
-const Gacha = require("../../models/gacha");
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -367,12 +366,14 @@ router.post("/chang_auth", auth, async (req, res) => {
 });
 
 /* Deliever management */
-router.get("/get_deliver", auth, async (req, res) => {
-  CardDeliver.find()
-    .then((deliver) => {
-      return res.send({ status: 1, deliverData: deliver });
-    })
-    .catch((err) => res.send({ status: 0, err: err }));
+router.get("/deliveries", auth, async (req, res) => {
+  try {
+    console.log("get deliveries");
+    const delivers = await CardDeliver.find();
+    res.send({ status: 1, deliveries: delivers });
+  } catch (error) {
+    res.send({ status: 0, err: err });
+  }
 });
 
 router.post("/set_deliver_status", auth, async (req, res) => {
