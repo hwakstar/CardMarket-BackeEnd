@@ -452,4 +452,19 @@ router.delete("/del_shipping_address/:id", auth, async (req, res) => {
   }
 });
 
+// get all shipping address of user
+router.get("/getUserData/:id", auth, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const userData = await Users.findOne({ _id: id }).populate(
+      "shipAddress_id"
+    );
+
+    res.send({ status: 1, userData: userData });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
 module.exports = router;

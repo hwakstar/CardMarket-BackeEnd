@@ -13,7 +13,6 @@ const gachaSchema = new mongoose.Schema(
     total_number: { type: Number, default: 0 },
     isRelease: { type: Boolean, default: false },
     remain_prizes: { type: Array },
-    poped_prizes: { type: Array },
   },
   {
     timestamps: true,

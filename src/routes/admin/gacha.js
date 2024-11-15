@@ -10,8 +10,9 @@ const deleteFile = require("../../utils/delete");
 const Gacha = require("../../models/gacha");
 const adminSchemas = require("../../models/admin");
 const Users = require("../../models/user");
-const CardDeliver = require("../../models/cardDeliver");
 const PointLog = require("../../models/pointLog");
+const PrizeVideo = require("../../models/prizeVideo");
+const CardDeliver = require("../../models/cardDeliver");
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
@@ -231,14 +232,33 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // Test Mode
     // Draw prize of gach by rarity (random currently) and add it into poped prize
 
+    // Get drawedPrizes list randomly
+    // Create an array to keep track of available indices
+    let availableIndices = Array.from(gacha.remain_prizes.keys());
     for (let i = 0; i < drawPrizesNum; i++) {
-      // Get drawedPrizes list randomly
-      const index = Math.floor(Math.random() * gacha.remain_prizes.length);
-      drawedPrizes.push(gacha.remain_prizes[index]);
-    }
+      if (availableIndices.length === 0) {
+        break; // Exit if there are no more unique indices
+      }
 
-    // // Update Gacha
-    // await gacha.save();
+      // Get a random index from the available indices
+      const randomIndex = Math.floor(Math.random() * availableIndices.length);
+      const selectedIndex = availableIndices[randomIndex];
+
+      // Find the video for the selected prize
+      const video = await PrizeVideo.findOne({
+        kind: gacha.remain_prizes[selectedIndex].kind,
+      });
+
+      // Assign video URL and gacha_id to the selected prize
+      gacha.remain_prizes[selectedIndex].video = video.url;
+      gacha.remain_prizes[selectedIndex].gacha_id = gachaId;
+
+      // Add the selected prize to the drawn prizes
+      drawedPrizes.push(gacha.remain_prizes[selectedIndex]);
+
+      // Remove the selected index from available indices
+      availableIndices.splice(randomIndex, 1);
+    }
 
     // Update remain points of user
     userData.point_remain -= drawPoints;
@@ -255,27 +275,52 @@ router.post("/draw_gacha", auth, async (req, res) => {
     });
     await newPointLog.save();
 
-    // // Add drawedPrizes into popoed_prizes
-    // gacha.poped_prizes.push(gacha.remain_prizes[index]);
-
-    // // Remove drawedPrize from gacha remain_prizes
-    // gacha.remain_prizes = gacha.remain_prizes.filter(
-    //   (prize) => prize._id != drawedPrizes[i]._id
-    // );
-
-    // // New Card Deliver Data
-    // const newDeliver = new CardDeliver({
-    //   user_id: userData._id,
-    //   user_name: userData.name,
-    //   gacha_id: gacha._id,
-    //   gacha_name: gacha.name,
-    //   gacha_price: gacha.price,
-    //   prizes: drawedPrizes,
-    //   status: "Pending",
-    // });
-    // await newDeliver.save();
-
     res.send({ status: 1, prizes: drawedPrizes });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+router.post("/setNotSelectedPrizes", auth, async (req, res) => {
+  const { prizes, user } = req.body;
+
+  try {
+    if (prizes && prizes.length !== 0) {
+      const userData = await Users.findOne({ _id: user._id });
+      const gacha = await Gacha.findOne({ _id: prizes[0].gacha_id });
+
+      for (let i = 0; i < prizes.length; i++) {
+        // Add drawedPrizes into user notSelectedPrizes
+        userData.notselected_prizes.push(prizes[i]);
+
+        // Remove drawedPrize from gacha remainPrizes
+        gacha.remain_prizes = gacha.remain_prizes.filter(
+          (prize) => prize._id.toString() !== prizes[i]._id
+        );
+      }
+
+      // Update gacha & userData
+      await gacha.save();
+      await userData.save();
+
+      res.send({ status: 1 });
+    }
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+router.post("/shipping", auth, async (req, res) => {
+  const { popedPrizes, returnedPrizes, cashback, user } = req.body;
+
+  try {
+    // Add
+    const updatedPrizes = popedPrizes.map((prize) => ({
+      ...prize,
+      status: "pending",
+    }));
+
+    res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0 });
   }
