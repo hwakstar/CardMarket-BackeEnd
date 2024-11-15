@@ -70,7 +70,6 @@ const admin = require("./src/routes/admin");
 const user = require("./src/routes/user");
 const gacha = require("./src/routes/admin/gacha");
 const point = require("./src/routes/user/point");
-const payment = require("./src/routes/payment");
 const mail = require("./src/routes/mail");
 // Admin business router
 app.use("/admin", admin);
@@ -79,8 +78,6 @@ app.use("/admin/gacha", gacha);
 app.use("/user", user);
 app.use("/user/point", point);
 app.use("/mail", mail);
-// Payment router
-app.use("/payment", payment);
 app.get("/status", (req, res) => {
   res.send({ msg: "Server is running." });
 });
