@@ -12,7 +12,6 @@ const adminSchemas = require("../../models/admin");
 const Users = require("../../models/user");
 const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
-const CardDeliver = require("../../models/cardDeliver");
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
@@ -174,8 +173,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
   const { gachaId, counts, user } = req.body;
 
   try {
-    // Find Gacha to draw
     const gacha = await Gacha.findOne({ _id: gachaId });
+    const userData = await Users.findOne({ _id: user._id });
 
     // get total number of remain prizes
     const remainPrizesNum = gacha.remain_prizes.length;
@@ -189,50 +188,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // return if remain prizes is less than drawing prizes
     if (remainPrizesNum < drawPrizesNum) return res.send({ status: 0, msg: 0 });
     // return if remain points is less than drawing points
-    const userData = await Users.findOne({ _id: user._id });
     if (userData.point_remain < drawPoints)
       return res.send({ status: 0, msg: 1 });
 
-    let drawedPrizes = [];
-
-    // Real Mode here
-    // // if draw counts and remain prize counts are the same
-    // if (drawCounts === remainPrizeCounts) {
-    //   // if gacha has last prize, add last prize into drawedPrizes
-    //   if (gacha.last_prize && Object.entries(gacha.last_prize).length !== 0) {
-    //     drawedPrizes.push(gacha.last_prize);
-    //     gacha.last_prize = {};
-    //     gacha.last_effect = true;
-    //     existLastFlag = true;
-    //   }
-    // }
-
-    // // if remain prize is exist, add all remaining prizes into popped prize
-    // if (gacha.remain_prizes.length > 0) {
-    //   // check last prize exist
-    //   const counts =
-    //     gacha.last_prize &&
-    //     Object.entries(gacha.last_prize).length !== 0 &&
-    //     drawCounts >= remainPrizeCounts
-    //       ? drawCounts - 1
-    //       : drawCounts;
-
-    //   for (let i = 0; i < counts; i++) {
-    //     // Get drawedPrizes list
-    //     const index = Math.floor(Math.random() * gacha.remain_prizes.length);
-    //     drawedPrizes.push(gacha.remain_prizes[index]);
-
-    //     // Remove drawedPrize from gacha remain_prize list
-    //     gacha.remain_prizes = gacha.remain_prizes.filter(
-    //       (prize) => prize._id != drawedPrizes[i]._id
-    //     );
-    //   }
-    // }
-
-    // Test Mode
-    // Draw prize of gach by rarity (random currently) and add it into poped prize
-
     // Get drawedPrizes list randomly
+    let drawedPrizes = [];
     // Create an array to keep track of available indices
     let availableIndices = Array.from(gacha.remain_prizes.keys());
     for (let i = 0; i < drawPrizesNum; i++) {
@@ -260,8 +220,21 @@ router.post("/draw_gacha", auth, async (req, res) => {
       availableIndices.splice(randomIndex, 1);
     }
 
+    // Add drawedPrizes into optainedPrizes of user
+    for (let i = 0; i < drawedPrizes.length; i++) {
+      userData.obtained_prizes.push(drawedPrizes[i]);
+
+      // Remove drawedPrize from gacha remainPrizes
+      gacha.remain_prizes = gacha.remain_prizes.filter(
+        (prize) => prize._id !== drawedPrizes[i]._id
+      );
+    }
+
     // Update remain points of user
     userData.point_remain -= drawPoints;
+
+    // Update gacha & userData
+    await gacha.save();
     await userData.save();
 
     // Add new points log
@@ -281,44 +254,44 @@ router.post("/draw_gacha", auth, async (req, res) => {
   }
 });
 
-router.post("/setNotSelectedPrizes", auth, async (req, res) => {
-  const { prizes, user } = req.body;
-
-  try {
-    if (prizes && prizes.length !== 0) {
-      const userData = await Users.findOne({ _id: user._id });
-      const gacha = await Gacha.findOne({ _id: prizes[0].gacha_id });
-
-      for (let i = 0; i < prizes.length; i++) {
-        // Add drawedPrizes into user notSelectedPrizes
-        userData.notselected_prizes.push(prizes[i]);
-
-        // Remove drawedPrize from gacha remainPrizes
-        gacha.remain_prizes = gacha.remain_prizes.filter(
-          (prize) => prize._id.toString() !== prizes[i]._id
-        );
-      }
-
-      // Update gacha & userData
-      await gacha.save();
-      await userData.save();
-
-      res.send({ status: 1 });
-    }
-  } catch (error) {
-    res.send({ status: 0 });
-  }
-});
-
 router.post("/shipping", auth, async (req, res) => {
-  const { popedPrizes, returnedPrizes, cashback, user } = req.body;
+  const { shippingPrizes, returningPrizes, cashback, user } = req.body;
 
   try {
-    // Add
-    const updatedPrizes = popedPrizes.map((prize) => ({
-      ...prize,
-      status: "pending",
-    }));
+    const userData = await Users.findOne({ _id: user._id });
+
+    // remove returningPrizes from obtainedPrizes of user
+    for (let i = 0; i < returningPrizes.length; i++) {
+      userData.obtained_prizes = userData.obtained_prizes.filter(
+        (prize) => prize._id.toString() !== returningPrizes[i]._id
+      );
+    }
+    // add returningPrizes into remainPrizes of gacha
+    for (let i = 0; i < returningPrizes.length; i++) {
+      const gacha = await Gacha.findOne({ _id: returningPrizes[i].gacha_id });
+      delete returningPrizes[i].selected;
+      gacha.remain_prizes.push(returningPrizes[i]);
+      await gacha.save();
+    }
+
+    // Change obtainedPrizes status from notSelected to awaiting
+    userData.obtained_prizes.forEach((obtained_prize) => {
+      const found = shippingPrizes.some(
+        (shippingPrize) => shippingPrize._id === obtained_prize._id.toString()
+      );
+
+      if (found) {
+        // Change deliveryStatus of obtainedPrizes if a matching _id is found
+        obtained_prize.deliverStatus = "awaiting";
+        delete obtained_prize.selected;
+      }
+    });
+
+    // add cashback of user
+    userData.point_remain += cashback;
+
+    // update user data
+    await userData.save();
 
     res.send({ status: 1 });
   } catch (error) {

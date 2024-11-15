@@ -8,8 +8,6 @@ const auth = require("../../middleware/auth");
 const Users = require("../../models/user");
 const adminSchemas = require("../../models/admin");
 const PointLog = require("../../models/pointLog");
-const CardDeliver = require("../../models/cardDeliver");
-const Gacha = require("../../models/gacha");
 const RegisterModel = require("../../affiliate/models/RegisterModel");
 const AffUsers = require("../../affiliate/models/UsersModel");
 const Blogs = require("../../models/blog");
@@ -224,77 +222,6 @@ router.post("/update_user", auth, async (req, res) => {
   }
 });
 
-//get deliver data by user id
-router.get("/get_deliver/:user_id", auth, async (req, res) => {
-  const user_id = req.params.user_id;
-  const delievers = await CardDeliver.find({
-    user_id: user_id,
-    status: { $ne: "Delivered" },
-  });
-
-  if (delievers) {
-    res.send({ status: 1, deliver: delievers });
-  } else {
-    res.send({ status: 0, msg: "failedReq", err: err });
-  }
-});
-
-router.get("/get_cards/:user_id", auth, (req, res) => {
-  const user_id = req.params.user_id;
-  Users.findOne({ _id: user_id })
-    .then((user) => res.send({ status: 1, cards: user.obtain_cards }))
-    .catch((err) => res.send({ status: 0, err: err }));
-});
-
-//return obtained prizes
-router.post("/return_prize", auth, async (req, res) => {
-  try {
-    const { deliver_id, prize_id } = req.body;
-
-    // Find Card that has Returned Prize from Deliver List
-    const deliver = await CardDeliver.findOne({ _id: deliver_id });
-
-    // Remove ReturnedPrize from the prizes List of Pending Card
-    const updatedDeliverPrizes = deliver.prizes.filter(
-      (prize) => prize._id.toString() !== prize_id
-    );
-    deliver.prizes = updatedDeliverPrizes;
-
-    if (deliver.prizes.length === 0) {
-      await deliver.deleteOne();
-    } else {
-      await deliver.save();
-    }
-
-    // Find Gacha that has ReturnedPrize from Gacha List
-    const gacha = await Gacha.findOne({ _id: deliver.gacha_id });
-
-    // Add ReturnedPrize into Remain Prizes List of Gacha
-    const popedPrize = gacha.poped_prizes.find(
-      (prize) => prize._id.toString() === prize_id
-    );
-    gacha.remain_prizes.push(popedPrize);
-
-    // Remove Returned Prize from PopedPrizes List of Gacha
-    const updatedPopedPrizes = gacha.poped_prizes.filter(
-      (prize) => prize._id.toString() !== prize_id
-    );
-    gacha.poped_prizes = updatedPopedPrizes;
-
-    // Save updated gacha
-    await gacha.save();
-
-    // Change PointRemain of User
-    const user = await Users.findOne({ _id: deliver.user_id });
-    user.point_remain += popedPrize.cashback;
-    await user.save();
-
-    res.send({ status: 1, msg: "successReturn" });
-  } catch (error) {
-    res.send({ status: 0, msg: "failedReturn", err: error });
-  }
-});
-
 router.delete("/del_user/:id", auth, (req, res) => {
   const id = req.params.id;
 
@@ -453,7 +380,7 @@ router.delete("/del_shipping_address/:id", auth, async (req, res) => {
 });
 
 // get all shipping address of user
-router.get("/getUserData/:id", auth, async (req, res) => {
+router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   const id = req.params.id;
 
   try {
@@ -461,7 +388,11 @@ router.get("/getUserData/:id", auth, async (req, res) => {
       "shipAddress_id"
     );
 
-    res.send({ status: 1, userData: userData });
+    res.send({
+      status: 1,
+      obtainedPrizes: userData.obtained_prizes,
+      shipAddress: userData.shipAddress_id,
+    });
   } catch (error) {
     res.send({ status: 0 });
   }
