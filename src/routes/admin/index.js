@@ -3,6 +3,7 @@ const path = require("path");
 const moment = require("moment");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
+const { ObjectId } = require("mongodb");
 
 const router = express.Router();
 
@@ -20,6 +21,8 @@ const adminSchemas = require("../../models/admin");
 const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
 const PrizeVideo = require("../../models/prizeVideo");
+const Gacha = require("../../models/gacha");
+const PoingLogs = require("../../models/pointLog");
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -131,7 +134,6 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
     trackingNumber: req.body.trackingNumber,
     deliveryCompany: req.body.deliveryCompany,
   };
-  console.log(prizeData);
 
   try {
     if (req.body.id) {
@@ -227,9 +229,7 @@ router.post(
             if (req.file) {
               await deleteFile(filePath);
             }
-          } catch (err) {
-            console.log(err);
-          }
+          } catch (err) {}
 
           adminSchemas.Point.updateOne({ _id: id }, pointData)
             .then(() => res.send({ status: 2 }))
@@ -274,9 +274,7 @@ router.delete("/del_point/:id", auth, (req, res) => {
       const filePath = path.join("./", point.img_url);
       try {
         await deleteFile(filePath);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (err) {}
       point
         .deleteOne()
         .then(() => {
@@ -368,76 +366,107 @@ router.post("/chang_auth", auth, async (req, res) => {
 /* Deliever management */
 router.get("/deliveries", auth, async (req, res) => {
   try {
-    console.log("get deliveries");
-    const delivers = await CardDeliver.find();
-    res.send({ status: 1, deliveries: delivers });
+    const users = await Users.find().populate("shipAddress_id");
+
+    let obtainedPrizes = [];
+    users.map(async (user) => {
+      for (let i = 0; i < user.obtained_prizes.length; i++) {
+        const obtainedPrize = {};
+        obtainedPrize.userId = user._id;
+        obtainedPrize.userName = user.name;
+        obtainedPrize.userEmail = user.email;
+        obtainedPrize.shipAddress = user.shipAddress_id;
+
+        const prize = user.obtained_prizes[i];
+        if (prize.deliverStatus !== "notSelected") {
+          obtainedPrize.drawId = prize.drawDate;
+          obtainedPrize.prizeId = prize._id;
+          obtainedPrize.prizeName = prize.name;
+          obtainedPrize.prizeImg = prize.img_url;
+          obtainedPrize.prizeKind = prize.kind;
+          obtainedPrize.prizeTrackingNumber = prize.trackingNumber;
+          obtainedPrize.prizeDeliveryCompany = prize.deliveryCompany;
+          obtainedPrize.prizeDeliverStatus = prize.deliverStatus;
+
+          obtainedPrizes.push(obtainedPrize);
+        }
+      }
+    });
+
+    res.send({ status: 1, prizes: obtainedPrizes });
   } catch (error) {
     res.send({ status: 0, err: err });
   }
 });
 
-router.post("/set_deliver_status", auth, async (req, res) => {
-  const { id, user_id, status } = req.body;
+router.post("/changeDeliverStatus", auth, async (req, res) => {
+  const { userId, prizeId, status, drawDate } = req.body;
 
   try {
-    const deliver = await CardDeliver.findOne({ _id: id });
+    const user = await Users.findOne({ _id: userId });
 
-    if (status === "Delivering") {
-      deliver.status = "Delivered";
-      await deliver.save();
+    const obtainedPrizes = user.obtained_prizes;
+    const targetPrize = obtainedPrizes.find((prize) =>
+      prize._id.equals(new ObjectId(prizeId))
+    );
+    targetPrize.deliverStatus = "shipped";
+    targetPrize.drawDate = drawDate;
+    await Users.updateOne({ _id: userId }, user);
 
-      const user = await Users.findOne({ _id: user_id });
-      user.obtain_cards.push(deliver);
-      await user.save();
-
-      res.send({ status: 1, msg: "successUpdated" });
-    } else {
-      if (deliver) {
-        deliver.status = "Delivering";
-        const result = await deliver.save();
-
-        if (result) {
-          res.send({ status: 1, msg: "successUpdated" });
-        }
-      }
-    }
+    res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to change status." });
   }
 });
 
 // get statistics data such as total income and gacha status
-router.get("/get_statistics", auth, async (req, res) => {
-  try {
-    const deliverCards = await CardDeliver.find();
+router.post("/statistics", auth, async (req, res) => {
+  const { pendingStartDate, deliveringStartDate } = req.body;
 
-    let totalIncome = 0;
+  try {
+    // get total income (purchase points)
+    const pointLogs = await PoingLogs.aggregate([
+      { $match: { usage: "purchasePoints" } },
+      { $group: { _id: null, totalPoints: { $sum: "$point_num" } } },
+    ]);
+
+    const users = await Users.find();
+    // get prize status
     let pendings = 0;
     let deliverings = 0;
-    let delieverd = 0;
+    users.map((user) => {
+      for (let i = 0; i < user.obtained_prizes.length; i++) {
+        const prize = user.obtained_prizes[i];
+        if (prize.deliverStatus === "awaiting") pendings++;
+        if (prize.deliverStatus === "shipped") deliverings++;
+      }
+    });
 
-    deliverCards.map((deliverCard) => {
-      switch (deliverCard.status) {
-        case "Pending":
-          pendings += deliverCard.prizes.length;
-          break;
-        case "Delivering":
-          deliverings += deliverCard.prizes.length;
-          break;
-        case "Delivered":
-          delieverd += deliverCard.prizes.length;
-          totalIncome += deliverCard.prizes.length * deliverCard.gacha_price;
-          break;
+    let periodPendings = [];
+    let periodDeliverings = [];
+    users.map((user) => {
+      for (let i = 0; i < user.obtained_prizes.length; i++) {
+        const prize = user.obtained_prizes[i];
 
-        default:
-          break;
+        if (
+          prize.deliverStatus === "awaiting" &&
+          prize.drawDate > pendingStartDate
+        )
+          periodPendings.push(prize);
+        if (
+          prize.deliverStatus === "shipped" &&
+          prize.drawDate > deliveringStartDate
+        )
+          periodDeliverings.push(prize);
       }
     });
 
     res.send({
       status: 1,
-      totalIncome: totalIncome,
-      gachaData: [pendings, deliverings, delieverd],
+      totalIncome: pointLogs[0] ? pointLogs[0].totalPoints : 0,
+      prizeStatus: [pendings, deliverings],
+      periodPendings,
+      periodDeliverings,
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });

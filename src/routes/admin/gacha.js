@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const router = express.Router();
+const { ObjectId } = require("mongodb");
 
 const auth = require("../../middleware/auth");
 
@@ -170,7 +171,7 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaId, counts, user } = req.body;
+  const { gachaId, counts, drawDate, user } = req.body;
 
   try {
     const gacha = await Gacha.findOne({ _id: gachaId });
@@ -182,8 +183,6 @@ router.post("/draw_gacha", auth, async (req, res) => {
     const drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
     // get poins of drwing prizes
     const drawPoints = gacha.price * drawPrizesNum;
-    // get draw date time of server
-    const drawDate = new Date();
 
     // return if remain prizes is less than drawing prizes
     if (remainPrizesNum < drawPrizesNum) return res.send({ status: 0, msg: 0 });
@@ -222,6 +221,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // Add drawedPrizes into optainedPrizes of user
     for (let i = 0; i < drawedPrizes.length; i++) {
+      drawedPrizes[i].drawDate = drawDate;
       userData.obtained_prizes.push(drawedPrizes[i]);
 
       // Remove drawedPrize from gacha remainPrizes
@@ -266,12 +266,21 @@ router.post("/shipping", auth, async (req, res) => {
         (prize) => prize._id.toString() !== returningPrizes[i]._id
       );
     }
+    await userData.save();
+
     // add returningPrizes into remainPrizes of gacha
     for (let i = 0; i < returningPrizes.length; i++) {
-      const gacha = await Gacha.findOne({ _id: returningPrizes[i].gacha_id });
+      const gachaId = returningPrizes[i].gacha_id;
+      const gacha = await Gacha.findOne({ _id: gachaId });
+
+      returningPrizes[i]._id = new ObjectId(returningPrizes[i]._id);
       delete returningPrizes[i].selected;
+      delete returningPrizes[i].gacha_id;
+      delete returningPrizes[i].drawDate;
+      delete returningPrizes[i].video;
       gacha.remain_prizes.push(returningPrizes[i]);
-      await gacha.save();
+
+      await Gacha.updateOne({ _id: gachaId }, gacha);
     }
 
     // Change obtainedPrizes status from notSelected to awaiting
@@ -286,12 +295,10 @@ router.post("/shipping", auth, async (req, res) => {
         delete obtained_prize.selected;
       }
     });
-
     // add cashback of user
     userData.point_remain += cashback;
-
     // update user data
-    await userData.save();
+    await Users.updateOne({ _id: user._id }, userData);
 
     res.send({ status: 1 });
   } catch (error) {
