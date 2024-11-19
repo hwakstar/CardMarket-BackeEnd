@@ -192,8 +192,12 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // Get drawedPrizes list randomly
     let drawedPrizes = [];
+    // get all prizes isn't last one
+    const gradePrizes = gacha.remain_prizes.filter(
+      (item) => item.kind !== "last_prize"
+    );
     // Create an array to keep track of available indices
-    let availableIndices = Array.from(gacha.remain_prizes.keys());
+    let availableIndices = Array.from(gradePrizes.keys());
     for (let i = 0; i < drawPrizesNum; i++) {
       if (availableIndices.length === 0) {
         break; // Exit if there are no more unique indices
@@ -205,18 +209,32 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
       // Find the video for the selected prize
       const video = await PrizeVideo.findOne({
-        kind: gacha.remain_prizes[selectedIndex].kind,
+        kind: gradePrizes[selectedIndex].kind,
       });
 
       // Assign video URL and gacha_id to the selected prize
-      gacha.remain_prizes[selectedIndex].video = video.url;
-      gacha.remain_prizes[selectedIndex].gacha_id = gachaId;
+      gradePrizes[selectedIndex].video = video.url;
+      gradePrizes[selectedIndex].gacha_id = gachaId;
 
       // Add the selected prize to the drawn prizes
-      drawedPrizes.push(gacha.remain_prizes[selectedIndex]);
+      drawedPrizes.push(gradePrizes[selectedIndex]);
 
       // Remove the selected index from available indices
       availableIndices.splice(randomIndex, 1);
+    }
+
+    // get last one prize
+    const lastOnePrize = gacha.remain_prizes.find(
+      (item) => item.kind === "last_prize"
+    );
+    // add last one prize into drawedPrizes
+    if (lastOnePrize && drawPrizesNum === gacha.remain_prizes.length) {
+      // Find the video for the selected prize
+      const video = await PrizeVideo.findOne({ kind: "last_prize" });
+      lastOnePrize.video = video.url;
+      lastOnePrize.gacha_id = gachaId;
+
+      drawedPrizes.push(lastOnePrize);
     }
 
     // Add drawedPrizes into optainedPrizes of user

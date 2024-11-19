@@ -18,10 +18,8 @@ const deleteFile = require("../../utils/delete");
 const auth = require("../../middleware/auth");
 
 const adminSchemas = require("../../models/admin");
-const CardDeliver = require("../../models/cardDeliver");
 const Users = require("../../models/user");
 const PrizeVideo = require("../../models/prizeVideo");
-const Gacha = require("../../models/gacha");
 const PoingLogs = require("../../models/pointLog");
 
 router.post("/login", async (req, res) => {
@@ -467,46 +465,6 @@ router.post("/statistics", auth, async (req, res) => {
       prizeStatus: [pendings, deliverings],
       periodPendings,
       periodDeliverings,
-    });
-  } catch (error) {
-    res.send({ status: 0, msg: "Failed to get data." });
-  }
-});
-
-// get statistics data such as total income and gacha status
-router.post("/getStatusIncome", auth, async (req, res) => {
-  try {
-    const { status, startDate } = req.body;
-
-    // make incomes array
-    const deliverCards = await CardDeliver.find({
-      status: status,
-      gacha_date: { $gte: startDate },
-    });
-
-    // Create an object to hold totals by date
-    const totalPriceByDate = {};
-
-    // Iterate over the deliverCards to sum prices by date
-    deliverCards.forEach((card) => {
-      const dateKey = moment(card.gacha_date).format("YYYY-MM-DD"); // Format date to YYYY-MM-DD
-
-      if (!totalPriceByDate[dateKey]) {
-        totalPriceByDate[dateKey] = 0; // Initialize if it doesn't exist
-      }
-
-      totalPriceByDate[dateKey] += card.gacha_price; // Add the price to the corresponding date
-    });
-
-    // Convert the result to an array if needed
-    const totalPriceArray = Object.entries(totalPriceByDate).map(
-      ([date, total]) => ({ date, total })
-    );
-
-    res.send({
-      status: 1,
-      startDate: startDate,
-      pendingIncomes: totalPriceArray,
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });
