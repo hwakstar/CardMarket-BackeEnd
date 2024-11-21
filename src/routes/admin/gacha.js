@@ -278,27 +278,33 @@ router.post("/shipping", auth, async (req, res) => {
   try {
     const userData = await Users.findOne({ _id: user._id });
 
-    // remove returningPrizes from obtainedPrizes of user
-    for (let i = 0; i < returningPrizes.length; i++) {
-      userData.obtained_prizes = userData.obtained_prizes.filter(
-        (prize) => prize._id.toString() !== returningPrizes[i]._id
-      );
-    }
-    await userData.save();
+    // return all prizes
+    if (shippingPrizes.length === 0) {
+      // remove returningPrizes from obtainedPrizes of user
+      for (let i = 0; i < returningPrizes.length; i++) {
+        userData.obtained_prizes = userData.obtained_prizes.filter(
+          (prize) => prize._id.toString() !== returningPrizes[i]._id
+        );
+      }
+      await userData.save();
 
-    // add returningPrizes into remainPrizes of gacha
-    for (let i = 0; i < returningPrizes.length; i++) {
-      const gachaId = returningPrizes[i].gacha_id;
-      const gacha = await Gacha.findOne({ _id: gachaId });
+      // add returningPrizes into remainPrizes of gacha
+      for (let i = 0; i < returningPrizes.length; i++) {
+        const gachaId = returningPrizes[i].gacha_id;
+        const gacha = await Gacha.findOne({ _id: gachaId });
 
-      returningPrizes[i]._id = new ObjectId(returningPrizes[i]._id);
-      delete returningPrizes[i].selected;
-      delete returningPrizes[i].gacha_id;
-      delete returningPrizes[i].drawDate;
-      delete returningPrizes[i].video;
-      gacha.remain_prizes.push(returningPrizes[i]);
+        returningPrizes[i]._id = new ObjectId(returningPrizes[i]._id);
+        delete returningPrizes[i].selected;
+        delete returningPrizes[i].gacha_id;
+        delete returningPrizes[i].drawDate;
+        delete returningPrizes[i].video;
+        gacha.remain_prizes.push(returningPrizes[i]);
 
-      await Gacha.updateOne({ _id: gachaId }, gacha);
+        await Gacha.updateOne({ _id: gachaId }, gacha);
+      }
+
+      // add cashback of user
+      userData.point_remain += cashback;
     }
 
     // Change obtainedPrizes status from notSelected to awaiting
@@ -313,8 +319,7 @@ router.post("/shipping", auth, async (req, res) => {
         delete obtained_prize.selected;
       }
     });
-    // add cashback of user
-    userData.point_remain += cashback;
+
     // update user data
     await Users.updateOne({ _id: user._id }, userData);
 
