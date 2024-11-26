@@ -21,7 +21,7 @@ const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 
 router.post("/register", async (req, res) => {
-  const { name, country, email, password, affId, linkId } = req.body;
+  const { name, country, email, password, affId, linkId, userId } = req.body;
 
   try {
     // check email exist
@@ -42,17 +42,26 @@ router.post("/register", async (req, res) => {
     };
 
     // add affiliate id if user introduced by affiliate
-    if (affId) userObj.aff_id = affId;
+    if (affId && affId !== "null") userObj.aff_id = affId;
 
     // add new rank id
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
 
+    // if new user is someone who invites by another user
+    if (userId && userId !== "null") {
+      userObj.point_remain = 1000;
+
+      const inviter = await Users.findOne({ _id: userId });
+      inviter.point_remain += 1000;
+      await Users.updateOne({ _id: userId }, inviter);
+    }
+
     // save new user into db
     const newUser = await new Users(userObj).save();
 
     // if new user is someone invited by affiliate
-    if (affId && linkId) {
+    if (affId && affId !== "null" && linkId && linkId !== "null") {
       // add affiliate status for register counts
       const registerByLink = new RegisterModel({
         aff_id: affId,
