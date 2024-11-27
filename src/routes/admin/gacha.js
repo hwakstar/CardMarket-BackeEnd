@@ -92,7 +92,7 @@ router.get("/set_release/:id", auth, async (req, res) => {
 
 // set prize to gacha
 router.post("/set_prize", auth, async (req, res) => {
-  const { gachaId, prizeId } = req.body;
+  const { gachaId, prizeId, order } = req.body;
 
   try {
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
@@ -119,8 +119,23 @@ router.post("/set_prize", auth, async (req, res) => {
       );
       gacha.remain_prizes = noLastPrize;
     }
-    gacha.remain_prizes.push(prize);
-    gacha.total_number += 1;
+
+    const newPrize = {
+      _id: prize._id,
+      img_url: prize.img_url,
+      name: prize.name,
+      cashback: prize.cashback,
+      kind: prize.kind,
+      trackingNumber: prize.trackingNumber,
+      deliveryCompany: prize.deliveryCompany,
+      status: prize.status,
+      deliverStatus: prize.deliverStatus,
+      createdAt: prize.createdAt,
+    };
+    if (order) newPrize.order = order;
+
+    gacha.remain_prizes.push(newPrize);
+    if (order != 0) gacha.total_number += 1;
     await gacha.save();
 
     res.send({ status: 1 });
@@ -139,11 +154,14 @@ router.post("/unset_prize", auth, async (req, res) => {
     await prize.save();
 
     const gacha = await Gacha.findOne({ _id: gachaId });
+    const targetPrize = gacha.remain_prizes.find((item) => item._id == prizeId);
+    const order = targetPrize.order;
+
     const remainPrizes = gacha.remain_prizes.filter(
       (data) => data._id != prizeId
     );
     gacha.remain_prizes = remainPrizes;
-    gacha.total_number -= 1;
+    if (order != 0) gacha.total_number -= 1;
     gacha.save();
 
     res.send({ status: 1 });
@@ -178,7 +196,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
     const userData = await Users.findOne({ _id: user._id });
 
     // get total number of remain prizes
-    const remainPrizesNum = gacha.remain_prizes.length;
+    const remainPrizesNum = gacha.remain_prizes.filter(
+      (item) => item.order != 0
+    ).length;
     // get number of drawing prizes
     const drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
     // get poins of drwing prizes
@@ -194,47 +214,50 @@ router.post("/draw_gacha", auth, async (req, res) => {
     let drawedPrizes = [];
     // get all prizes isn't last one
     const gradePrizes = gacha.remain_prizes.filter(
-      (item) => item.kind !== "last_prize"
+      (item) => item.kind !== "last_prize" && item.order != 0
     );
-    // Create an array to keep track of available indices
-    let availableIndices = Array.from(gradePrizes.keys());
-    for (let i = 0; i < drawPrizesNum; i++) {
-      if (availableIndices.length === 0) {
-        break; // Exit if there are no more unique indices
-      }
 
-      // Get a random index from the available indices
-      const randomIndex = Math.floor(Math.random() * availableIndices.length);
-      const selectedIndex = availableIndices[randomIndex];
+    // Sort the array by the 'order' property
+    gradePrizes.sort((a, b) => {
+      // Handle cases where 'order' might be undefined
+      const orderA = a.order ? parseInt(a.order, 10) : Infinity; // Use Infinity for undefined
+      const orderB = b.order ? parseInt(b.order, 10) : Infinity; // Use Infinity for undefined
 
-      // Find the video for the selected prize
-      const video = await PrizeVideo.findOne({
-        kind: gradePrizes[selectedIndex].kind,
-      });
-
-      // Assign video URL and gacha_id to the selected prize
-      gradePrizes[selectedIndex].video = video.url;
-      gradePrizes[selectedIndex].gacha_id = gachaId;
-
-      // Add the selected prize to the drawn prizes
-      drawedPrizes.push(gradePrizes[selectedIndex]);
-
-      // Remove the selected index from available indices
-      availableIndices.splice(randomIndex, 1);
-    }
+      return orderA - orderB; // Sort in ascending order
+    });
 
     // get last one prize
     const lastOnePrize = gacha.remain_prizes.find(
       (item) => item.kind === "last_prize"
     );
+
     // add last one prize into drawedPrizes
-    if (lastOnePrize && drawPrizesNum === gacha.remain_prizes.length) {
+    if (
+      lastOnePrize &&
+      drawPrizesNum ===
+        gacha.remain_prizes.filter((item) => item.order != 0).length
+    ) {
       // Find the video for the selected prize
       const video = await PrizeVideo.findOne({ kind: "last_prize" });
       lastOnePrize.video = video.url;
       lastOnePrize.gacha_id = gachaId;
 
-      drawedPrizes.push(lastOnePrize);
+      gradePrizes.push(lastOnePrize);
+    }
+
+    // add grade prizes into drawedprizs list
+    for (let i = 0; i < drawPrizesNum; i++) {
+      // Find the video for the selected prize
+      const video = await PrizeVideo.findOne({
+        kind: gradePrizes[i].kind,
+      });
+
+      // Assign video URL and gacha_id to the selected prize
+      gradePrizes[i].video = video.url;
+      gradePrizes[i].gacha_id = gachaId;
+
+      // Add the selected prize to the drawn prizes
+      drawedPrizes.push(gradePrizes[i]);
     }
 
     // Add drawedPrizes into optainedPrizes of user
