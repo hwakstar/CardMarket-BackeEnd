@@ -27,9 +27,9 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Oripa frontend
-app.use(express.static(path.join(__dirname, "Oripa")));
+// app.use(express.static(path.join(__dirname, "oripa")));
 // Affiliate frontend
-app.use(express.static(path.join(__dirname, "Affiliate")));
+app.use(express.static(path.join(__dirname, "affiliate")));
 
 // Serve the uploads folder statically
 app.use(
@@ -95,10 +95,14 @@ app.use("/api/affiliate/status/", affiliate_status);
 app.use("/api/affiliate/admin/", affiliate_admin);
 app.use("/api/affiliate/link/", affiliate_link);
 
-// The "catchall" handler: for any request that doesn't match one above, send back the React app.
+// Oripa Frontend
 // app.get("/", (req, res) => {
-//   res.sendFile(path.join(__dirname, "Oripa", "index.html"));
+//   res.sendFile(path.join(__dirname, "oripa", "index.html"));
 // });
+// Affiliate Frontend
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "affiliate", "index.html"));
+});
 
 // Create HTTPS server
 // https.createServer(options, app).listen(port, () => {
