@@ -8,7 +8,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 3000;
 
 // // Load SSL certificate and key
 // const options = {
@@ -27,9 +27,9 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Oripa frontend
-// app.use(express.static(path.join(__dirname, "oripa")));
+app.use(express.static(path.join(__dirname, "oripa")));
 // Affiliate frontend
-app.use(express.static(path.join(__dirname, "affiliate")));
+// app.use(express.static(path.join(__dirname, "affiliate")));
 
 // Serve the uploads folder statically
 app.use(
@@ -96,13 +96,13 @@ app.use("/api/affiliate/admin/", affiliate_admin);
 app.use("/api/affiliate/link/", affiliate_link);
 
 // Oripa Frontend
-// app.get("/", (req, res) => {
-//   res.sendFile(path.join(__dirname, "oripa", "index.html"));
-// });
-// Affiliate Frontend
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "affiliate", "index.html"));
+  res.sendFile(path.join(__dirname, "oripa", "index.html"));
 });
+// Affiliate Frontend
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(__dirname, "affiliate", "index.html"));
+// });
 
 // Create HTTPS server
 // https.createServer(options, app).listen(port, () => {
