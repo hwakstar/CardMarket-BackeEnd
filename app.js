@@ -99,6 +99,10 @@ app.use("/api/affiliate/link/", affiliate_link);
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "oripa", "index.html"));
 });
+// Catch-all handler for any other routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "oripa", "index.html"));
+});
 // Affiliate Frontend
 // app.get("/", (req, res) => {
 //   res.sendFile(path.join(__dirname, "affiliate", "index.html"));
