@@ -23,6 +23,16 @@ const prizeSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Rubbish
+const rubbishSchema = new Schema({
+  img_url: { type: String },
+  name: { type: String },
+  cashback: { type: Number },
+  status: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+
 // Point
 const pointSchema = new Schema({
   point_num: { type: Number, required: true },
@@ -69,6 +79,7 @@ const AdminSchema = new Schema({
 
 const Category = mongoose.model("Category", categorySchema, "category");
 const Prize = mongoose.model("Prize", prizeSchema, "prize");
+const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
 const Point = mongoose.model("Point", pointSchema, "point");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");
@@ -79,6 +90,7 @@ const Administrator = mongoose.model("Admin", AdminSchema, "admin");
 const adminSchemas = {
   Category: Category,
   Prize: Prize,
+  Rubbish: Rubbish,
   Point: Point,
   Rank: Rank,
   Terms: Terms,

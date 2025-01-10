@@ -40,6 +40,10 @@ app.use(
   "/uploads/prize",
   express.static(path.join(__dirname, "uploads/prize"))
 );
+app.use(
+  "/uploads/rubbish",
+  express.static(path.join(__dirname, "uploads/rubbish"))
+);
 app.use("/template", express.static(path.join(__dirname, "template")));
 app.use(
   "/uploads/point",

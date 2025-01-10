@@ -8,6 +8,7 @@ const { ObjectId } = require("mongodb");
 const router = express.Router();
 
 const uploadPrize = require("../../utils/multer/prize_multer");
+const uploadRubbish = require("../../utils/multer/rubbish_multer");
 const uploadPoint = require("../../utils/multer/point_multer");
 const uploadRank = require("../../utils/multer/rank_multer");
 const uploadLogo = require("../../utils/multer/logo_multer");
@@ -172,13 +173,71 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
   }
 });
 
+/* Rubbish Management */
+router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
+  const rubbishData = {
+    name: req.body.name,
+    cashback: req.body.cashBack,
+  };
+
+  try {
+    if (req.body.id) {
+      if (req.file) {
+        const rubbish = await adminSchemas.Rubbish.findOne({ _id: req.body.id });
+
+        const filename = rubbish.img_url;
+        const filePath = path.join("./", filename);
+        await deleteFile(filePath);
+
+        rubbishData.img_url = `uploads/rubbish/${req.file.filename}`;
+      }
+
+      const result = await adminSchemas.Rubbish.updateOne(
+        { _id: req.body.id },
+        rubbishData
+      );
+
+      if (result) {
+        res.send({ status: 1, msg: "successUpdated" });
+      } else {
+        res.send({ status: 0, msg: "failedUpdated" });
+      }
+    } else {
+      rubbishData.img_url = `uploads/rubbish/${req.file.filename}`;
+
+      const newRubbish = new adminSchemas.Rubbish(rubbishData);
+      const result = await newRubbish.save();
+
+      if (result) {
+        res.send({ status: 1, msg: "successAdded" });
+      } else {
+        res.send({ status: 0, msg: "failedAdded" });
+      }
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
+
 router.get("/prize", auth, async (req, res) => {
   try {
     const prizes = await adminSchemas.Prize.find({ status: false }).sort({
       createdAt: -1,
     });
-
+    console.log(prizes);
     res.send({ status: 1, prizes: prizes });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+router.get("/rubbish", auth, async (req, res) => {
+  try {
+    const rubbishs = await adminSchemas.Rubbish.find({ status: false }).sort({
+      createdAt: -1,
+    });
+
+    res.send({ status: 1, rubbishs: rubbishs });
   } catch (error) {
     res.send({ status: 0 });
   }
@@ -194,6 +253,25 @@ router.delete("/prize/:id", auth, async (req, res) => {
     try {
       await deleteFile(filePath);
       prize.deleteOne();
+      res.send({ status: 1, msg: "successDeleted" });
+    } catch (err) {
+      res.send({ status: 0, msg: "failedDeleted" });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
+
+router.delete("/rubbish/:id", auth, async (req, res) => {
+  try {
+    const rubbish = await adminSchemas.Rubbish.findOne({ _id: req.params.id });
+
+    const filename = rubbish.img_url;
+    const filePath = path.join("./", filename);
+
+    try {
+      await deleteFile(filePath);
+      rubbish.deleteOne();
       res.send({ status: 1, msg: "successDeleted" });
     } catch (err) {
       res.send({ status: 0, msg: "failedDeleted" });
@@ -324,6 +402,7 @@ router.post("/add_admin", async (req, res) => {
         category: { read: true, write: false, delete: false },
         prizeVideo: { read: true, write: false, delete: false },
         prize: { read: true, write: false, delete: false },
+        rubbish: { read: true, write: false, delete: false },
         gacha: { read: true, write: false, delete: false },
         point: { read: true, write: false, delete: false },
         delivering: { read: true, write: false, delete: false },
@@ -633,6 +712,7 @@ router.post(
 
 // get theme
 router.get("/getThemeData", async (req, res) => {
+  console.log("this is test");
   try {
     const themes = await adminSchemas.Themes.find();
     if (themes.length > 0) {
