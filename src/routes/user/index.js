@@ -56,10 +56,10 @@ router.post("/register", async (req, res) => {
       await Users.updateOne({ _id: userId }, inviter);
     }
 
-    // save new user into db
-    const newUser = await new Users(userObj).save();
     console.log("new userObj================");
     console.log(userObj);
+    // save new user into db
+    const newUser = await new Users(userObj).save();
 
     console.log("new Users================");
     console.log(newUser);
