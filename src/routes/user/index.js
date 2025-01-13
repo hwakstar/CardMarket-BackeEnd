@@ -42,7 +42,8 @@ router.post("/register", async (req, res) => {
 
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
-
+    console.log("new userObj================45");
+    console.log(userObj);
     // add new rank id
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
