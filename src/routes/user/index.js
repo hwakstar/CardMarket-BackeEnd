@@ -22,7 +22,7 @@ const userRankData = require("../../utils/userRnkData");
 
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId } = req.body;
-
+  console.log(req.body);
   try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
