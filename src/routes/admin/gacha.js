@@ -13,6 +13,7 @@ const adminSchemas = require("../../models/admin");
 const Users = require("../../models/user");
 const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
+const Rubbish = require('../../models/rubbish');
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
@@ -194,13 +195,22 @@ router.post("/draw_gacha", auth, async (req, res) => {
   try {
     const gacha = await Gacha.findOne({ _id: gachaId });
     const userData = await Users.findOne({ _id: user._id });
+    const rubbish = await Rubbish.find();
 
     // get total number of remain prizes
     const remainPrizesNum = gacha.remain_prizes.filter(
       (item) => item.order != 0
     ).length;
+    // get total number of rubbish
+    let rubbishNum = rubbish.length;
     // get number of drawing prizes
-    const drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
+    let drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
+
+    // get random value as a drawPrizesNum
+    drawPrizesNum = Math.floor(counts * Math.random() * 0.3);
+    if (rubbishNum < counts - drawPrizesNum) drawPrizesNum = counts - rubbishNum;
+    // get rubbish number to select
+    const drawRubbishNum = counts - drawPrizesNum;
     // get poins of drwing prizes
     const drawPoints = gacha.price * drawPrizesNum;
 
@@ -260,21 +270,46 @@ router.post("/draw_gacha", auth, async (req, res) => {
       drawedPrizes.push(gradePrizes[i]);
     }
 
+    // Remove rubbish container
+    let removeRubbish = [];
+    // add rubbish into drawedeprizs list
+    for (let i = 0; i < drawRubbishNum; i++) {
+      // Find the random value;
+      const id = Math.floor(Math.random() *  rubbishNum);
+
+      // Add the selected rubbish to the drawn prizes
+      drawedPrizes.push(rubbish[i]);
+      
+      rubbish[i].total_number -= 1;
+      if (!rubbish[i].total_number) {
+        removeRubbish.push(rubbish[i]);
+        rubbish.splice(id, 1); 
+        rubbishNum--;
+      }
+    }
+
+    // Update Rubbish
+    let reRubNum = removeRubbish.length;
+    for (let i = 0; i < rubbishNum; i++)  await Rubbish.updateOne({ _id: rubbish[i]._id }, { total_number: rubbish[i].total_number });
+    for (let i = 0; i < reRubNum; i++) await Rubbish.deleteOne({_id: removeRubbish[i]._id});
+
     // Add drawedPrizes into optainedPrizes of user
     for (let i = 0; i < drawedPrizes.length; i++) {
       drawedPrizes[i].drawDate = drawDate;
       userData.obtained_prizes.push(drawedPrizes[i]);
 
       // Remove drawedPrize from gacha remainPrizes
-      gacha.remain_prizes = gacha.remain_prizes.filter(
-        (prize) => prize._id !== drawedPrizes[i]._id
-      );
+      if (i < drawPrizesNum) {
+        gacha.remain_prizes = gacha.remain_prizes.filter(
+          (prize) => prize._id !== drawedPrizes[i]._id
+        );
+      }
     }
 
     // Update remain points of user
     userData.point_remain -= drawPoints;
 
-    // Update gacha & userData
+    // Update gacha & userData & rubbish
     await gacha.save();
     await userData.save();
 

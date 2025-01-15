@@ -178,6 +178,7 @@ router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
   const rubbishData = {
     name: req.body.name,
     cashback: req.body.cashBack,
+    totalNumber: req.body.totalNumber,
   };
 
   try {
