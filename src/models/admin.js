@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const Rubbish = require('./rubbish');
 
 // Gacha's main category
 const categorySchema = new Schema({
@@ -21,6 +20,17 @@ const prizeSchema = new Schema({
   deliveryCompany: { type: String },
   status: { type: Boolean, default: false },
   deliverStatus: {type: String, default: "notSelected"},
+  createdAt: { type: Date, default: Date.now },
+});
+
+// Rubbish
+const rubbishSchema = new mongoose.Schema({
+  img_url: { type: String },
+  name: { type: String },
+  cashback: { type: Number },
+  totalNumber: {type: Number},
+  status: { type: Boolean, default: false },
+  count: {type: Number, default: 0},
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -70,6 +80,7 @@ const AdminSchema = new Schema({
 
 const Category = mongoose.model("Category", categorySchema, "category");
 const Prize = mongoose.model("Prize", prizeSchema, "prize");
+const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
 const Point = mongoose.model("Point", pointSchema, "point");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");

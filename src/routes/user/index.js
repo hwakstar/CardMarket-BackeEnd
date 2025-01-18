@@ -403,7 +403,7 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
     const userData = await Users.findOne({ _id: id }).populate(
       "shipAddress_id"
     );
-
+    // console.log(userData.obtained_prizes);
     res.send({
       status: 1,
       obtainedPrizes: userData.obtained_prizes,

@@ -11,8 +11,10 @@ const gachaSchema = new mongoose.Schema(
     award_rarity: { type: Number },
     order: { type: Number, default: 1 },
     total_number: { type: Number, default: 0 },
+    rubbish_total_number: { type: Number, default: 0 },
     isRelease: { type: Boolean, default: false },
     remain_prizes: { type: Array },
+    remain_rubbishs: {type: Array },
   },
   {
     timestamps: true,
