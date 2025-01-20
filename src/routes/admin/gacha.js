@@ -421,11 +421,18 @@ router.post("/shipping", auth, async (req, res) => {
 
     // return all prizes
     if (shippingPrizes.length === 0) {
-      for (let i = 0; i < returningPrizes.length; i++) {
-        userData.obtained_prizes = userData.obtained_prizes.filter(
-          (prize) => prize._id.toString() !== returningPrizes[i]._id
-        );
+      let len = returningPrizes.length;
+      let obtainedData = userData.obtained_prizes;
+      for (let i = 0; i < len; i++) {
+        let L = obtainedData.length;
+        for (let j = 0; j < L; j++) {
+          if (returningPrizes[i]._id.toString() === obtainedData[j]._id.toString()) {
+            obtainedData.splice(j, 1);
+            break;
+          }
+        }
       }
+      userData.obtained_prizes = obtainedData;
       await userData.save();
 
       // add returningPrizes into remainPrizes of gacha
