@@ -62,8 +62,7 @@ router.get("/category/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
-  const data = await Gacha.find({ category: gacha.category_id});
-
+  const data = await Gacha.find({ category: gacha.category._id});
   if (gacha) res.send({ status: 1, gacha: data });
   else res.send({ status: 0 });
 });
