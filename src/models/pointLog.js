@@ -8,6 +8,8 @@ const pointLogSchema = new mongoose.Schema(
     user_country: { type: String },
     point_num: { type: Number, required: true },
     usage: { type: String },
+    gacha: { type: String, default: '' },
+    number: {type: String, default: ''}
   },
   {
     timestamps: true,

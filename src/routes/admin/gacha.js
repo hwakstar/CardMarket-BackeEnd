@@ -197,8 +197,9 @@ router.post("/set_rubbish", auth, async (req, res) => {
     let cnt = Number(count);
     if (cnt) newRubbish.count = cnt;
 
+    gacha.rubbish_total_number += cnt;
+    gacha.total_number += cnt;
     gacha.remain_rubbishs.push(newRubbish);
-    if (count != 0) gacha.rubbish_total_number += 1;
     await gacha.save();
 
     res.send({ status: 1 });
@@ -251,7 +252,8 @@ router.post("/unset_rubbish", auth, async (req, res) => {
       (data) => data._id != rubbishId
     );
     gacha.remain_rubbishs = remainRubbishs;
-    if (count != 0) gacha.rubbish_total_number -= 1;
+    gacha.rubbish_total_number -= count;
+    gacha.total_number -= count;
     gacha.save();
 
     res.send({ status: 1 });
@@ -281,6 +283,7 @@ router.post("/upload_bulk", auth, async (req, res) => {
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
   const { gachaId, counts, drawDate, user } = req.body;
+  let countkind = counts;
 
   try {
     const gacha = await Gacha.findOne({ _id: gachaId });
@@ -297,11 +300,10 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // get number of drawing prizes
     let drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
-    if (counts === 'all') counts = remainPrizesNum;
+    if (counts === 'all') counts = remainPrizesNum + gacha.rubbish_total_number;
 
     // get random value as a drawPrizesNum
     drawPrizesNum = Math.round(counts * Math.random());
-    // console.log(drawPrizesNum)
     // if (remainRubbishsNum < counts - drawPrizesNum) drawPrizesNum = counts - remainRubbishsNum;
     // get rubbish number to select
     const drawRubbishNum = counts - drawPrizesNum;
@@ -376,6 +378,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       gradeRubbishs[id].gacha_id = gachaId;
 
       drawedPrizes.push(gradeRubbishs[id]);
+      gacha.rubbish_total_number -= 1;
       
       gradeRubbishs[id].count -= 1;
       if (gradeRubbishs[id].count === 0) {
@@ -415,6 +418,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
       user_country: userData.country,
       point_num: drawPoints,
       usage: "drawGacha",
+      gacha: gacha.name,
+      number: countkind
     });
     await newPointLog.save();
     res.send({ status: 1, prizes: drawedPrizes });
@@ -468,6 +473,7 @@ router.post("/shipping", auth, async (req, res) => {
             rub.count = 1;
             gacha.remain_rubbishs.push(rub);
           }
+          gacha.rubbish_total_number += 1;
         }
         else gacha.remain_prizes.push(returningPrizes[i]);
 
