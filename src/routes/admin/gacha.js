@@ -57,6 +57,16 @@ router.get("/:id", async (req, res) => {
   if (gacha) res.send({ status: 1, gacha: gacha });
   else res.send({ status: 0 });
 });
+// get gacha by gacha category.id
+router.get("/category/:id", async (req, res) => {
+  const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
+    "category"
+  );
+  const data = await Gacha.find({ category: gacha.category_id});
+
+  if (gacha) res.send({ status: 1, gacha: data });
+  else res.send({ status: 0 });
+});
 
 // delete gacha
 router.delete("/:id", async (req, res) => {
