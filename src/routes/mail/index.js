@@ -124,7 +124,6 @@ router.post("/gmail-send", async (req, res) => {
     // });
     res.send({status: 1});
   } catch (error) {
-    console.log(error);
     res.send(error);
   }
 });

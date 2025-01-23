@@ -304,13 +304,12 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // get random value as a drawPrizesNum
     drawPrizesNum = Math.round(counts * Math.random());
-    // if (remainRubbishsNum < counts - drawPrizesNum) drawPrizesNum = counts - remainRubbishsNum;
+    if (remainPrizesNum < drawPrizesNum) drawPrizesNum = remainPrizesNum;
     // get rubbish number to select
     const drawRubbishNum = counts - drawPrizesNum;
     // get poins of drwing prizes
     const drawPoints = gacha.price * counts;
-    // return if remain prizes is less than drawing prizes
-    if (remainPrizesNum < drawPrizesNum) return res.send({ status: 0, msg: 0 });
+
     // return if remain points is less than drawing points
     if (userData.point_remain < drawPoints)
       return res.send({ status: 0, msg: 1 });
@@ -505,5 +504,46 @@ router.post("/shipping", auth, async (req, res) => {
     res.send({ status: 0 });
   }
 });
+
+// get time selected gacha
+router.get("/time/:userid/:gachaid", auth, async (req, res) => {
+  const userid = req.params.userid;
+  const gachaid = req.params.gachaid;
+
+  try{
+    const userData = await Users.findOne({ _id: userid});
+    const gacha = userData.gacha_time.find((gacha) => gacha.id == gachaid);
+    res.send({
+      status: 1,
+      gacha: gacha.time,
+    });
+  } catch (error) {
+    res.send({ status: 0});
+  };
+}) 
+
+// set time seleted gacha
+router.post("/time", auth, async (req, res) => {
+  const {userid, gachaid } = req.body;
+  try{
+    const userData = await Users.findOne({ _id: userid});
+    const gachaIndex = userData.gacha_time.findIndex((gacha) => gacha.id === gachaid);
+    const currentTime = Math.floor(Date.now() / 1000);
+
+    if (gachaIndex !== -1) {
+      // Update existing gacha time
+      userData.gacha_time[gachaIndex].time = currentTime;
+    } else {
+      // Add new gacha time
+      userData.gacha_time.push({ id: gachaid, time: currentTime});
+    }
+    await userData.save();
+    await Users.updateOne({ _id: userid}, userData);
+    
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0});
+  };
+})
 
 module.exports = router;

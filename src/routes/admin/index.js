@@ -22,6 +22,7 @@ const adminSchemas = require("../../models/admin");
 const Users = require("../../models/user");
 const PrizeVideo = require("../../models/prizeVideo");
 const PoingLogs = require("../../models/pointLog");
+const Times = require("../../models/time");
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -225,7 +226,6 @@ router.get("/prize", auth, async (req, res) => {
     const prizes = await adminSchemas.Prize.find({ status: false }).sort({
       createdAt: -1,
     });
-    console.log(prizes);
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
     res.send({ status: 0 });
@@ -435,6 +435,18 @@ router.post("/chang_auth", auth, async (req, res) => {
     const admin = await adminSchemas.Administrator.findOne({ _id: adminId });
     admin.authority = authority;
     await admin.save();
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: "failedUpdated", err: error });
+  }
+});
+
+router.post("/time", auth, async (req, res) => {
+  const { time } = req.body;
+  try {
+    const timedoc = await Times.findOne();
+    timedoc.time = Number(time);
+    await timedoc.save();
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: "failedUpdated", err: error });

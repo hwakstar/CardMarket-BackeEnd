@@ -9,6 +9,7 @@ const UserSchema = new mongoose.Schema({
   country: { type: String },
   point_remain: { type: Number, default: 0 },
   obtained_prizes: { type: Array },
+  gacha_time: {type: Array},
   active: { type: Boolean, default: true },
   aff_id: { type: String },
   shipAddress_id: {

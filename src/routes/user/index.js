@@ -16,6 +16,11 @@ const ShippingAddress = require("../../models/shipAddress");
 const AffRanks = require("../../affiliate/models/RankModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
+const Times = require("../../models/time");
+
+const Recipient = require("mailersend").Recipient;
+const EmailParams = require("mailersend").EmailParams;
+const MailerSend = require("mailersend").MailerSend;
 
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
@@ -43,7 +48,7 @@ router.post("/register", async (req, res) => {
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
     console.log("new userObj================45");
-    console.log(userObj);
+    // console.log(userObj);
     // add new rank id
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
@@ -58,12 +63,12 @@ router.post("/register", async (req, res) => {
     }
 
     console.log("new userObj================");
-    console.log(userObj);
+    // console.log(userObj);
     // save new user into db
     const newUser = await new Users(userObj).save();
 
     console.log("new Users================");
-    console.log(newUser);
+    // console.log(newUser);
     console.log("new Users================");
 
     // if new user is someone invited by affiliate
@@ -117,6 +122,30 @@ router.post("/register", async (req, res) => {
       await newAffEarn.save();
     }
 
+    // mail service
+    // const mailersend = new MailerSend({
+    //   apiKey: 'mlsn.6470c18b466c7a235405c8fb1e1757716eb680e1ad917d0bbe10c15b5cb749c3',
+    // });
+    
+    // const recipients = new Recipient("black425knight@gmail.com", "hwakstar79@gmail.com");
+    // console.log('ok1')
+
+    // const emailParams = new EmailParams()
+    //     .setFrom("Sun@trial-351ndgwxn8r4zqx8.mlsender.net", "Sun")
+    //     .setTo(recipients)
+    //     .setSubject("Subject")
+    //     .setHtml("Greetings from the team, you got this message through MailerSend1.")
+    //     .setText("Greetings from the team, you got this message through MailerSend2.");
+        
+    // mailersend.email.send(emailParams)
+    //   .then(response => {
+    //     console.log("Email sent successfully:", response);
+    //   })
+    //   .catch(error => {
+    //     console.error("Error sending email:", error);
+    //   });
+    // console.log('ok2')
+
     res.send({ status: 1, msg: "successRegistered" });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
@@ -128,6 +157,7 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await Users.findOne({ email: email });
+    const times = await Times.findOne();
 
     if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
     if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
@@ -145,6 +175,7 @@ router.post("/login", async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
+      time: times.time
     };
 
     // get rank data
@@ -187,6 +218,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
   try {
     // create user data
     const user = await Users.findOne({ _id: id });
+    const times = await Times.findOne();
     const userData = {
       _id: user._id,
       name: user.name,
@@ -196,6 +228,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
+      time: times.time
     };
 
     // get rank data
@@ -413,5 +446,7 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
     res.send({ status: 0 });
   }
 });
+
+ 
 
 module.exports = router;
