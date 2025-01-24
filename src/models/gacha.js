@@ -7,7 +7,7 @@ const gachaSchema = new mongoose.Schema(
     price: { type: Number, required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     kind: { type: Array },
-    type: { type: Number },
+    type: { type: String },
     award_rarity: { type: Number },
     order: { type: Number, default: 1 },
     total_number: { type: Number, default: 0 },
@@ -15,6 +15,7 @@ const gachaSchema = new mongoose.Schema(
     isRelease: { type: Boolean, default: false },
     remain_prizes: { type: Array },
     remain_rubbishs: {type: Array },
+    userLogs: {type: Array}
   },
   {
     timestamps: true,

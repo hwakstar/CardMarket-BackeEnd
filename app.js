@@ -72,6 +72,7 @@ app.use(
 // Routers for Oripa
 const admin = require("./src/routes/admin");
 const user = require("./src/routes/user");
+const drawLog = require("./src/routes/user/drawlog");
 const gacha = require("./src/routes/admin/gacha");
 const point = require("./src/routes/user/point");
 const mail = require("./src/routes/mail");
@@ -81,6 +82,7 @@ app.use("/admin/gacha", gacha);
 // User task router
 app.use("/user", user);
 app.use("/user/point", point);
+app.use("/user/drawlog", drawLog);
 app.use("/mail", mail);
 app.get("/status", (req, res) => {
   res.send({ msg: "Server is running." });

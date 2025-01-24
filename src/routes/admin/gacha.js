@@ -48,6 +48,20 @@ router.get("/", async (req, res) => {
   else res.send({ status: 0 });
 });
 
+// get user count by gacha id
+router.get("/count/:id", async (req, res) => {
+  const gachaid = req.params.id;
+  try {
+    const gachas = await Gacha.findOne({_id: gachaid});
+    const currentTime = Math.floor(Date.now() / 1000);
+    const count = gachas.userLogs.filter((item) => item.time >= currentTime - 86400).length;
+      res.send({status: 1, count: count});
+  } catch (err) {
+    res.send({status: 1})
+  }
+});
+
+
 // get gacha by id
 router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
@@ -504,46 +518,5 @@ router.post("/shipping", auth, async (req, res) => {
     res.send({ status: 0 });
   }
 });
-
-// get time selected gacha
-router.get("/time/:userid/:gachaid", auth, async (req, res) => {
-  const userid = req.params.userid;
-  const gachaid = req.params.gachaid;
-
-  try{
-    const userData = await Users.findOne({ _id: userid});
-    const gacha = userData.gacha_time.find((gacha) => gacha.id == gachaid);
-    res.send({
-      status: 1,
-      gacha: gacha.time,
-    });
-  } catch (error) {
-    res.send({ status: 0});
-  };
-}) 
-
-// set time seleted gacha
-router.post("/time", auth, async (req, res) => {
-  const {userid, gachaid } = req.body;
-  try{
-    const userData = await Users.findOne({ _id: userid});
-    const gachaIndex = userData.gacha_time.findIndex((gacha) => gacha.id === gachaid);
-    const currentTime = Math.floor(Date.now() / 1000);
-
-    if (gachaIndex !== -1) {
-      // Update existing gacha time
-      userData.gacha_time[gachaIndex].time = currentTime;
-    } else {
-      // Add new gacha time
-      userData.gacha_time.push({ id: gachaid, time: currentTime});
-    }
-    await userData.save();
-    await Users.updateOne({ _id: userid}, userData);
-    
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0});
-  };
-})
 
 module.exports = router;

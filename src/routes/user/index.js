@@ -175,7 +175,8 @@ router.post("/login", async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
-      time: times.time
+      time: times.time,
+      createtime: user.createdAt
     };
 
     // get rank data
@@ -219,6 +220,17 @@ router.get("/get_user/:id", auth, async (req, res) => {
     // create user data
     const user = await Users.findOne({ _id: id });
     const times = await Times.findOne();
+    const createtime = new Intl.DateTimeFormat('ja-JP', {
+      timeZone: 'Asia/Tokyo', // Specify the time zone
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false // Use 24-hour format
+    }).format(new Date(user.createdAt));
+    
     const userData = {
       _id: user._id,
       name: user.name,
@@ -228,7 +240,8 @@ router.get("/get_user/:id", auth, async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
-      time: times.time
+      time: times.time,
+      createtime: createtime
     };
 
     // get rank data
