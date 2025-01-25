@@ -16,7 +16,7 @@ const PrizeVideo = require("../../models/prizeVideo");
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
-  const { type, name, price, category, kind, awardRarity, order } = req.body;
+  const { type, name, price, category, kind, awardRarity, order, time } = req.body;
 
   try {
     const newGacha = new Gacha({
@@ -28,6 +28,7 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
       award_rarity: awardRarity,
       order: order,
       img_url: `uploads/gacha/${req.file.filename}`,
+      time: time
     });
 
     const result = await newGacha.save();
@@ -54,7 +55,8 @@ router.get("/count/:id", async (req, res) => {
   try {
     const gachas = await Gacha.findOne({_id: gachaid});
     const currentTime = Math.floor(Date.now() / 1000);
-    const count = gachas.userLogs.filter((item) => item.time >= currentTime - 86400).length;
+    const yeasterday = currentTime - currentTime % 86400 - 86400;
+    const count = gachas.userLogs.filter((item) => item.time >= yeasterday && item.time < yeasterday + 86400).length;
       res.send({status: 1, count: count});
   } catch (err) {
     res.send({status: 1})
@@ -121,6 +123,11 @@ router.post("/set_prize", auth, async (req, res) => {
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
     const gacha = await Gacha.findOne({ _id: gachaId });
 
+    if (prize.kind === "last_prize") {
+      const check = gacha.kind.filter((item) => item.value === "last_prize");
+      if (!check.length) return  res.send({status: 0});
+    }
+
     prize.status = true;
     await prize.save();
 
@@ -140,6 +147,7 @@ router.post("/set_prize", auth, async (req, res) => {
       const noLastPrize = gacha.remain_prizes.filter(
         (prize) => prize.kind !== "last_prize"
       );
+      gacha.show_prizes = noLastPrize;
       gacha.remain_prizes = noLastPrize;
     }
 
@@ -157,6 +165,7 @@ router.post("/set_prize", auth, async (req, res) => {
     };
     if (order) newPrize.order = order;
 
+    gacha.show_prizes.push(newPrize);
     gacha.remain_prizes.push(newPrize);
     if (order != 0) gacha.total_number += 1;
     await gacha.save();
@@ -238,6 +247,7 @@ router.post("/unset_prize", auth, async (req, res) => {
     const remainPrizes = gacha.remain_prizes.filter(
       (data) => data._id != prizeId
     );
+    gacha.show_prizes = remainPrizes;
     gacha.remain_prizes = remainPrizes;
     if (order != 0) gacha.total_number -= 1;
     gacha.save();

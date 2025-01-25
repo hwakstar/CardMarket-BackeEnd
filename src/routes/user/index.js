@@ -16,7 +16,6 @@ const ShippingAddress = require("../../models/shipAddress");
 const AffRanks = require("../../affiliate/models/RankModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
-const Times = require("../../models/time");
 
 const Recipient = require("mailersend").Recipient;
 const EmailParams = require("mailersend").EmailParams;
@@ -157,7 +156,6 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await Users.findOne({ email: email });
-    const times = await Times.findOne();
 
     if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
     if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
@@ -171,11 +169,11 @@ router.post("/login", async (req, res) => {
       name: user.name,
       email: user.email,
       point_remain: user.point_remain,
+      point_total: user.point_total,
       shipAddress_id: user.shipAddress_id,
       address: user.address,
       city: user.city,
       country: user.country,
-      time: times.time,
       createtime: user.createdAt
     };
 
@@ -219,7 +217,6 @@ router.get("/get_user/:id", auth, async (req, res) => {
   try {
     // create user data
     const user = await Users.findOne({ _id: id });
-    const times = await Times.findOne();
     const createtime = new Intl.DateTimeFormat('ja-JP', {
       timeZone: 'Asia/Tokyo', // Specify the time zone
       year: 'numeric',
@@ -240,7 +237,6 @@ router.get("/get_user/:id", auth, async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
-      time: times.time,
       createtime: createtime
     };
 
