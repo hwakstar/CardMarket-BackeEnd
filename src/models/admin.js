@@ -34,6 +34,15 @@ const rubbishSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Coupon
+const couponSchema = new Schema({
+  name: { type: String },
+  cashback: { type: Number },
+  code: {type: String},
+  allow: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
 // Point
 const pointSchema = new Schema({
   point_num: { type: Number, required: true },
@@ -82,6 +91,7 @@ const Category = mongoose.model("Category", categorySchema, "category");
 const Prize = mongoose.model("Prize", prizeSchema, "prize");
 const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
 const Point = mongoose.model("Point", pointSchema, "point");
+const Coupon = mongoose.model("Coupon", couponSchema, "coupon");
 const Rank = mongoose.model("Rank", rankSchema, "rank");
 const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
@@ -97,6 +107,7 @@ const adminSchemas = {
   Terms: Terms,
   Themes: Themes,
   Carousels: Carousels,
+  Coupon: Coupon,
   Administrator: Administrator,
 };
 

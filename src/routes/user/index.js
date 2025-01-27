@@ -24,13 +24,31 @@ const MailerSend = require("mailersend").MailerSend;
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 
+// Generate random code
+const generateRandomCode = (length = 8) => {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let randomCode = '';
+  for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * letters.length);
+      randomCode += letters[randomIndex];
+  }
+  return randomCode;
+}
+
 router.post("/register", async (req, res) => {
-  const { name, country, email, password, affId, linkId, userId } = req.body;
+  const { name, country, email, password, affId, linkId, userId, randomcode } = req.body;
   try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
     if (isEmailExist) {
       return res.send({ status: 0, msg: "exsitEmail" });
+    }
+
+    let generatecode = generateRandomCode();
+    while (1) {
+      const newcode = await Users.findOne({ invitecode: generatecode});
+      if (newcode === null) break;
+      generatecode = generateRandomCode();
     }
 
     // hass password
@@ -42,8 +60,9 @@ router.post("/register", async (req, res) => {
       country: country,
       email: email,
       hashedPass: hashedPassword,
+      inviteCode: generatecode,
     };
-
+  
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
     console.log("new userObj================45");
@@ -53,12 +72,23 @@ router.post("/register", async (req, res) => {
     userObj.rank_id = userRank._id;
 
     // if new user is someone who invites by another user
-    if (userId && userId !== "null") {
-      userObj.point_remain = 1000;
+    // if (userId && userId !== "null") {
+    //   userObj.point_remain = 1000;
 
-      const inviter = await Users.findOne({ _id: userId });
-      inviter.point_remain += 1000;
-      await Users.updateOne({ _id: userId }, inviter);
+    //   const inviter = await Users.findOne({ _id: userId });
+    //   inviter.point_remain += 1000;
+    //   await Users.updateOne({ _id: userId }, inviter);
+    // }
+
+    // if new user is someone who invites by randomcode
+    if (randomcode) {
+      const inviter = await Users.findOne({ inviteCode: randomcode });
+      if (inviter.inviteCount) {
+        inviter.point_remain += 300;
+        inviter.inviteCount -= 1;
+        userObj.invited = randomcode;
+        await Users.updateOne({ inviteCode: randomcode }, inviter);
+      }
     }
 
     console.log("new userObj================");
@@ -174,6 +204,9 @@ router.post("/login", async (req, res) => {
       address: user.address,
       city: user.city,
       country: user.country,
+      inviteCode: user.inviteCode,
+      inviteCount: user.inviteCount,
+      invited: user.invited,
       createtime: user.createdAt
     };
 
@@ -236,6 +269,9 @@ router.get("/get_user/:id", auth, async (req, res) => {
       shipAddress_id: user.shipAddress_id,
       address: user.address,
       city: user.city,
+      inviteCode: user.inviteCode,
+      inviteCount: user.inviteCount,
+      invited: user.invited,
       country: user.country,
       createtime: createtime
     };

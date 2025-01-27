@@ -9,6 +9,8 @@ const pointLogSchema = new mongoose.Schema(
     point_num: { type: Number, required: true },
     usage: { type: String },
     gacha: { type: String, default: '' },
+    couponname: {type: String, default: ''},
+    couponcode: {type: String, default: ''},
     number: {type: String, default: ''}
   },
   {

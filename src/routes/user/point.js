@@ -10,6 +10,9 @@ const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
 const AffRanks = require("../../affiliate/models/RankModel");
 const AffRankData = require("../../affiliate/utils/affRankData");
+const userRankData = require("../../utils/userRnkData");
+const { Rank } = require("../../models/admin");
+const adminSchemas = require("../../models/admin");
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -20,6 +23,17 @@ router.post("/purchase", auth, async (req, res) => {
   try {
     // update user remain points
     const user = await Users.findOne({ _id: user_id });
+
+    const rank = await userRankData(user._id);
+    //when first purchase, inviter add 500pt
+    console.log(rank.totalPointsAmount,user.invited )
+    if (rank.totalPointsAmount === 0 && user.invited) {
+      console.log('okkkk')
+      const inviter = await Users.findOne({inviteCode: user.invited});
+      inviter.point_remain += 500;
+      await Users.updateOne({ inviteCode: user.invited }, inviter);
+    }
+
     user.point_remain += point_num;
     await user.save();
 
@@ -84,6 +98,55 @@ router.post("/purchase", auth, async (req, res) => {
     }
 
     res.send({ status: 1, msg: "Successfully purchased points." });
+  } catch (error) {
+    res.send({ status: 0, msg: "Failed to purchase points.", error: error });
+  }
+});
+
+// add point by admincode
+router.post("/admincode", auth, async (req, res) => {
+  const { user_id, code } = req.body;
+
+  if (user_id == undefined)
+    return res.status(401).json({ msg: "authorization denied" });
+
+  try {
+    // update user remain points
+    const user = await Users.findOne({ _id: user_id });
+    const coupon = await adminSchemas.Coupon.findOne({code: code});
+    if (!coupon.allow) {
+      return (
+        res.send({status: 0, msg: 'notAdmin'})
+      )
+    }
+
+    const isCheck = await PointLog.findOne({user_id: user_id, couponcode: code});
+    console.log(isCheck)
+    if (isCheck) {
+      return (
+        res.send({status: 0, msg: 'alreadyUse'})
+      );
+    }
+
+    user.point_remain += coupon.cashback;
+    await user.save();
+
+    // add new point log
+    const newPointLogObj = {
+      user_id: user_id,
+      user_name: user.name,
+      user_country: user.country ? user.country : "",
+      point_num: coupon.cashback,
+      date: Date.now(),
+      usage: "coupon",
+      couponname: coupon.name,
+      couponcode: coupon.code,
+      aff_id: user.aff_id,
+    };
+    const newPointLog = new PointLog(newPointLogObj);
+    await newPointLog.save();
+
+    res.send({ status: 1, data: coupon.cashback, msg: "pointAdd" });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to purchase points.", error: error });
   }

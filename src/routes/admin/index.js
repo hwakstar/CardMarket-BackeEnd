@@ -400,6 +400,7 @@ router.post("/add_admin", async (req, res) => {
         users: { read: true, write: false, delete: false },
         carousel: { read: true, write: false, delete: false },
         category: { read: true, write: false, delete: false },
+        coupon: { read: true, write: false, delete: false },
         prizeVideo: { read: true, write: false, delete: false },
         prize: { read: true, write: false, delete: false },
         rubbish: { read: true, write: false, delete: false },
@@ -591,7 +592,7 @@ router.get("/get_rank", auth, async (req, res) => {
     .then((ranks) => {
       return res.send({ status: 1, ranks: ranks });
     })
-    .catch((err) => res.send({ status: 0, err: err }));
+    .catch((error) => res.send({ status: 0, error: error }));
 });
 
 // add or update
@@ -847,4 +848,73 @@ router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
   }
 });
 
+// Coupon management
+const generateRandomCode = (length = 6) => {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let randomCode = '';
+  for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * letters.length);
+      randomCode += letters[randomIndex];
+  }
+  return randomCode;
+}
+
+router.post("/coupon", auth, async (req, res) => {
+  const { name, cashBack, allow, flag, code } = req.body;
+  let randomCode = generateRandomCode();
+  while (1) {
+    const newcode = await adminSchemas.Coupon.findOne({ code: randomCode});
+    if (newcode === null) break;
+    randomCode = generateRandomCode();
+  }
+
+  try {
+    const couponData = { 
+      name: name,
+      code: randomCode, 
+      cashback: cashBack,
+      allow: allow 
+    };
+    if (!flag) {
+      console.log('ok')
+      const newCategory = new adminSchemas.Coupon(couponData);
+      await newCategory.save();
+      console.log(newCategory)
+      res.send({ status: 1, msg: "successAdded" });
+    }
+    else {
+      couponData.code = code;
+      await adminSchemas.Coupon.updateOne({code: code}, couponData);
+      res.send({ status: 1, msg: "successUpdated" });
+    }
+  } catch (error) {
+    if (!flag) res.send({ status: 0, msg: "failedAdded" });
+    else res.send({ status: 0, msg: "failedUpdated" });
+  }
+});
+
+// get all
+router.get("/coupon", async (req, res) => {
+  try {
+    const coupons = await adminSchemas.Coupon.find();
+
+    return res.send({ status: 1, coupons: coupons });
+  } catch (error) {
+    res.send({ status: 0, err: err });
+  }
+});
+
+// delete
+router.delete("/coupon/:id", auth, async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const coupon = await adminSchemas.Coupon.findOne({ _id: id });
+    await coupon.deleteOne();
+
+    return res.send({ status: 1, msg: "successDeleted" });
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
 module.exports = router;
