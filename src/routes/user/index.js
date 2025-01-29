@@ -17,12 +17,9 @@ const AffRanks = require("../../affiliate/models/RankModel");
 const EarnModel = require("../../affiliate/models/EarnModel");
 const AffPayment = require("../../affiliate/models/PaymentModel");
 
-const Recipient = require("mailersend").Recipient;
-const EmailParams = require("mailersend").EmailParams;
-const MailerSend = require("mailersend").MailerSend;
-
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
+const axios = require('axios');
 
 // Generate random code
 const generateRandomCode = (length = 8) => {
@@ -151,33 +148,121 @@ router.post("/register", async (req, res) => {
       await newAffEarn.save();
     }
 
-    // mail service
-    // const mailersend = new MailerSend({
-    //   apiKey: 'mlsn.6470c18b466c7a235405c8fb1e1757716eb680e1ad917d0bbe10c15b5cb749c3',
-    // });
-    
-    // const recipients = new Recipient("black425knight@gmail.com", "hwakstar79@gmail.com");
-    // console.log('ok1')
+    const token = jwt.sign(
+      { email }, "RANDOM-TOKEN", { expiresIn: '30m'}
+    );
 
-    // const emailParams = new EmailParams()
-    //     .setFrom("Sun@trial-351ndgwxn8r4zqx8.mlsender.net", "Sun")
-    //     .setTo(recipients)
-    //     .setSubject("Subject")
-    //     .setHtml("Greetings from the team, you got this message through MailerSend1.")
-    //     .setText("Greetings from the team, you got this message through MailerSend2.");
-        
-    // mailersend.email.send(emailParams)
-    //   .then(response => {
-    //     console.log("Email sent successfully:", response);
-    //   })
-    //   .catch(error => {
-    //     console.error("Error sending email:", error);
-    //   });
-    // console.log('ok2')
+    // Mail send
+    const url = 'https://api.mailersend.com/v1/email';
+    const data = {
+        from: {
+            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
+        },
+        to: [
+            {
+                email: email
+            }
+        ],
+        subject: 'Account activation link',
+        html: `
+                <h1>Please use the following link to activate your account</h1>
+                <a href="http://on-gacha.net/user/index?token=${token}"> <h2> Activate your account <h2> </a>
+                <hr />
+                <p>This email may contain sensitive information</p>
+            `
+    };
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+    };
+
+    try {
+        const response = await axios.post(url, data, { headers });
+        console.log('Email sent successfully:', response.data);
+    } catch (error) {
+        console.error('Error sending email:', error.response ? error.response.data : error.message);
+    }
 
     res.send({ status: 1, msg: "successRegistered" });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
+  }
+});
+
+router.post("/gmail-send", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const token = jwt.sign(
+      { email }, "RANDOM-TOKEN", { expiresIn: '30m'}
+    );
+
+    // Mail send
+    const url = 'https://api.mailersend.com/v1/email';
+    const data = {
+        from: {
+            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
+        },
+        to: [
+            {
+                email: email
+            }
+        ],
+        subject: 'Account activation link',
+        html: `
+                <h1>Please use the following link to activate your account</h1>
+                <a href="http://on-gacha.net/user/index?token=${token}"> <h2> Activate your account </h2> </a>
+                <hr />
+                <p>This email may contain sensitive information</p>
+            `
+    };
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+    };
+
+    try {
+        const response = await axios.post(url, data, { headers });
+        console.log('Email sent successfully:', response.data);
+    } catch (error) {
+        console.error('Error sending email:', error.response ? error.response.data : error.message);
+    }
+
+    res.send({ status: 1, msg: "emailSent" });
+  } catch (error) {
+    res.send({ status: 0, msg: "emailFailed" });
+  }
+});
+
+router.post("/activate", async (req, res) => {
+  const { token } = req.body;
+
+  if (token) {
+    jwt.verify(token, "RANDOM-TOKEN", async (err, decoded) => {
+      if (err) {
+        console.log('Activation error');
+        return res.send({
+          status: 0,
+          msg: 'Explink'
+        });
+      } else {
+        const { email } = jwt.decode(token);
+
+        const user = await Users.findOne({ email: email });
+        if (!user) {
+          return res.send({ status: 0, msg: "failedVerifyed" });
+        }
+        user.isVerify = true;
+
+        await Users.updateOne({ email: email }, user);  
+        res.send({ status: 1, msg: "successVerifyed" });
+      }
+    });
+  } else {
+    return res.send({ status: 0, msg: "failedVerifyed" });
   }
 });
 
@@ -188,6 +273,7 @@ router.post("/login", async (req, res) => {
     const user = await Users.findOne({ email: email });
 
     if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
+    if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify"});
     if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
 
     const checkPass = await bcrypt.compare(password, user.hashedPass);
@@ -220,6 +306,86 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", err: error });
   }
+});
+
+router.post("/forgot", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await Users.findOne({ email });
+    if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
+
+    const token = jwt.sign({ _id: user._id }, "RANDOM-TOKEN", { expiresIn: '10m'});
+
+    // Mail send
+    const url = 'https://api.mailersend.com/v1/email';
+    const data = {
+        from: {
+            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
+        },
+        to: [
+            {
+                email: email
+            }
+        ],
+        subject: 'Password Reset link',
+        html: `
+              <h1>Please use the following link to reset your password</h1>
+              <a href="http://on-gacha.net/auth/forgot?token=${token}"> <h2> Reset Password </h2> </a>
+              <hr />
+              <p>This email may contain sensetive information</p>
+            `
+    };
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+    };
+
+    try {
+        const response = await axios.post(url, data, { headers });
+        console.log('Email sent successfully:', response.data);
+    } catch (error) {
+        console.error('Error sending email:', error.response ? error.response.data : error.message);
+    }
+    
+    user.resetPasswordLink = token;
+    await Users.updateOne({email}, user);
+    console.log(token)
+
+    res.send({ status: 1, msg: "emailSent"});
+  } catch (error) {
+    res.send({ status: 0, msg: "emailFailed"});
+  }
+});
+
+router.post("/reset", async (req, res) => {
+  const { resetPasswordLink, newPassword } = req.body;
+
+  try {
+    jwt.verify(resetPasswordLink, "RANDOM-TOKEN", async (err, decoded) => {
+      if (err) {
+        return res.send({
+          status: 0,
+          msg: 'Explink'
+        });
+      }
+      const user = await Users.findOne({ resetPasswordLink: resetPasswordLink });
+      if (!user) {
+        return res.send({ status: 0, msg: 'failedReset'});
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.hashedPass = hashedPassword;
+      user.resetPasswordLink = '';
+      await Users.updateOne({_id: user._id}, user);
+      res.send({ status: 1, msg: 'successReset'})
+    });
+  } catch (err) {
+    res.send({ status: 0, msg: 'failedReset'});
+  }
+
 });
 
 router.post("/changePwd", auth, async (req, res) => {

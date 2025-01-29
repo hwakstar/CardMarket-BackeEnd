@@ -13,8 +13,10 @@ const UserSchema = new mongoose.Schema(
     inviteCode: {type: String},
     inviteCount: {type: Number, default: 15},
     invited: {type: String, default: ''},
+    isVerify: {type: Boolean, default: false},
     active: { type: Boolean, default: true },
     aff_id: { type: String },
+    resetPasswordLink: {type: String, default: ''},
     shipAddress_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ShippingAddress",
