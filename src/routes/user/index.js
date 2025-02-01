@@ -166,7 +166,7 @@ router.post("/register", async (req, res) => {
         subject: 'Account activation link',
         html: `
                 <h1>Please use the following link to activate your account</h1>
-                <a href="http://on-gacha.net/user/index?token=${token}"> <h2> Activate your account <h2> </a>
+                <a href="http://on-gacha.net/auth/login?token=${token}"> <h2> Activate your account <h2> </a>
                 <hr />
                 <p>This email may contain sensitive information</p>
             `
@@ -212,7 +212,7 @@ router.post("/gmail-send", async (req, res) => {
         subject: 'Account activation link',
         html: `
                 <h1>Please use the following link to activate your account</h1>
-                <a href="http://on-gacha.net/user/index?token=${token}"> <h2> Activate your account </h2> </a>
+                <a href="http://on-gacha.net/auth/login?token=${token}"> <h2> Activate your account </h2> </a>
                 <hr />
                 <p>This email may contain sensitive information</p>
             `
