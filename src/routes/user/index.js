@@ -248,18 +248,39 @@ router.post("/activate", async (req, res) => {
           status: 0,
           msg: 'Explink'
         });
-      } else {
-        const { email } = jwt.decode(token);
-
-        const user = await Users.findOne({ email: email });
-        if (!user) {
-          return res.send({ status: 0, msg: "failedVerifyed" });
-        }
-        user.isVerify = true;
-
-        await Users.updateOne({ email: email }, user);  
-        res.send({ status: 1, msg: "successVerifyed" });
       }
+      const { email } = jwt.decode(token);
+
+      const user = await Users.findOne({ email: email });
+      if (!user) {
+        return res.send({ status: 0, msg: "failedVerifyed" });
+      }
+      user.isVerify = true;
+      await Users.updateOne({ email: email }, user);
+
+      const userData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        point_remain: user.point_remain,
+        point_total: user.point_total,
+        shipAddress_id: user.shipAddress_id,
+        address: user.address,
+        city: user.city,
+        country: user.country,
+        inviteCode: user.inviteCode,
+        inviteCount: user.inviteCount,
+        invited: user.invited,
+        createtime: user.createdAt
+      };
+  
+      // get rank data
+      const rank = await userRankData(user._id);
+      userData.rankData = rank;
+  
+      const tokken = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "1h" });
+
+      res.send({ status: 1, msg: "successVerifyed" , user: userData, token: tokken});
     });
   } else {
     return res.send({ status: 0, msg: "failedVerifyed" });
