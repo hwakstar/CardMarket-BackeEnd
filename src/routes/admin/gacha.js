@@ -14,6 +14,19 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
 
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const fs = require('fs');
+const { pipeline } = require('stream');
+
+// Configure the AWS SDK
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION, // Change to your bucket's region
+  credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID, // Use environment variable
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // Use environment variable
+  },
+});
+
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
   const { type, name, price, category, kind, awardRarity, order, time } = req.body;
@@ -291,16 +304,63 @@ router.post("/unset_rubbish", auth, async (req, res) => {
 router.post("/upload_bulk", auth, async (req, res) => {
   const { prizes } = req.body;
 
+  // Function to download a file from S3
+  const downloadFile = async (bucketName, fileName, downloadPath) => {
+      const params = {
+          Bucket: bucketName,
+          Key: fileName,
+      };
+
+      const command = new GetObjectCommand(params);
+
+      return new Promise((resolve, reject) => {
+          s3Client.send(command)
+              .then(response => {
+                  const fileStream = fs.createWriteStream(downloadPath);
+                  pipeline(response.Body, fileStream, (err) => {
+                      if (err) {
+                          console.error('Pipeline failed:', err);
+                          reject(err);
+                      } else {
+                          console.log(`File downloaded successfully to ${downloadPath}`);
+                          resolve();
+                      }
+                  });
+              })
+              .catch(error => {
+                  console.error('Error downloading file:', error);
+                  reject(error);
+              });
+      });
+  };
+
+  // Usage
+  const bucketName = 'oripacsv'; // Replace with your bucket name
+  const baseUrl = 'https://oripacsv.s3.amazonaws.com/';
+  
   try {
-    const newPrizes = await adminSchemas.Prize.create(prizes);
+      // Ensure the uploads directory exists
+      const uploadDir = 'uploads/prize';
+      if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir);
+      }
 
-    newPrizes.map(async (prize) => {
-      await prize.save();
-    });
+      // Create an array of promises for downloading files
+      const downloadPromises = prizes.map(async (prize) => {
+          const fileName = prize.img_url.replace(baseUrl, '');
+          const downloadPath = `${uploadDir}/${fileName}`; // Local path to save the file
+          prize.img_url = downloadPath;
+          const newPrize = new adminSchemas.Prize(prize);
+          const result = await newPrize.save();
+          return downloadFile(bucketName, fileName, downloadPath);
+      });
 
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0 });
+      // Wait for all downloads to complete
+      await Promise.all(downloadPromises);
+      res.send({ status: 1 });
+  } catch (err) {
+      console.error('Error in upload_bulk:', err);
+      res.send({ status: 0 });
   }
 });
 
@@ -327,10 +387,14 @@ router.post("/draw_gacha", auth, async (req, res) => {
     if (counts === 'all') counts = remainPrizesNum + gacha.rubbish_total_number;
 
     // get random value as a drawPrizesNum
-    drawPrizesNum = Math.round(counts * Math.random());
+    drawPrizesNum = Math.round(counts * Math.random() * Math.random());
     if (remainPrizesNum < drawPrizesNum) drawPrizesNum = remainPrizesNum;
     // get rubbish number to select
-    const drawRubbishNum = counts - drawPrizesNum;
+    let drawRubbishNum = counts - drawPrizesNum;
+    if (gacha.rubbish_total_number < drawRubbishNum) {
+      drawRubbishNum = gacha.rubbish_total_number;
+      drawPrizesNum = counts - drawRubbishNum;
+    }
     // get poins of drwing prizes
     const drawPoints = gacha.price * counts;
 

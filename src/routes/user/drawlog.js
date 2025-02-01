@@ -16,7 +16,9 @@ router.get("/:userid/:gachaid", auth, async (req, res) => {
 
   try{
     const drawLogData = await Gacha.findOne({ _id: gachaid });
+
     const userDrawLog = drawLogData.userLogs.find(log => log.userid.toString() === userid);
+
     if (userDrawLog == null) {
       return res.send({
         status: 0,
