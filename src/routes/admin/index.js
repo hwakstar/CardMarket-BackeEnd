@@ -157,6 +157,7 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
         res.send({ status: 0, msg: "failedUpdated" });
       }
     } else {
+      console.log(req.file.filename)
       prizeData.img_url = `uploads/prize/${req.file.filename}`;
 
       const newPrize = new adminSchemas.Prize(prizeData);
@@ -179,6 +180,7 @@ router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
     name: req.body.name,
     cashback: req.body.cashBack,
     totalNumber: req.body.totalNumber,
+    nickname: req.body.nickname
   };
 
   try {

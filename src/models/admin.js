@@ -19,6 +19,7 @@ const prizeSchema = new Schema({
   trackingNumber: { type: String },
   deliveryCompany: { type: String },
   status: { type: Boolean, default: false },
+  order: {type: Number, default: 0},
   deliverStatus: {type: String, default: "notSelected"},
   createdAt: { type: Date, default: Date.now },
 });
@@ -29,6 +30,7 @@ const rubbishSchema = new mongoose.Schema({
   name: { type: String },
   cashback: { type: Number },
   totalNumber: {type: Number},
+  nickname: {type: String},
   status: { type: Boolean, default: false },
   count: {type: Number, default: 0},
   createdAt: { type: Date, default: Date.now },

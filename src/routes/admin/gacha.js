@@ -17,6 +17,7 @@ const PrizeVideo = require("../../models/prizeVideo");
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const fs = require('fs');
 const { pipeline } = require('stream');
+const gacha = require("../../models/gacha");
 
 // Configure the AWS SDK
 const s3Client = new S3Client({
@@ -223,6 +224,7 @@ router.post("/set_rubbish", auth, async (req, res) => {
       img_url: rubbish.img_url,
       name: rubbish.name,
       cashback: rubbish.cashback,
+      nickname: rubbish.nickname,
       // kind: prize.kind,
       // trackingNumber: prize.trackingNumber,
       // deliveryCompany: prize.deliveryCompany,
@@ -334,33 +336,42 @@ router.post("/upload_bulk", auth, async (req, res) => {
       });
   };
 
-  // Usage
   const bucketName = 'oripacsv'; // Replace with your bucket name
   const baseUrl = 'https://oripacsv.s3.amazonaws.com/';
   
   try {
-      // Ensure the uploads directory exists
-      const uploadDir = 'uploads/prize';
-      if (!fs.existsSync(uploadDir)) {
-          fs.mkdirSync(uploadDir);
-      }
+    // Ensure the uploads directory exists
+    const uploadDir = 'uploads/prize';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir);
+    }
+    
+    let rlt = [];
+    // Create an array of promises for downloading files
+    const downloadPromises = prizes.map(async (prize) => {
+        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
+        const fileName = path.basename(prize.img_url);
+        const fName = uniqueSuffix + "-" + fileName;
+        const downloadPath = path.join(uploadDir, fName);; // Local path to save the file
+        
+        try {
+            await downloadFile(bucketName, fileName, downloadPath); // Await the download
+            prize.img_url = downloadPath;
+            const newPrize = new adminSchemas.Prize(prize);
+            const result = await newPrize.save();
+            rlt.push(newPrize);
+        } catch (error) {
+            console.error(`Failed to download or save prize ${fileName}:`, error);
+            // Optionally, you can handle the error for this specific prize
+        }
+    });
 
-      // Create an array of promises for downloading files
-      const downloadPromises = prizes.map(async (prize) => {
-          const fileName = prize.img_url.replace(baseUrl, '');
-          const downloadPath = `${uploadDir}/${fileName}`; // Local path to save the file
-          prize.img_url = downloadPath;
-          const newPrize = new adminSchemas.Prize(prize);
-          const result = await newPrize.save();
-          return downloadFile(bucketName, fileName, downloadPath);
-      });
-
-      // Wait for all downloads to complete
-      await Promise.all(downloadPromises);
-      res.send({ status: 1 });
+    // Wait for all downloads to complete
+    await Promise.all(downloadPromises);
+    res.send({ status: 1, prizes: rlt });
   } catch (err) {
       console.error('Error in upload_bulk:', err);
-      res.send({ status: 0 });
+      res.send({ status: 0, message: 'An error occurred during the upload process.' });
   }
 });
 
@@ -390,6 +401,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
     drawPrizesNum = Math.round(counts * Math.random() * Math.random());
     if (remainPrizesNum < drawPrizesNum) drawPrizesNum = remainPrizesNum;
     // get rubbish number to select
+    drawPrizesNum = 3;
+    
     let drawRubbishNum = counts - drawPrizesNum;
     if (gacha.rubbish_total_number < drawRubbishNum) {
       drawRubbishNum = gacha.rubbish_total_number;

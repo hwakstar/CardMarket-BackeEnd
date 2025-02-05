@@ -171,6 +171,7 @@ router.post("/register", async (req, res) => {
                 <p>This email may contain sensitive information</p>
             `
     };
+    console.log(email)
 
     const headers = {
         'Content-Type': 'application/json',
