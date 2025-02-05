@@ -176,12 +176,13 @@ router.post("/set_prize", auth, async (req, res) => {
       status: prize.status,
       deliverStatus: prize.deliverStatus,
       createdAt: prize.createdAt,
+      order: prize.order
     };
     if (order) newPrize.order = order;
 
     gacha.show_prizes.push(newPrize);
     gacha.remain_prizes.push(newPrize);
-    if (order != 0) gacha.total_number += 1;
+    gacha.total_number = gacha.total_number + 1;
     await gacha.save();
 
     res.send({ status: 1 });
@@ -385,13 +386,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
     const userData = await Users.findOne({ _id: user._id });
 
     // get total number of remain prizes
-    const remainPrizesNum = gacha.remain_prizes.filter(
-      (item) => item.order != 0
-    ).length;
+    const remainPrizesNum = gacha.remain_prizes.length;
     // get total number of remain rubbishs
-    let remainRubbishsNum = gacha.remain_rubbishs.filter(
-      (item) => item.count != 0
-    ).length;
+    let remainRubbishsNum = gacha.remain_rubbishs.filter((item) => item.count != 0).length;
 
     // get number of drawing prizes
     let drawPrizesNum = counts === "all" ? remainPrizesNum : counts;
@@ -401,7 +398,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     drawPrizesNum = Math.round(counts * Math.random() * Math.random());
     if (remainPrizesNum < drawPrizesNum) drawPrizesNum = remainPrizesNum;
     // get rubbish number to select
-    
+
     let drawRubbishNum = counts - drawPrizesNum;
     if (gacha.rubbish_total_number < drawRubbishNum) {
       drawRubbishNum = gacha.rubbish_total_number;
@@ -417,7 +414,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     let drawedPrizes = [];
     // get all prizes isn't last one
     const gradePrizes = gacha.remain_prizes.filter(
-      (item) => item.kind !== "last_prize" && item.order != 0
+      (item) => item.kind !== "last_prize"
     );
     // get all rubbishs isn't count 0
     let gradeRubbishs = gacha.remain_rubbishs.filter(
@@ -442,7 +439,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     if (
       lastOnePrize &&
       drawPrizesNum ===
-      gacha.remain_prizes.filter((item) => item.order != 0).length
+      gacha.remain_prizes.length
     ) {
       // Find the video for the selected prize
       const video = await PrizeVideo.findOne({ kind: "last_prize" });
