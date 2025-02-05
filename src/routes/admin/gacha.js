@@ -401,7 +401,6 @@ router.post("/draw_gacha", auth, async (req, res) => {
     drawPrizesNum = Math.round(counts * Math.random() * Math.random());
     if (remainPrizesNum < drawPrizesNum) drawPrizesNum = remainPrizesNum;
     // get rubbish number to select
-    drawPrizesNum = 3;
     
     let drawRubbishNum = counts - drawPrizesNum;
     if (gacha.rubbish_total_number < drawRubbishNum) {
