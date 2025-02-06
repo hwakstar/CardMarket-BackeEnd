@@ -235,7 +235,7 @@ router.get("/prize", auth, async (req, res) => {
 
 router.get("/rubbish", auth, async (req, res) => {
   try {
-    const rubbishs = await adminSchemas.Rubbish.find({ status: false }).sort({
+    const rubbishs = await adminSchemas.Rubbish.find().sort({
       createdAt: -1,
     });
 

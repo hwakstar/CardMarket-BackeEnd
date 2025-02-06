@@ -31,7 +31,7 @@ const rubbishSchema = new mongoose.Schema({
   cashback: { type: Number },
   totalNumber: {type: Number},
   nickname: {type: String},
-  status: { type: Boolean, default: false },
+  status: { type: Number, default: 0 },
   count: {type: Number, default: 0},
   createdAt: { type: Date, default: Date.now },
 });
