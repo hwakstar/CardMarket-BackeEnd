@@ -371,9 +371,14 @@ router.post("/upload_bulk", auth, async (req, res) => {
 router.post("/draw_gacha", auth, async (req, res) => {
   const { gachaId, counts, drawDate, user } = req.body;
   let countkind = counts;
+  const testmode = (req.headers['test'] === 'true');
 
   try {
     const gacha = await Gacha.findOne({ _id: gachaId });
+    if (!gacha.isRelease) {
+      return res.send({ status: 0 });
+    }
+
     const userData = await Users.findOne({ _id: user._id });
 
     // get total number of remain prizes
@@ -399,7 +404,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     const drawPoints = gacha.price * counts;
 
     // return if remain points is less than drawing points
-    if (userData.point_remain < drawPoints)
+    if (!testmode && userData.point_remain < drawPoints)
       return res.send({ status: 0, msg: 1 });
     // Get drawedPrizes list randomly
     let drawedPrizes = [];
@@ -474,41 +479,42 @@ router.post("/draw_gacha", auth, async (req, res) => {
       }
     }
 
-    // Add drawedPrizes into optainedPrizes of user
-    for (let i = 0; i < drawedPrizes.length; i++) {
-      drawedPrizes[i].drawDate = drawDate;
-      userData.obtained_prizes.push(drawedPrizes[i]);
+    if (!testmode) {
+      // Add drawedPrizes into optainedPrizes of user
+      for (let i = 0; i < drawedPrizes.length; i++) {
+        drawedPrizes[i].drawDate = drawDate;
+        userData.obtained_prizes.push(drawedPrizes[i]);
 
-      // Remove drawedPrize from gacha remainPrizes
-      if (i < drawPrizesNum) {
-        gacha.remain_prizes = gacha.remain_prizes.filter(
-          (prize) => prize._id !== drawedPrizes[i]._id
-        );
+        // Remove drawedPrize from gacha remainPrizes
+        if (i < drawPrizesNum) {
+          gacha.remain_prizes = gacha.remain_prizes.filter(
+            (prize) => prize._id !== drawedPrizes[i]._id
+          );
+        }
       }
-    }
-    // Update remain points of user
-    userData.point_remain -= drawPoints;
+      // Update remain points of user
+      userData.point_remain -= drawPoints;
 
-    // Update gacha.remain_rubbishs
-    gacha.remain_rubbishs = gradeRubbishs;
-    // Update gacha & userData & rubbish
-    await gacha.save();
-    await userData.save();
-    await Gacha.updateOne({ _id: gachaId }, gacha);
-    // console.log(gacha.remain_rubbishs);
+      // Update gacha.remain_rubbishs
+      gacha.remain_rubbishs = gradeRubbishs;
+      // Update gacha & userData & rubbish
+      await gacha.save();
+      await userData.save();
+      await Gacha.updateOne({ _id: gachaId }, gacha);
 
     // Add new points log
-    const newPointLog = new PointLog({
-      aff_id: userData.aff_id,
-      user_id: userData._id,
-      user_name: userData.name,
-      user_country: userData.country,
-      point_num: drawPoints,
-      usage: "drawGacha",
-      gacha: gacha.name,
-      number: countkind
-    });
-    await newPointLog.save();
+      const newPointLog = new PointLog({
+        aff_id: userData.aff_id,
+        user_id: userData._id,
+        user_name: userData.name,
+        user_country: userData.country,
+        point_num: drawPoints,
+        usage: "drawGacha",
+        gacha: gacha.name,
+        number: countkind
+      });
+      await newPointLog.save();
+    }
     res.send({ status: 1, prizes: drawedPrizes });
   } catch (error) {
     res.send({ status: 0 });
