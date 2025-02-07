@@ -44,7 +44,6 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
       img_url: `uploads/gacha/${req.file.filename}`,
       time: time
     });
-
     const result = await newGacha.save();
     if (result) res.send({ status: 1, msg: "successAdded" });
     else res.send({ status: 0, msg: "failedAdded" });
