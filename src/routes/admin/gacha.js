@@ -76,7 +76,6 @@ router.get("/count/:id", async (req, res) => {
   }
 });
 
-
 // get gacha by id
 router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
@@ -135,6 +134,9 @@ router.post("/set_prize", auth, async (req, res) => {
   try {
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
     const gacha = await Gacha.findOne({ _id: gachaId });
+    if (!prize || !gacha) {
+      return res.send({ status: 0, msg: error });
+    }
 
     if (prize.kind === "last_prize") {
       const check = gacha.kind.filter((item) => item.value === "last_prize");
@@ -196,6 +198,10 @@ router.post("/set_rubbish", auth, async (req, res) => {
   try {
     const rubbish = await adminSchemas.Rubbish.findOne({ _id: rubbishId });
     const gacha = await Gacha.findOne({ _id: gachaId });
+    if (!rubbish || !gacha) {
+      return res.send({ status: 0, msg: error });
+    }
+
     const rubbishBygacha = gacha.remain_rubbishs.find((item) => item._id === rubbishId);
     let cnt = Number(count);
 
@@ -241,20 +247,25 @@ router.post("/unset_prize", auth, async (req, res) => {
   const { gachaId, prizeId } = req.body;
 
   try {
-    const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
-    prize.status = false;
-    await prize.save();
-
+    
     const gacha = await Gacha.findOne({ _id: gachaId });
-    const targetPrize = gacha.remain_prizes.find((item) => item._id == prizeId);
+    const target = gacha.remain_prizes.find((item) => item._id == prizeId);
+    if (!target) {
+      return res.send({ status: 0, msg: error });
+    }
 
     const remainPrizes = gacha.remain_prizes.filter(
       (data) => data._id != prizeId
     );
+    
     gacha.show_prizes = remainPrizes;
     gacha.remain_prizes = remainPrizes;
     gacha.total_number -= 1;
-    gacha.save();
+    await gacha.save();
+    
+    const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
+    prize.status = false;
+    await prize.save();
 
     res.send({ status: 1 });
   } catch (error) {
@@ -267,13 +278,13 @@ router.post("/unset_rubbish", auth, async (req, res) => {
   const { gachaId, rubbishId } = req.body;
 
   try {
-    const rubbish = await adminSchemas.Rubbish.findOne({ _id: rubbishId });
-    // console.log(rubbish);
-    rubbish.status -= 1;
-    await rubbish.save();
-
+    
     const gacha = await Gacha.findOne({ _id: gachaId });
     const targetRubbish = gacha.remain_rubbishs.find((item) => item._id == rubbishId);
+    if (!targetRubbish) {
+      return res.send({ status: 0, msg: error });
+    }
+
     const count = targetRubbish.count;
     // console.log(count);
     const remainRubbishs = gacha.remain_rubbishs.filter(
@@ -282,8 +293,13 @@ router.post("/unset_rubbish", auth, async (req, res) => {
     gacha.remain_rubbishs = remainRubbishs;
     gacha.rubbish_total_number -= count;
     gacha.total_number -= count;
-    gacha.save();
-
+    await gacha.save();
+    
+    const rubbish = await adminSchemas.Rubbish.findOne({ _id: rubbishId });
+    // console.log(rubbish);
+    rubbish.status -= 1;
+    await rubbish.save();
+    
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: error });

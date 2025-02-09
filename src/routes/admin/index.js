@@ -254,7 +254,7 @@ router.delete("/prize/:id", auth, async (req, res) => {
 
     try {
       await deleteFile(filePath);
-      prize.deleteOne();
+      await prize.deleteOne();
       res.send({ status: 1, msg: "successDeleted" });
     } catch (err) {
       res.send({ status: 0, msg: "failedDeleted" });
@@ -273,7 +273,7 @@ router.delete("/rubbish/:id", auth, async (req, res) => {
 
     try {
       await deleteFile(filePath);
-      rubbish.deleteOne();
+      await rubbish.deleteOne();
       res.send({ status: 1, msg: "successDeleted" });
     } catch (err) {
       res.send({ status: 0, msg: "failedDeleted" });
