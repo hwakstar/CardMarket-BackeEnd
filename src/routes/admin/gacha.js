@@ -401,7 +401,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // return if remain points is less than drawing points
     if (!testmode && userData.point_remain < drawPoints) return res.send({ status: 0, msg: 1 });
     
-    /* Determine ordered prizes */
+    /* -------- Determine ordered prizes -------- */
     // get all order prizes
     let orderprizes = gacha.remain_prizes.filter((item) => item.order && item.kind !== "last_prize" );
     // get last one prize
@@ -435,7 +435,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     }
     let remains = countkind - drawedPrizes.length;
 
-    /* Determine random prizes */
+    /* --------- Determine random prizes ---------- */
     // get all remain prizes order = 0
     let gradePrizes = gacha.remain_prizes.filter((item) => item.order === 0 && item.kind !== 'last_prize');
     // get all rubbishs isn't count 0
