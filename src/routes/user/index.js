@@ -156,8 +156,8 @@ router.post("/register", async (req, res) => {
     const url = 'https://api.mailersend.com/v1/email';
     const data = {
         from: {
-            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
-        },
+            email:  "on-gacha.net"
+          },
         to: [
             {
                 email: email
@@ -171,12 +171,11 @@ router.post("/register", async (req, res) => {
                 <p>This email may contain sensitive information</p>
             `
     };
-    console.log(email)
 
     const headers = {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
     };
 
     try {
@@ -203,7 +202,7 @@ router.post("/gmail-send", async (req, res) => {
     const url = 'https://api.mailersend.com/v1/email';
     const data = {
         from: {
-            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
+            email: "on-gacha.net"
         },
         to: [
             {
@@ -222,7 +221,7 @@ router.post("/gmail-send", async (req, res) => {
     const headers = {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
     };
 
     try {
@@ -343,7 +342,7 @@ router.post("/forgot", async (req, res) => {
     const url = 'https://api.mailersend.com/v1/email';
     const data = {
         from: {
-            email: "MS_TInsiA@trial-zr6ke4n38v3lon12.mlsender.net"
+            email: "on-gacha.net"
         },
         to: [
             {
@@ -362,7 +361,7 @@ router.post("/forgot", async (req, res) => {
     const headers = {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.73774a4e8364b1bf04ecb6c4f288f0490bc7ef115037566c842f48e0c0cc0f1b'
+        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
     };
 
     try {
