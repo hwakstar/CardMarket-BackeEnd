@@ -278,7 +278,7 @@ router.post("/activate", async (req, res) => {
       const rank = await userRankData(user._id);
       userData.rankData = rank;
   
-      const tokken = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "1h" });
+      const tokken = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
       res.send({ status: 1, msg: "successVerifyed" , user: userData, token: tokken});
     });
@@ -321,7 +321,7 @@ router.post("/login", async (req, res) => {
     const rank = await userRankData(user._id);
     userData.rankData = rank;
 
-    const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "1h" });
+    const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
     res.send({ status: 1, msg: "successLogin", user: userData, token });
   } catch (error) {
