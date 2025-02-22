@@ -540,6 +540,7 @@ router.post("/statistics", auth, async (req, res) => {
           periodDeliverings.push(prize);
       }
     });
+    const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
 
     res.send({
       status: 1,
@@ -547,9 +548,25 @@ router.post("/statistics", auth, async (req, res) => {
       prizeStatus: [pendings, deliverings],
       periodPendings,
       periodDeliverings,
+      gachaVisitStatus: gachaVisitStatus.current
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });
+  }
+});
+
+// save Gacha visit status
+router.post("/gachastatus", auth, async (req, res) => {
+  const current = req.body.current;
+
+  try {
+    const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
+    gachaVisitStatus.current = current;
+    await gachaVisitStatus.save();
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0 });
   }
 });
 

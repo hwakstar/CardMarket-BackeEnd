@@ -70,7 +70,8 @@ router.get("/count/:id", async (req, res) => {
     const currentTime = Math.floor(Date.now() / 1000);
     const yeasterday = currentTime - currentTime % 86400 - 86400;
     const count = gachas.userLogs.filter((item) => item.time >= yeasterday && item.time < yeasterday + 86400).length;
-      res.send({status: 1, count: count});
+    const allow = await adminSchemas.GachaVisitStatus.findOne();
+    res.send({status: 1, count: count, allow: allow.current});
   } catch (err) {
     res.send({status: 1})
   }
