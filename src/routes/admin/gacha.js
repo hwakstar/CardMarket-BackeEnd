@@ -79,11 +79,11 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
 
 // get all gachas
 router.get("/", async (req, res) => {
-  const gachas = await Gacha.find()
+  const gachas = await Gacha.find({isRelease: true})
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
 
-  if (gachas) res.send({ status: 1, gachaList: gachas });
+    if (gachas) res.send({ status: 1, gachaList: gachas });
   else res.send({ status: 0 });
 });
 
@@ -107,10 +107,15 @@ router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
+  const gachas = await Gacha.find({isRelease: true})
+    .sort({ order: 1, createdAt: -1 })
+    .populate("category");
 
-  if (gacha) res.send({ status: 1, gacha: gacha });
+
+  if (gacha) res.send({ status: 1, gacha: gacha, gachas: gachas });
   else res.send({ status: 0 });
 });
+
 // get gacha by gacha category.id
 router.get("/category/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
@@ -633,7 +638,11 @@ router.post("/shipping", auth, async (req, res) => {
     // update user data
     await Users.updateOne({ _id: user._id }, userData);
 
-    res.send({ status: 1 });
+    const gachas = await Gacha.find({isRelease: true})
+        .sort({ order: 1, createdAt: -1 })
+        .populate("category");
+
+    res.send({ status: 1, gachas: gachas });
   } catch (error) {
     res.send({ status: 0 });
   }
