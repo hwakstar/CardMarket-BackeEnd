@@ -77,7 +77,8 @@ const termsSchema = new Schema({
 
 // Gacha visit status
 const gachavisitSchema = new Schema({
-  current: { type: Boolean, default: false },
+  currentGacha: { type: Boolean, default: false },
+  currentInvite: { type: Boolean, default: false },
 });
 
 // Carousel

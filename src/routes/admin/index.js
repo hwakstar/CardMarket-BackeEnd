@@ -157,7 +157,6 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
         res.send({ status: 0, msg: "failedUpdated" });
       }
     } else {
-      console.log(req.file.filename)
       prizeData.img_url = `uploads/prize/${req.file.filename}`;
 
       const newPrize = new adminSchemas.Prize(prizeData);
@@ -541,6 +540,7 @@ router.post("/statistics", auth, async (req, res) => {
       }
     });
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
+    const currentStatus = {gacha: gachaVisitStatus.currentGacha, invite: gachaVisitStatus.currentInvite};
 
     res.send({
       status: 1,
@@ -548,7 +548,7 @@ router.post("/statistics", auth, async (req, res) => {
       prizeStatus: [pendings, deliverings],
       periodPendings,
       periodDeliverings,
-      gachaVisitStatus: gachaVisitStatus.current
+      currentStatus: currentStatus
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });
@@ -561,7 +561,8 @@ router.post("/gachastatus", auth, async (req, res) => {
 
   try {
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
-    gachaVisitStatus.current = current;
+    gachaVisitStatus.currentGacha = current.gacha;
+    gachaVisitStatus.currentInvite = current.invite;
     await gachaVisitStatus.save();
 
     res.send({ status: 1 });

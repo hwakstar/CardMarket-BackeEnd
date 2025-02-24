@@ -28,7 +28,6 @@ router.post("/purchase", auth, async (req, res) => {
     //when first purchase, inviter add 500pt
     console.log(rank.totalPointsAmount,user.invited )
     if (rank.totalPointsAmount === 0 && user.invited) {
-      console.log('okkkk')
       const inviter = await Users.findOne({inviteCode: user.invited});
       inviter.point_remain += 500;
       await Users.updateOne({ inviteCode: user.invited }, inviter);

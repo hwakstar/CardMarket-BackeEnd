@@ -32,19 +32,44 @@ const s3Client = new S3Client({
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
   const { type, name, price, category, kind, awardRarity, order, time } = req.body;
 
+  const gachaData = {
+    type: type,
+    name: name,
+    price: price,
+    category: category,
+    kind: kind,
+    award_rarity: awardRarity,
+    order: order,
+    // img_url: `uploads/gacha/${req.file.filename}`,
+    time: time
+  };
   try {
-    const newGacha = new Gacha({
-      type: type,
-      name: name,
-      price: price,
-      category: category,
-      kind: kind,
-      award_rarity: awardRarity,
-      order: order,
-      img_url: `uploads/gacha/${req.file.filename}`,
-      time: time
-    });
-    const result = await newGacha.save();
+    if (req.body.id) {
+      if (req.file) {
+        let gacha = await Gacha.findOne({ _id: req.body.id });
+        if (!gacha) return res.send({ status: 0, msg: "failedReq" });
+        
+        const filename = gacha.img_url;
+        const filePath = path.join("./", filename);
+        await deleteFile(filePath);
+        gachaData.img_url = `uploads/gacha/${req.file.filename}`;
+      }
+
+      const result = await Gacha.updateOne(
+        { _id: req.body.id }, // Filter to find the document
+        { $set: gachaData } // Update object using $set
+      );
+
+      if (result) {
+        return res.send({ status: 1, msg: "successUpdated" });
+      } else {
+        return res.send({ status: 0, msg: "failedUpdated" });
+      }
+    }
+
+    gachaData.img_url = `uploads/gacha/${req.file.filename}`;
+    const newG = new Gacha(gachaData);
+    const result = await newG.save();
     if (result) res.send({ status: 1, msg: "successAdded" });
     else res.send({ status: 0, msg: "failedAdded" });
   } catch (error) {
@@ -71,7 +96,7 @@ router.get("/count/:id", async (req, res) => {
     const yeasterday = currentTime - currentTime % 86400 - 86400;
     const count = gachas.userLogs.filter((item) => item.time >= yeasterday && item.time < yeasterday + 86400).length;
     const allow = await adminSchemas.GachaVisitStatus.findOne();
-    res.send({status: 1, count: count, allow: allow.current});
+    res.send({status: 1, count: count, allow: allow.currentGacha});
   } catch (err) {
     res.send({status: 1})
   }
@@ -104,7 +129,7 @@ router.delete("/:id", async (req, res) => {
 
     try {
       await deleteFile(filePath);
-      gacha.deleteOne();
+      await gacha.deleteOne();
 
       res.send({ status: 1 });
     } catch (err) {

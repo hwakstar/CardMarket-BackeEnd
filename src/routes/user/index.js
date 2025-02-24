@@ -466,11 +466,13 @@ router.get("/get_user/:id", auth, async (req, res) => {
     // get rank data
     const rank = await userRankData(user._id, user.rank_id);
     userData.rankData = rank;
+    const allow = await adminSchemas.GachaVisitStatus.findOne();
 
     res.send({
       status: 1,
       msg: "get User succeeded.",
       user: userData,
+      invite: allow.currentInvite
     });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", error: error });
