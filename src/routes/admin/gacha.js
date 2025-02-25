@@ -585,38 +585,38 @@ router.post("/shipping", auth, async (req, res) => {
       await userData.save();
 
       // add returningPrizes into remainPrizes of gacha
-      for (let i = 0; i < returningPrizes.length; i++) {
-        const gachaId = returningPrizes[i].gacha_id;
-        let gacha = await Gacha.findOne({ _id: gachaId });
+      // for (let i = 0; i < returningPrizes.length; i++) {
+      //   const gachaId = returningPrizes[i].gacha_id;
+      //   let gacha = await Gacha.findOne({ _id: gachaId });
         
-        delete returningPrizes[i].selected;
-        delete returningPrizes[i].gacha_id;
-        delete returningPrizes[i].drawDate;
-        delete returningPrizes[i].count
-        delete returningPrizes[i].video;
+      //   delete returningPrizes[i].selected;
+      //   delete returningPrizes[i].gacha_id;
+      //   delete returningPrizes[i].drawDate;
+      //   delete returningPrizes[i].count
+      //   delete returningPrizes[i].video;
 
-        if (returningPrizes[i].kind == 'rubbish') {
-          let len = gacha.remain_rubbishs.length;
-          for (j = 0; j < len; j++) 
-            if (gacha.remain_rubbishs[j]._id == returningPrizes[i]._id) {
-              gacha.remain_rubbishs[j].count += 1;
-              break;
-            }
-          if (j == len) {
-            let rub = returningPrizes[i];
-            rub.count = 1;
-            gacha.remain_rubbishs.push(rub);
-          }
-          gacha.rubbish_total_number += 1;
-        }
-        else {
-          returningPrizes[i].order = 0;
-          gacha.remain_prizes.push(returningPrizes[i]);
-          await adminSchemas.Prize.updateOne({_id: returningPrizes[i]._id}, returningPrizes[i]);
-        }
+      //   if (returningPrizes[i].kind == 'rubbish') {
+      //     let len = gacha.remain_rubbishs.length;
+      //     for (j = 0; j < len; j++) 
+      //       if (gacha.remain_rubbishs[j]._id == returningPrizes[i]._id) {
+      //         gacha.remain_rubbishs[j].count += 1;
+      //         break;
+      //       }
+      //     if (j == len) {
+      //       let rub = returningPrizes[i];
+      //       rub.count = 1;
+      //       gacha.remain_rubbishs.push(rub);
+      //     }
+      //     gacha.rubbish_total_number += 1;
+      //   }
+      //   else {
+      //     returningPrizes[i].order = 0;
+      //     gacha.remain_prizes.push(returningPrizes[i]);
+      //     await adminSchemas.Prize.updateOne({_id: returningPrizes[i]._id}, returningPrizes[i]);
+      //   }
 
-        await Gacha.updateOne({ _id: gachaId }, gacha);
-      }
+      //   await Gacha.updateOne({ _id: gachaId }, gacha);
+      // }
 
       // add cashback of user
       userData.point_remain += cashback;
