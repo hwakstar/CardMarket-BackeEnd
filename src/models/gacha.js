@@ -17,7 +17,9 @@ const gachaSchema = new mongoose.Schema(
     show_prizes: {type: Array},
     remain_prizes: { type: Array },
     remain_rubbishs: {type: Array },
-    userLogs: {type: Array}
+    userLogs: {type: Array},
+    title: { type: String, default: ''},
+    desc: { type: String, default: ''},
   },
   {
     timestamps: true,

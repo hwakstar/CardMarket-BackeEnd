@@ -66,6 +66,8 @@ const rankSchema = new Schema({
 const themeSchema = new Schema({
   logoUrl: { type: String },
   bgColor: { type: String },
+  title: {type: String, default: ''},
+  desc: {type: String, default: ''}
 });
 
 // Terms of service
