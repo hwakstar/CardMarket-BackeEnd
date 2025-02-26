@@ -77,13 +77,47 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
   }
 });
 
+router.post("/seo", auth, async (req, res) => {
+  const { gachaId, title, desc } = req.body;
+
+  const seoData = {
+    title: title,
+    desc: desc
+  };
+  try {
+    let result;
+    if (!gachaId) {
+      result = await adminSchemas.Themes.updateOne({},{$set: seoData});
+    }
+    else {
+      let gacha = await Gacha.findOne({ _id: gachaId });
+      if (!gacha) return res.send({ status: 0, msg: "failedReq" });
+      
+      result = await Gacha.updateOne(
+        { _id: gachaId }, // Filter to find the document
+        { $set: seoData } // Update object using $set
+      );
+    }
+
+    if (result) {
+      return res.send({ status: 1, msg: "successUpdated" });
+    } else {
+      return res.send({ status: 0, msg: "failedUpdated" });
+    }
+  } catch (error) {
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
+
 // get all gachas
 router.get("/", async (req, res) => {
   const gachas = await Gacha.find({isRelease: true})
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
+  const homeSeo = await adminSchemas.Themes.findOne();
+  const home = { title: homeSeo.title, desc: homeSeo.desc};
 
-    if (gachas) res.send({ status: 1, gachaList: gachas });
+  if (gachas) res.send({ status: 1, gachaList: gachas, home: home});
   else res.send({ status: 0 });
 });
 

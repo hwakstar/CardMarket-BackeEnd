@@ -696,39 +696,35 @@ router.post("/changeBgColor", auth, async (req, res) => {
 });
 
 // change logo
-router.post(
-  "/changeLogo",
-  auth,
-  uploadLogo.single("file"),
-  async (req, res) => {
-    try {
-      let logoUrl;
-      if (req.file?.filename !== undefined) {
-        logoUrl = `uploads/logo/${req.file.filename}`;
-      }
-
-      const themes = await adminSchemas.Themes.find();
-      if (themes.length === 0) {
-        // create new theme data
-        const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
-        await newTheme.save();
-      } else {
-        if (logoUrl && themes[0].logoUrl) {
-          const filePath = path.join("./", themes[0].logoUrl);
-          await deleteFile(filePath);
-        }
-
-        await adminSchemas.Themes.updateOne(
-          { _id: themes[0] },
-          { logoUrl: logoUrl }
-        );
-      }
-
-      res.send({ status: 1 });
-    } catch (error) {
-      res.send({ status: 0, msg: error });
+router.post("/changeLogo", auth, uploadLogo.single("file"), async (req, res) => {
+  try {
+    let logoUrl;
+    if (req.file?.filename !== undefined) {
+      logoUrl = `uploads/logo/${req.file.filename}`;
     }
-  }
+
+    const themes = await adminSchemas.Themes.find();
+    if (themes.length === 0) {
+      // create new theme data
+      const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
+      await newTheme.save();
+    } else {
+      if (logoUrl && themes[0].logoUrl) {
+        const filePath = path.join("./", themes[0].logoUrl);
+        await deleteFile(filePath);
+      }
+
+      console.log('kkkkkkkkk')
+      await adminSchemas.Themes.updateOne(
+        { _id: themes[0] },
+        { logoUrl: logoUrl }
+      );
+    }
+
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0, msg: error });
+  }}
 );
 
 // get theme
