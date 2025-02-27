@@ -480,14 +480,14 @@ router.get("/deliveries", auth, async (req, res) => {
 
 router.post("/changeDeliverStatus", auth, async (req, res) => {
   const { userId, prizeId, status, drawDate } = req.body;
-
   try {
     const user = await Users.findOne({ _id: userId });
 
     const obtainedPrizes = user.obtained_prizes;
-    const targetPrize = obtainedPrizes.find((prize) =>
-      prize._id.equals(new ObjectId(prizeId))
-    );
+
+    const targetPrize = obtainedPrizes.find((prize) => prize._id == prizeId
+  );
+
     targetPrize.deliverStatus = "shipped";
     targetPrize.drawDate = drawDate;
     await Users.updateOne({ _id: userId }, user);
