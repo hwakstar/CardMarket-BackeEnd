@@ -457,7 +457,7 @@ router.get("/deliveries", auth, async (req, res) => {
         obtainedPrize.shipAddress = user.shipAddress_id;
 
         const prize = user.obtained_prizes[i];
-        if (prize.deliverStatus !== "notSelected") {
+        if (prize.deliverStatus && prize.deliverStatus !== "notSelected") {
           obtainedPrize.drawId = prize.drawDate;
           obtainedPrize.prizeId = prize._id;
           obtainedPrize.prizeName = prize.name;
