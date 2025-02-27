@@ -488,13 +488,13 @@ router.post("/draw_gacha", auth, async (req, res) => {
     const remainGrade = gacha.remain_prizes.length + gacha.rubbish_total_number;
     for (let i = 0; i < orderL; i++) {
       const prize = orderprizes[i];
-      console.log('ok')
       if (gacha.total_number - remainGrade + countkind < prize.order) break;
       
       const video = await PrizeVideo.findOne({ kind: prize.kind });
       // Assign video URL and gacha_id to the selected prize
       prize.video = video.url;
       prize.gacha_id = gachaId;
+      prize.deliverStatus = 'notSelected';
       
       // Add the selected prize to the drawn prizes
       drawedPrizes.push(prize);
