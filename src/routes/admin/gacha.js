@@ -165,6 +165,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const gacha = await Gacha.findOne({ _id: req.params.id });
     const filePath = path.join("./", gacha.img_url);
+    if (!gacha) res.send({ status: 0, msg: "failedReq" });
 
     try {
       await deleteFile(filePath);
