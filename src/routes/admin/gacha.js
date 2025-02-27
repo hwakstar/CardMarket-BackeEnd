@@ -111,7 +111,7 @@ router.post("/seo", auth, async (req, res) => {
 
 // get all gachas
 router.get("/", async (req, res) => {
-  const gachas = await Gacha.find({isRelease: true})
+  const gachas = await Gacha.find()
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
   const homeSeo = await adminSchemas.Themes.findOne();
@@ -141,7 +141,7 @@ router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
-  const gachas = await Gacha.find({isRelease: true})
+  const gachas = await Gacha.find()
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
 
@@ -672,7 +672,7 @@ router.post("/shipping", auth, async (req, res) => {
     // update user data
     await Users.updateOne({ _id: user._id }, userData);
 
-    const gachas = await Gacha.find({isRelease: true})
+    const gachas = await Gacha.find()
         .sort({ order: 1, createdAt: -1 })
         .populate("category");
 
