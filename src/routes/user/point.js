@@ -13,6 +13,7 @@ const AffRankData = require("../../affiliate/utils/affRankData");
 const userRankData = require("../../utils/userRnkData");
 const { Rank } = require("../../models/admin");
 const adminSchemas = require("../../models/admin");
+const stripe = require('stripe')(process.env.STRIPE_API_SECRET_KEY);
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -148,6 +149,28 @@ router.post("/admincode", auth, async (req, res) => {
     res.send({ status: 1, data: coupon.cashback, msg: "pointAdd" });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to purchase points.", error: error });
+  }
+});
+
+// Stripe payment
+router.post("/create-payment-intent", auth, async (req, res) => {
+  const { amount } = req.body;
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: "JPY", // Change to your desired currency
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    console.log(error)
+    res.status(500).send({ error: error.message });
   }
 });
 
