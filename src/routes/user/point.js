@@ -14,6 +14,17 @@ const userRankData = require("../../utils/userRnkData");
 const { Rank } = require("../../models/admin");
 const adminSchemas = require("../../models/admin");
 const stripe = require('stripe')(process.env.STRIPE_API_SECRET_KEY);
+const axios = require('axios');
+const Client = require('@amazonpay/amazon-pay-api-sdk-nodejs');
+const { v4: uuidv4 } = require('uuid');
+
+const config = {
+  publicKeyId: process.env.AMAZON_PUBLIC_KEY_ID,
+  privateKey: process.env.AMAZON_PRIVATE_KEY,
+  region: 'jp',
+  algorithm: 'AMZN-PAY-RSASSA-PSS-V2',
+  sandbox: false,
+};
 
 router.post("/purchase", auth, async (req, res) => {
   const { user_id, point_num, price } = req.body;
@@ -33,7 +44,6 @@ router.post("/purchase", auth, async (req, res) => {
       inviter.point_remain += 300;
       await Users.updateOne({ inviteCode: user.invited }, inviter);
     }
-
     user.point_remain += point_num;
     await user.save();
 
@@ -99,6 +109,7 @@ router.post("/purchase", auth, async (req, res) => {
 
     res.send({ status: 1, msg: "Successfully purchased points." });
   } catch (error) {
+    console.log(error)
     res.send({ status: 0, msg: "Failed to purchase points.", error: error });
   }
 });
@@ -167,11 +178,149 @@ router.post("/create-payment-intent", auth, async (req, res) => {
     });
 
     res.send({
-      clientSecret: paymentIntent.client_secret,
+      status: 1, clientSecret: paymentIntent.client_secret,
+    });
+  } catch (error) {
+    res.send({ status: 0, error: error.message });
+  }
+});
+
+// Amazon payment
+router.post('/create-checkout-session', auth, async (req, res) => {
+  const { amount } = req.body;
+  const payload = {
+    webCheckoutDetails: {
+      checkoutReviewReturnUrl: process.env.AMAZON_CHECKOUT_REVIEW_RETURN_URL,
+      // checkoutResultReturnUrl: '',
+    },
+    paymentDetails: {
+      paymentIntent: 'AuthorizeWithCapture',
+      canHandlePendingAuthorization: false,
+      chargeAmount: {
+        amount: amount.toString(),
+        currencyCode: 'JPY',
+      },
+    },
+    storeId: process.env.AMAZON_STORE_ID,
+  };
+  const headers = {
+    'x-amz-pay-idempotency-key': uuidv4().toString().replace(/-/g, '')
+  };
+
+  try {
+    const testPayClient = new Client.WebStoreClient(config);
+    const signature = testPayClient.generateButtonSignature(payload);
+    const response = await testPayClient.createCheckoutSession(payload, headers);
+    res.send({
+      status: 1,
+      checkoutSessionId: response.data.checkoutSessionId,
+      signature: signature,
+      payload: JSON.stringify(payload)
     });
   } catch (error) {
     console.log(error)
-    res.status(500).send({ error: error.message });
+    res.send({status: 0});
+  }
+});
+
+router.get('/get-checkout-session/:checkoutSessionId', auth, async (req, res) => {
+  const { checkoutSessionId } = req.params;
+
+  try {
+    const testPayClient = new Client.WebStoreClient(config);
+    const response = await testPayClient.getCheckoutSession(checkoutSessionId);
+    const { shippingAddress, paymentPreferences } = response.data;
+    const sessionData = {shippingAddress: shippingAddress, paymentInstrument: paymentPreferences?.[0] || {},};
+    
+    res.send({
+      status: 1,
+      sessoionData: sessionData
+    });
+  } catch (error) {
+    console.error('Error fetching checkout session:', error);
+    res.send({
+      status: 0,
+      error: error.message || 'Checkout session not found or invalid',
+    });
+  }
+});
+
+// Update Payment
+router.post('/update-checkout-session', auth, async (req, res) => {
+  const { checkoutSessionId } = req.body;
+
+  if (!checkoutSessionId) {
+    return res.send({ status: 0, error: 'Checkout session ID is required' });
+  }
+
+  try {
+    const testPayClient = new Client.WebStoreClient(config);
+
+    // Fetch the session to get the original amount
+    const sessionResponse = await testPayClient.getCheckoutSession(checkoutSessionId);
+    const originalAmount = sessionResponse.data.paymentDetails.chargeAmount.amount;
+
+    const updatePayload = {
+        webCheckoutDetails: {
+          checkoutResultReturnUrl: process.env.AMAZON_CHECKOUT_RESULT_RETURN_URL + '?amount=' + originalAmount,
+        },
+        paymentDetails: {
+          paymentIntent: 'AuthorizeWithCapture',
+          canHandlePendingAuthorization: false,
+          softDescriptor: "Descriptor",
+          chargeAmount: {
+            amount: originalAmount.toString(),
+            currencyCode: 'JPY',
+          },
+        },
+        merchantMetadata: {
+            merchantReferenceId: "Merchant reference ID",
+            merchantStoreName: "On-gacha.net",
+            noteToBuyer: "Note to buyer",
+            customInformation: "Custom information"
+        }
+    };
+
+    const response = await testPayClient.updateCheckoutSession(checkoutSessionId, updatePayload);
+    res.send({
+      status: 1,
+      data: response.data,
+      amazonPayRedirectUrl: response.data.webCheckoutDetails.amazonPayRedirectUrl
+    });
+  } catch (error) {
+    console.error('Error authorizing payment:', error);
+    res.send({
+      status: 0,
+      error: error.message || 'Payment authorization failed',
+    });
+  }
+});
+
+router.post('/complete-checkout-session', auth, async (req, res) => {
+  const { checkoutSessionId, amount } = req.body;
+
+  if (!checkoutSessionId) {
+    return res.send({ status: 0, error: 'Checkout session ID is required' });
+  }
+
+  try {
+    const testPayClient = new Client.WebStoreClient(config);
+    const completePayload = {
+        chargeAmount: {
+          amount: amount.toString(),
+          currencyCode: 'JPY',
+        },
+      }
+    // Fetch the session to get the original amount
+    const sessionResponse = await testPayClient.completeCheckoutSession(checkoutSessionId, completePayload);
+    if (sessionResponse.data.statusDetails.state === 'Completed') res.send({ status: 1 });
+    else res.send({ status: 0 });
+  } catch (error) {
+    console.error('Error authorizing payment:', error);
+    res.send({
+      status: 0,
+      error: error.message || 'Payment authorization failed',
+    });
   }
 });
 
