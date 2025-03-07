@@ -20,6 +20,16 @@ const AffPayment = require("../../affiliate/models/PaymentModel");
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 const axios = require('axios');
+const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+
+const sesClient = new SESClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
 
 // Generate random code
 const generateRandomCode = (length = 8) => {
@@ -148,44 +158,42 @@ router.post("/register", async (req, res) => {
       await newAffEarn.save();
     }
 
-    const token = jwt.sign(
-      { email }, "RANDOM-TOKEN", { expiresIn: '30m'}
-    );
+    const token = jwt.sign({ email }, "RANDOM-TOKEN", { expiresIn: '30m'});
 
     // Mail send
-    const url = 'https://api.mailersend.com/v1/email';
-    const data = {
-        from: {
-            email:  "on-gacha.net"
+    const params = {
+      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Destination: {
+        ToAddresses: [email], // Recipient email
+      },
+      Message: {
+        Subject: {
+          Data: 'Verify Your Email',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: `
+              <h1>Email Verification</h1>
+              <p>Click the link below to verify your email:</p>
+              <a href="http://on-gacha.net/auth/login?token=${token}">
+                Verify Email
+              </a>
+            `,
+            Charset: 'UTF-8',
           },
-        to: [
-            {
-                email: email
-            }
-        ],
-        subject: 'Account activation link',
-        html: `
-                <h1>Please use the following link to activate your account</h1>
-                <a href="http://on-gacha.net/auth/login?token=${token}"> <h2> Activate your account <h2> </a>
-                <hr />
-                <p>This email may contain sensitive information</p>
-            `
-    };
-
-    const headers = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
+        },
+      },
     };
 
     try {
-        const response = await axios.post(url, data, { headers });
-        console.log('Email sent successfully:', response.data);
+      const command = new SendEmailCommand(params);
+      await sesClient.send(command);
+      res.send({status: 1, msg: "successRegistered" });
     } catch (error) {
-        console.error('Error sending email:', error.response ? error.response.data : error.message);
+      console.error('Error sending email:', error.response ? error.response.data : error.message);
+      res.send({ status: 0, msg: "failedReq" });
     }
-
-    res.send({ status: 1, msg: "successRegistered" });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
   }
@@ -199,40 +207,37 @@ router.post("/gmail-send", async (req, res) => {
     );
 
     // Mail send
-    const url = 'https://api.mailersend.com/v1/email';
-    const data = {
-        from: {
-            email: "on-gacha.net"
+    const params = {
+      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Destination: {
+        ToAddresses: [email], // Recipient email
+      },
+      Message: {
+        Subject: {
+          Data: 'Verify Your Email',
+          Charset: 'UTF-8',
         },
-        to: [
-            {
-                email: email
-            }
-        ],
-        subject: 'Account activation link',
-        html: `
-                <h1>Please use the following link to activate your account</h1>
-                <a href="http://on-gacha.net/auth/login?token=${token}"> <h2> Activate your account </h2> </a>
-                <hr />
-                <p>This email may contain sensitive information</p>
-            `
+        Body: {
+          Html: {
+            Data: `
+              <h1>Email Verification</h1>
+              <p>Click the link below to verify your email:</p>
+              <a href="http://on-gacha.net/auth/login?token=${token}">
+                Verify Email
+              </a>
+            `,
+            Charset: 'UTF-8',
+          },
+        },
+      },
     };
 
-    const headers = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
-    };
-
-    try {
-        const response = await axios.post(url, data, { headers });
-        console.log('Email sent successfully:', response.data);
-    } catch (error) {
-        console.error('Error sending email:', error.response ? error.response.data : error.message);
-    }
-
+    const command = new SendEmailCommand(params);
+    await sesClient.send(command);
+    console.log('Email sent successfully');
     res.send({ status: 1, msg: "emailSent" });
   } catch (error) {
+    console.error('Error sending email:', error.response ? error.response.data : error.message);
     res.send({ status: 0, msg: "emailFailed" });
   }
 });
@@ -339,44 +344,40 @@ router.post("/forgot", async (req, res) => {
     const token = jwt.sign({ _id: user._id }, "RANDOM-TOKEN", { expiresIn: '10m'});
 
     // Mail send
-    const url = 'https://api.mailersend.com/v1/email';
-    const data = {
-        from: {
-            email: "on-gacha.net"
+    const params = {
+      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Destination: {
+        ToAddresses: [email], // Recipient email
+      },
+      Message: {
+        Subject: {
+          Data: 'Password Reset link',
+          Charset: 'UTF-8',
         },
-        to: [
-            {
-                email: email
-            }
-        ],
-        subject: 'Password Reset link',
-        html: `
+        Body: {
+          Html: {
+            Data: `
               <h1>Please use the following link to reset your password</h1>
               <a href="http://on-gacha.net/auth/forgot?token=${token}"> <h2> Reset Password </h2> </a>
               <hr />
               <p>This email may contain sensetive information</p>
-            `
+            `,
+            Charset: 'UTF-8',
+          },
+        },
+      },
     };
 
-    const headers = {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': 'Bearer mlsn.2da8100005d10d2e2678eb7cc451fcbb6e63b42f17d6aff0a84500c1a642eee5'
-    };
-
-    try {
-        const response = await axios.post(url, data, { headers });
-        console.log('Email sent successfully:', response.data);
-    } catch (error) {
-        console.error('Error sending email:', error.response ? error.response.data : error.message);
-    }
+    const command = new SendEmailCommand(params);
+    await sesClient.send(command);
+    console.log('Email sent successfully');
     
     user.resetPasswordLink = token;
     await Users.updateOne({email}, user);
-    console.log(token)
-
+    
     res.send({ status: 1, msg: "emailSent"});
   } catch (error) {
+    console.error('Error sending email:', error.response ? error.response.data : error.message);
     res.send({ status: 0, msg: "emailFailed"});
   }
 });
