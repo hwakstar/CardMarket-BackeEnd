@@ -324,4 +324,77 @@ router.post('/complete-checkout-session', auth, async (req, res) => {
   }
 });
 
+// Paidy Payment
+router.post('/paidy/capture-payment', auth, async (req, res) => {
+  const { paymentId } = req.body;
+
+  // Validate input
+  if (!paymentId) return res.send({status: 0, error: 'Payment ID is required' });
+
+  try {
+    const response = await axios.post(`https://api.paidy.com/payments/${paymentId}/captures`,
+      {
+        metadata: {}
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Paidy-Version': '2018-04-10',
+          'Authorization': `Bearer ${process.env.PAIDY_SECRET_KEY}`,
+        },
+      }
+    );
+    // Send success response
+    res.send({ status: 1, data: response.data});
+  } catch (error) {
+    // Handle errors from Paidy API
+    const errorDetails = error.response?.data || { message: error.message };
+    console.error('Error capturing payment:', errorDetails);
+    res.send({
+      status: 0,
+      error: 'Failed to capture payment',
+    });
+  }
+});
+
+router.post('/paidy/retrieve-payment', auth, async (req, res) => {
+  const { paymentId } = req.body;
+
+  try {
+    const response = await axios.get(`https://api.paidy.com/payments/${paymentId}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Paidy-Version': '2018-04-10',
+          'Authorization': `Bearer ${process.env.PAIDY_SECRET_KEY}`
+        }
+      }
+    );
+    res.send({status: 1, payment: response.data.amount});
+  } catch (err) {
+    // console.log(err)
+    res.send({status: 0});
+  }
+});
+
+router.post('/paidy/close-payment', auth, async (req, res) => {
+  const { paymentId } = req.body;
+
+  try {
+    const response = await axios.get(`https://api.paidy.com/payments/${paymentId}/close`,
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Paidy-Version': '2018-04-10',
+          'Authorization': `Bearer ${process.env.PAIDY_SECRET_KEY}`
+        }
+      }
+    );
+    res.send({status: 1});
+  } catch (err) {
+    res.send({status: 0});
+  }
+});
+
 module.exports = router;
