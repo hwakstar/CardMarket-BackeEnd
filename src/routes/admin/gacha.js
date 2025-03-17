@@ -23,8 +23,8 @@ const gacha = require("../../models/gacha");
 const s3Client = new S3Client({
   region: process.env.AWS_REGION, // Change to your bucket's region
   credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID, // Use environment variable
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, // Use environment variable
+      accessKeyId: process.env.AMAZON_S3_ACCESS_KEY, // Use environment variable
+      secretAccessKey: process.env.AMAZON_S3_SECRET_KEY, // Use environment variable
   },
 });
 
@@ -408,7 +408,6 @@ router.post("/upload_bulk", auth, async (req, res) => {
   };
 
   const bucketName = 'oripacsv'; // Replace with your bucket name
-  const baseUrl = 'https://oripacsv.s3.amazonaws.com/';
   
   try {
     // Ensure the uploads directory exists
@@ -424,9 +423,12 @@ router.post("/upload_bulk", auth, async (req, res) => {
         const fileName = path.basename(prize.img_url);
         const fName = uniqueSuffix + "-" + fileName;
         const downloadPath = path.join(uploadDir, fName);; // Local path to save the file
+
+        const urlPath = new URL(prize.img_url).pathname; // Gets '/1000pt/busuta_1000.jpg'
+        const filePath = path.posix.normalize(urlPath).substring(1);
         
         try {
-            await downloadFile(bucketName, fileName, downloadPath); // Await the download
+            await downloadFile(bucketName, filePath, downloadPath); // Await the download
             prize.img_url = downloadPath;
             const newPrize = new adminSchemas.Prize(prize);
             const result = await newPrize.save();
