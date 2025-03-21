@@ -115,9 +115,10 @@ router.get("/", async (req, res) => {
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
   const homeSeo = await adminSchemas.Themes.findOne();
+  const statis = await adminSchemas.GachaVisitStatus.findOne();
   const home = { title: homeSeo.title, desc: homeSeo.desc};
 
-  if (gachas) res.send({ status: 1, gachaList: gachas, home: home});
+  if (gachas) res.send({ status: 1, gachaList: gachas, home: home, isStop: statis.currentMaintance});
   else res.send({ status: 0 });
 });
 
