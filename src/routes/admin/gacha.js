@@ -456,9 +456,12 @@ router.post("/draw_gacha", auth, async (req, res) => {
   
   try {
     const gacha = await Gacha.findOne({ _id: gachaId });
+    const statis = await adminSchemas.GachaVisitStatus.findOne();
+    if (statis.currentMaintance) return res.send({status: 2});
     if (!gacha.isRelease) {
       return res.send({ status: 0 });
     }
+
     const userData = await Users.findOne({ _id: user._id });
     let drawedPrizes = [];
     
@@ -604,6 +607,8 @@ router.post("/shipping", auth, async (req, res) => {
   const { shippingPrizes, returningPrizes, cashback, user } = req.body;
   try {
     const userData = await Users.findOne({ _id: user._id });
+    const statis = await adminSchemas.GachaVisitStatus.findOne();
+    if (statis.currentMaintance) return res.send({status: 2});
 
     // return all prizes
     if (shippingPrizes.length === 0) {

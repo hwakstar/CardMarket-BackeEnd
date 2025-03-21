@@ -76,11 +76,11 @@ const termsSchema = new Schema({
   lang: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
-
 // Gacha visit status
 const gachavisitSchema = new Schema({
   currentGacha: { type: Boolean, default: false },
   currentInvite: { type: Boolean, default: false },
+  currentMaintance: {type: Boolean, default: false},
 });
 
 // Carousel
@@ -107,7 +107,7 @@ const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
 const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
 const Administrator = mongoose.model("Admin", AdminSchema, "admin");
-const GachaVisitStatus = mongoose.model("GachaVisitStatus", gachavisitSchema, "gachavisitstatus")
+const GachaVisitStatus = mongoose.model("GachaVisitStatus", gachavisitSchema, "statis")
 
 const adminSchemas = {
   Category: Category,

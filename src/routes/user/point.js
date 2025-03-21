@@ -118,13 +118,14 @@ router.post("/purchase", auth, async (req, res) => {
 router.post("/admincode", auth, async (req, res) => {
   const { user_id, code } = req.body;
 
-  if (user_id == undefined)
-    return res.status(401).json({ msg: "authorization denied" });
+  if (user_id == undefined) return res.send({status: 0, msg: 'notAdmin'})
 
   try {
     // update user remain points
     const user = await Users.findOne({ _id: user_id });
+    const statis = await adminSchemas.GachaVisitStatus.findOne();
     const coupon = await adminSchemas.Coupon.findOne({code: code});
+    if (statis.currentMaintance) return res.send({status: 2, msg: 'notAdmin'})
     if (!coupon.allow) {
       return (
         res.send({status: 0, msg: 'notAdmin'})
@@ -132,7 +133,6 @@ router.post("/admincode", auth, async (req, res) => {
     }
 
     const isCheck = await PointLog.findOne({user_id: user_id, couponcode: code});
-    console.log(isCheck)
     if (isCheck) {
       return (
         res.send({status: 0, msg: 'alreadyUse'})

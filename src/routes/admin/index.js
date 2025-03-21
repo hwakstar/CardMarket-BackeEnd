@@ -335,10 +335,12 @@ router.post(
 );
 
 router.get("/get_point", auth, async (req, res) => {
+  const statis = await adminSchemas.GachaVisitStatus.findOne();
+
   adminSchemas.Point.find()
     .sort("point_num")
     .then((points) => {
-      return res.send({ status: 1, points: points });
+      return res.send({ status: 1, points: points, isStop: statis.currentMaintance });
     })
     .catch((err) => res.send({ status: 0, err: err }));
 });
@@ -541,6 +543,7 @@ router.post("/statistics", auth, async (req, res) => {
     });
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
     const currentStatus = {gacha: gachaVisitStatus.currentGacha, invite: gachaVisitStatus.currentInvite};
+    const maintance = gachaVisitStatus.currentMaintance;
 
     res.send({
       status: 1,
@@ -548,7 +551,8 @@ router.post("/statistics", auth, async (req, res) => {
       prizeStatus: [pendings, deliverings],
       periodPendings,
       periodDeliverings,
-      currentStatus: currentStatus
+      currentStatus: currentStatus,
+      maintance: maintance
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });
@@ -563,6 +567,20 @@ router.post("/gachastatus", auth, async (req, res) => {
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
     gachaVisitStatus.currentGacha = current.gacha;
     gachaVisitStatus.currentInvite = current.invite;
+    await gachaVisitStatus.save();
+    res.send({ status: 1 });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+// save Maintance mode status
+router.post("/maintance", auth, async (req, res) => {
+  const current = req.body.current;
+
+  try {
+    const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
+    gachaVisitStatus.currentMaintance = current;
     await gachaVisitStatus.save();
 
     res.send({ status: 1 });
