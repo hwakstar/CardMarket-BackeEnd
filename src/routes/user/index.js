@@ -560,6 +560,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
   try {
     // create user data
     const user = await Users.findOne({ _id: id });
+    const statis = await adminSchemas.GachaVisitStatus.findOne();
     const createtime = new Intl.DateTimeFormat('ja-JP', {
       timeZone: 'Asia/Tokyo', // Specify the time zone
       year: 'numeric',
@@ -595,7 +596,8 @@ router.get("/get_user/:id", auth, async (req, res) => {
       status: 1,
       msg: "get User succeeded.",
       user: userData,
-      invite: allow.currentInvite
+      invite: allow.currentInvite,
+      isStop: statis.currentMaintance
     });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", error: error });
