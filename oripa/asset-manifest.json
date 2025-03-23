@@ -1,14 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.199422fa.css",
-    "main.js": "/static/js/main.1577982e.js",
+    "main.css": "/static/css/main.7f581184.css",
+    "main.js": "/static/js/main.d735d2d8.js",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.07ed6d5fa32c1d54af0f.ttf",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.0ff70dcbf135d859ebf3.ttf",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.93f719f4d62bfa3e748c.woff2",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.bb8d5a145e22822103fb.woff2",
     "static/media/on-gacha_logo.png": "/static/media/on-gacha_logo.4bc63264ea79ce85ae6e.png",
+    "static/media/paidy.png": "/static/media/paidy.e6aafbef42c386b92950.png",
     "static/media/fa-regular-400.ttf": "/static/media/fa-regular-400.17a6e1aebccdbaa39e78.ttf",
-    "static/media/univa.png": "/static/media/univa.8eff452dc220bdbdb781.png",
+    "static/media/amazonpay.png": "/static/media/amazonpay.7ca038f586b39e449a3c.png",
     "static/media/login.png": "/static/media/login.a952913a7a42e036aa49.png",
     "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.bc3722686635b5f86132.woff2",
     "static/media/upload.png": "/static/media/upload.011989731c79ae349704.png",
@@ -20,7 +21,7 @@
     "static/media/check-email.svg": "/static/media/check-email.04306f2e57becc2aceba4df730d3e6e6.svg"
   },
   "entrypoints": [
-    "static/css/main.199422fa.css",
-    "static/js/main.1577982e.js"
+    "static/css/main.7f581184.css",
+    "static/js/main.d735d2d8.js"
   ]
 }

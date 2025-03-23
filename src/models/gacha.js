@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const gachaSchema = new mongoose.Schema(
   {
     img_url: { type: String, required: true },
+    detail_img_url: { type: String, default: ''},
     name: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },

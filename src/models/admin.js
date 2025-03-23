@@ -32,7 +32,8 @@ const rubbishSchema = new mongoose.Schema({
   totalNumber: {type: Number},
   nickname: {type: String},
   status: { type: Number, default: 0 },
-  count: {type: Number, default: 0},
+  count: {type: Number, default: 1},
+  order: {type: Number, default: 0},
   createdAt: { type: Date, default: Date.now },
 });
 

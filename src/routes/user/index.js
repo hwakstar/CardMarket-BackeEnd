@@ -29,7 +29,15 @@ const sesClient = new SESClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
-
+// AWS SNS Configuration
+// const snsClient = new SNSClient({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   },
+// });
+const verificationCodes = new Map();
 
 // Generate random code
 const generateRandomCode = (length = 8) => {
@@ -41,6 +49,11 @@ const generateRandomCode = (length = 8) => {
   }
   return randomCode;
 }
+
+// Generate random 6-digit code
+  const generateSNSCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
 
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId, randomcode } = req.body;
@@ -176,7 +189,7 @@ router.post("/register", async (req, res) => {
             Data: `
               <h1>Email Verification</h1>
               <p>Click the link below to verify your email:</p>
-              <a href="http://on-gacha.net/auth/login?token=${token}">
+              <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 Verify Email
               </a>
             `,
@@ -222,7 +235,7 @@ router.post("/gmail-send", async (req, res) => {
             Data: `
               <h1>Email Verification</h1>
               <p>Click the link below to verify your email:</p>
-              <a href="http://on-gacha.net/auth/login?token=${token}">
+              <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 Verify Email
               </a>
             `,
@@ -332,6 +345,115 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", err: error });
   }
+});
+
+router.post("/sns", async (req, res) => {
+  const { phoneNumber } = req.body;
+  const code = generateSNSCode();
+  const message = `Your verification code is ${code}`;
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 5 minutes expiration
+
+  if (!phoneNumber || !phoneNumber.match(/^\+\d{10,15}$/)) {
+    return res.send({ status: 0 });
+  }
+
+  const params = {
+    PhoneNumber: phoneNumber, // E.164 format: +12345678901
+    Message: message,
+    MessageAttributes: {
+      'AWS.SNS.SMS.SenderID': {
+        DataType: 'String',
+        StringValue: 'MyApp',
+      },
+      'AWS.SNS.SMS.SMSType': {
+        DataType: 'String',
+        StringValue: 'Transactional',
+      },
+    },
+  };
+
+  try {
+    const command = new PublishCommand(params);
+    await snsClient.send(command);
+    verificationCodes.set(phoneNumber, { code, expiresAt });
+    res.send({ status: 1, code: code });
+  } catch (error) {
+    res.send({ status: 0 });
+  }
+});
+
+router.post("/sns_test", async (req, res) => {
+  const { phoneNumber } = req.body;
+  const code = generateSNSCode();
+  const message = `Your verification code is ${code}`;
+  const expiresAt = Date.now() + 10 * 60 * 1000; // 5 minutes expiration
+
+  if (!phoneNumber || !phoneNumber.match(/^\+\d{10,15}$/)) {
+    return res.send({ status: 0 });
+  }
+
+  const params = {
+    phone_number: phoneNumber,
+    text_message: message,
+    click_count: true
+  };
+
+  try {
+    const response = await axios.post(
+      "https://sandbox.sms2.nexlink2.jp/api/v1/short_messages",
+      params,
+      {
+        headers: {
+          "Authorization": "Bearer YOUR_API_TOKEN", // Replace with your Nexlink2 token
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    verificationCodes.set(phoneNumber, { code, expiresAt });
+    console.log("Nexlink2 response:", response.data); // Log for verification
+    res.json({
+      status: 1,
+      code,
+      sandboxResponse: response.data // Include API response for testing
+    });
+  } catch (error) {
+    console.error("Error:", error.response?.data || error.message);
+    res.status(500).json({
+      status: 0,
+      error: error.response?.data || error.message
+    });
+  }
+});
+
+router.post('/sns/verify-code', (req, res) => {
+
+  console.log(`========== Verify Code ============')
+              ${req.body.phoneNumber}
+              ${req.body.code}
+  ====================================`)
+  const { phoneNumber, code } = req.body;
+
+  if (!phoneNumber || !code) {
+    return res.send({ status: 0 });
+  }
+
+  const storedData = verificationCodes.get(phoneNumber);
+
+  if (!storedData) {
+    return res.send({ status: 0, msg: 'Invalid Verification code!' });
+  }
+
+  if (Date.now() > storedData.expiresAt) {
+    verificationCodes.delete(phoneNumber);
+    return res.send({status: 0, msg: 'Verification code expired' });
+  }
+
+  if (storedData.code === code) {
+    verificationCodes.delete(phoneNumber);
+    return res.send({ status: 1});
+  }
+
+  res.send({status: 0,  msg: 'Invalid verification code' });
 });
 
 router.post("/forgot", async (req, res) => {
