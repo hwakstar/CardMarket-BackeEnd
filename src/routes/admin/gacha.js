@@ -640,7 +640,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
         if (drawedPrizes[i].kind == 'rubbish') {
           // Assuming remainRu is an array of objects and drawedPrizes is defined
           for (let j = 0; j < remainRu.length; j++) {
-            if (remainRu[j]._id == drawedPrizes[i]._id && remainRu[j].order) {
+            if (remainRu[j]._id == drawedPrizes[i]._id && remainRu[j].order && remainRu[j].order != undefined) {
               // Decrement the count if the IDs match
               remainRu[j].count = remainRu[j].count - 1;
             }
