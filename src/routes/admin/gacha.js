@@ -543,7 +543,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     /* -------- Determine ordered rubbishes -------- */
     // get all order rubbishes
-    let orderrubbishes = gacha.remain_rubbishs.filter((item) => item.order != 0 );
+    let orderrubbishes = gacha.remain_rubbishs.filter((item) => (item.order != 0 && item.order != undefined) );
     // Sort the array by the 'order' property
     orderrubbishes.sort((a, b) => {
       // Handle cases where 'order' might be undefined
@@ -576,7 +576,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     let gradePrizes = gacha.remain_prizes.filter((item) => item.order === 0 && item.kind !== 'last_prize');
     // get all rubbishs isn't count 0
     let remainRubbish = gacha.remain_rubbishs;
-    let gradeRubbishs = remainRubbish.filter(item => item.order == 0);
+    let gradeRubbishs = remainRubbish.filter(item => item.order == 0 || item.order == undefined);
 
     // get remain prizes order = 0
     let remainPrizesNum = gradePrizes.length;
@@ -604,9 +604,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
       prizeId.push(gradePrizes[i]._id);
       // Add the selected prize to the drawn prizes
       drawedPrizes.push(gradePrizes[i]);
-    }
-    // add rubbish into drawedeprizs list
+    }  
 
+    // add rubbish into drawedeprizs list
     for (let i = 0; i < drawRubbishNum; i++) {
 
       // Find the random value;
