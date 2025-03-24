@@ -3,6 +3,8 @@ const DbConnect = require("./src/config/db/dbConnect");
 // const DbConnect = require("./src/config/db/dbConnectLocal");
 const cors = require("cors");
 const https = require("https");
+const socketIo = require('socket.io')
+const http = require('http')
 const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -10,18 +12,29 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 
+const server = http.createServer(app)
+
 // // Load SSL certificate and key
 // const options = {
-//   key: fs.readFileSync("server.key"),
-//   cert: fs.readFileSync("server.cert"),
-// };
-
-const corsOptions = {
-  origin: "*",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  optionSuccessStatus: 200,
-};
+  //   key: fs.readFileSync("server.key"),
+  //   cert: fs.readFileSync("server.cert"),
+  // };
+  
+  const corsOptions = {
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    optionSuccessStatus: 200,
+  };
+  
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Your frontend origin
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true // Allow credentials if necessary
+  }
+});
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
@@ -119,9 +132,21 @@ app.get("*", (req, res) => {
 //   console.log(`HTTPS Server running on https://localhost:${port}`);
 // });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+
+io.on("connection", (socket) => {
+
+  socket.on("maintance", ({ maintance }) => {
+    socket.broadcast.emit("maintance", {
+      maintance: maintance
+    })
+  } )
+
+ 
 });
 
+// Start the server
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
 // execute database connection
 DbConnect();

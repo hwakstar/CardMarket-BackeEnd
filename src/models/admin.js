@@ -18,7 +18,7 @@ const prizeSchema = new Schema({
   kind: { type: String },
   trackingNumber: { type: String },
   deliveryCompany: { type: String },
-  status: { type: Boolean, default: false },
+  status: { type: Number, default: 0 },
   order: {type: Number, default: 0},
   deliverStatus: {type: String, default: "notSelected"},
   createdAt: { type: Date, default: Date.now },

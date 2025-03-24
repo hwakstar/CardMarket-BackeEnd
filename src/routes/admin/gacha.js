@@ -224,7 +224,7 @@ router.post("/set_prize", auth, async (req, res) => {
       if (!check.length) return  res.send({status: 0});
     }
 
-    prize.status = true; 
+    prize.status++; 
     prize.order = order;
     await prize.save();
 
@@ -352,7 +352,7 @@ router.post("/unset_prize", auth, async (req, res) => {
     await gacha.save();
     
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
-    prize.status = false;
+    prize.status--;
     await prize.save();
 
     res.send({ status: 1 });
