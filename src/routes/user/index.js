@@ -21,6 +21,7 @@ const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
 const axios = require('axios');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
@@ -29,14 +30,15 @@ const sesClient = new SESClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   },
 });
+
 // AWS SNS Configuration
-// const snsClient = new SNSClient({
-//   region: process.env.AWS_REGION,
-//   credentials: {
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//   },
-// });
+const snsClient = new SNSClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 const verificationCodes = new Map();
 
 // Generate random code
@@ -348,22 +350,27 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/sns", async (req, res) => {
-  const { phoneNumber } = req.body;
+
+  const { phonenumber } = req.body;
+
   const code = generateSNSCode();
-  const message = `Your verification code is ${code}`;
+  const message = `オンガチャの認証コードは${code}です。`;
   const expiresAt = Date.now() + 10 * 60 * 1000; // 5 minutes expiration
 
-  if (!phoneNumber || !phoneNumber.match(/^\+\d{10,15}$/)) {
-    return res.send({ status: 0 });
+  const regex = /^\+?[1-9]\d{1,14}$/;
+
+
+  if (!phonenumber && !regex.test(phonenumber)) {
+    return res.send({ status: 0, msg: "invalidPhonenumber" });
   }
 
   const params = {
-    PhoneNumber: phoneNumber, // E.164 format: +12345678901
+    phoneNumber: phonenumber, // E.164 format: +12345678901
     Message: message,
     MessageAttributes: {
       'AWS.SNS.SMS.SenderID': {
         DataType: 'String',
-        StringValue: 'MyApp',
+        StringValue: 'Oripa',
       },
       'AWS.SNS.SMS.SMSType': {
         DataType: 'String',
@@ -372,20 +379,26 @@ router.post("/sns", async (req, res) => {
     },
   };
 
+
+  verificationCodes.set(phonenumber, { code, expiresAt });
+
   try {
     const command = new PublishCommand(params);
+    
     await snsClient.send(command);
-    verificationCodes.set(phoneNumber, { code, expiresAt });
-    res.send({ status: 1, code: code });
+    verificationCodes.set(phonenumber, { code, expiresAt });
+    res.send({ status: 1 });
   } catch (error) {
+    console.log(error)
     res.send({ status: 0 });
   }
+
 });
 
 router.post("/sns_test", async (req, res) => {
   const { phoneNumber } = req.body;
   const code = generateSNSCode();
-  const message = `Your verification code is ${code}`;
+  const message = `オンガチャの認証コードは${code}です。`;
   const expiresAt = Date.now() + 10 * 60 * 1000; // 5 minutes expiration
 
   if (!phoneNumber || !phoneNumber.match(/^\+\d{10,15}$/)) {
@@ -427,15 +440,14 @@ router.post("/sns_test", async (req, res) => {
 
 router.post('/sns/verify-code', (req, res) => {
 
-  console.log(`========== Verify Code ============')
-              ${req.body.phoneNumber}
-              ${req.body.code}
-  ====================================`)
+
   const { phoneNumber, code } = req.body;
+
 
   if (!phoneNumber || !code) {
     return res.send({ status: 0 });
   }
+
 
   const storedData = verificationCodes.get(phoneNumber);
 
