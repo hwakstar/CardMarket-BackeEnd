@@ -364,35 +364,9 @@ router.post("/sns", async (req, res) => {
     return res.send({ status: 0, msg: "invalidPhonenumber" });
   }
 
-  const params = {
-    phoneNumber: phonenumber, // E.164 format: +12345678901
-    Message: message,
-    MessageAttributes: {
-      'AWS.SNS.SMS.SenderID': {
-        DataType: 'String',
-        StringValue: 'Oripa',
-      },
-      'AWS.SNS.SMS.SMSType': {
-        DataType: 'String',
-        StringValue: 'Transactional',
-      },
-    },
-  };
-
-  const command = new PublishCommand(params);
-
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-  try {
-    
-    const result = await snsClient.send(command);
-    console.log(result)
-
-    res.send({ status: 1 });
-  } catch (error) {
-    console.log(error)
-    res.send({ status: 0 });
-  }
+  sendSms(phonenumber, message)
 
 });
 
@@ -819,6 +793,31 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   }
 });
 
+ async function sendSms(phoneNumber, message) {
+   const params = {
+     PhoneNumber: phoneNumber, // E.164 format: +12345678901
+     Message: message,
+     MessageAttributes: {
+       'AWS.SNS.SMS.SenderID': {
+         DataType: 'String',
+         StringValue: 'Oripa',
+       },
+       'AWS.SNS.SMS.SMSType': {
+         DataType: 'String',
+         StringValue: 'Transactional',
+       },
+     },
+   };
+ 
+   const command = new PublishCommand(params);
+ 
+   try {
+     const response = await snsClient.send(command);
+     console.log('Message sent successfully:', response);
+   } catch (error) {
+     console.error('Error sending message:', error);
+   }
+ }
  
 
 module.exports = router;
