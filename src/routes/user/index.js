@@ -366,7 +366,8 @@ router.post("/sns", async (req, res) => {
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-  sendSms(phonenumber, message)
+  await sendSms(phonenumber, message)
+  res.send({ status: 1 })
 
 });
 
@@ -793,7 +794,13 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   }
 });
 
- async function sendSms(phoneNumber, message) {
+async function sendSms(phoneNumber, message) {
+    
+  console.log('=====================')
+  console.log(phoneNumber)
+  console.log(message)
+  console.log('=====================')
+
    const params = {
      PhoneNumber: phoneNumber, // E.164 format: +12345678901
      Message: message,
