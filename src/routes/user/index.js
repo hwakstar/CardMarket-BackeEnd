@@ -379,14 +379,15 @@ router.post("/sns", async (req, res) => {
     },
   };
 
+  const command = new PublishCommand(params);
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
   try {
-    const command = new PublishCommand(params);
     
-    await snsClient.send(command);
-    verificationCodes.set(phonenumber, { code, expiresAt });
+    const result = await snsClient.send(command);
+    console.log(result)
+
     res.send({ status: 1 });
   } catch (error) {
     console.log(error)
