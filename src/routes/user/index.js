@@ -803,7 +803,7 @@ async function sendSms(phoneNumber, message) {
 
    const params = {
      PhoneNumber: phoneNumber, // E.164 format: +12345678901
-     Message: message,
+     Message: '+81' + message,
      MessageAttributes: {
        'AWS.SNS.SMS.SenderID': {
          DataType: 'String',
