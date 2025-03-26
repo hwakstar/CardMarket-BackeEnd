@@ -12,7 +12,6 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 
-const server = http.createServer(app)
 
 // // Load SSL certificate and key
 // const options = {
@@ -27,14 +26,7 @@ const server = http.createServer(app)
     optionSuccessStatus: 200,
   };
   
-const io = socketIo(server, {
-  cors: {
-    origin: "*", // Your frontend origin
-    methods: ["GET", "POST"],
-    allowedHeaders: ["my-custom-header"],
-    credentials: true // Allow credentials if necessary
-  }
-});
+
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
@@ -132,6 +124,16 @@ app.get("*", (req, res) => {
 //   console.log(`HTTPS Server running on https://localhost:${port}`);
 // });
 
+const server = http.createServer(app);
+
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Your frontend origin
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
+    credentials: true, // Allow credentials if necessary
+  },
+});
 
 io.on("connection", (socket) => {
 
@@ -143,6 +145,8 @@ io.on("connection", (socket) => {
 
  
 });
+
+
 
 // Start the server
 server.listen(port, () => {

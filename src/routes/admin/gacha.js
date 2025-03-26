@@ -401,86 +401,90 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
   // Function to download a file from S3
   const downloadFile = async (bucketName, fileName, downloadPath) => {
-      const params = {
-          Bucket: bucketName,
-          Key: fileName,
-      };
+    const params = {
+      Bucket: bucketName,
+      Key: fileName.normalize("NFD"),
+    };
 
-      const command = new GetObjectCommand(params);
+    const command = new GetObjectCommand(params);
 
-      return new Promise((resolve, reject) => {
-          s3Client.send(command)
-              .then(response => {
-                  const fileStream = fs.createWriteStream(downloadPath);
-                  pipeline(response.Body, fileStream, (err) => {
-                      if (err) {
-                          console.error('Pipeline failed:', err);
-                          reject(err);
-                      } else {
-                          console.log(`File downloaded successfully to ${downloadPath}`);
-                          resolve();
-                      }
-                  });
-              })
-              .catch(error => {
-                  console.error('Error downloading file:', error);
-                  reject(error);
-              });
-      });
+    return new Promise((resolve, reject) => {
+      s3Client
+        .send(command)
+        .then((response) => {
+          const fileStream = fs.createWriteStream(downloadPath);
+          pipeline(response.Body, fileStream, (err) => {
+            if (err) {
+              console.error("Pipeline failed:", err);
+              reject(err);
+            } else {
+              console.log(`File downloaded successfully to ${downloadPath}`);
+              resolve();
+            }
+          });
+        })
+        .catch((error) => {
+          console.error("Error downloading file:", error);
+          reject(error);
+        });
+    });
   };
 
-  const bucketName = 'oripacsv'; // Replace with your bucket name
-  
+  const bucketName = "oripacsv"; // Replace with your bucket name
+
   try {
     // Ensure the uploads directory exists
-    
-    let uploadDir = 'uploads/prize';
 
-    if (req.body.type == 'rubbish') {
-       uploadDir = 'uploads/rubbish';
-    } 
+    let uploadDir = "uploads/prize";
+
+    if (req.body.type == "rubbish") {
+      uploadDir = "uploads/rubbish";
+    }
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir);
     }
-    
+
     let rlt = [];
     // Create an array of promises for downloading files
     const downloadPromises = prizes.map(async (prize) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9)
-        const fileName = path.basename(prize.img_url);
-        const fName = uniqueSuffix + "-" + fileName;
-        const downloadPath = path.join(uploadDir, fName);; // Local path to save the file
+      let img_els = prize.img_url.split("/");
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const fileName = img_els[img_els.length - 1];
+      const fName = uniqueSuffix + "-" + fileName;
 
-        const urlPath = new URL(prize.img_url).pathname; // Gets '/1000pt/busuta_1000.jpg'
-        const filePath = path.posix.normalize(urlPath).substring(1);
-        
-        try {
-            await downloadFile(bucketName, filePath, downloadPath); // Await the download
-            prize.img_url = downloadPath;
-          if (req.body.type == 'prize') {
-              const newPrize = new adminSchemas.Prize(prize);
-            const result = await newPrize.save();
-            rlt.push(newPrize);
-          } 
-          if (req.body.type == 'rubbish') {
-            const newRubbish = new adminSchemas.Rubbish(prize);
-            const result = await newRubbish.save();
-            rlt.push(newRubbish);
-          }
-            
-        } catch (error) {
-            console.error(`Failed to download or save prize ${fileName}:`, error);
-            // Optionally, you can handle the error for this specific prize
+      const downloadPath = path.join(uploadDir, fName); // Local path to save the file
+
+      const filePath = prize.img_url.slice(49);
+
+      try {
+        await downloadFile(bucketName, filePath, downloadPath); // Await the download
+        prize.img_url = downloadPath;
+        if (req.body.type == "prize") {
+          const newPrize = new adminSchemas.Prize(prize);
+          const result = await newPrize.save();
+          rlt.push(newPrize);
         }
+        if (req.body.type == "rubbish") {
+          const newRubbish = new adminSchemas.Rubbish(prize);
+          const result = await newRubbish.save();
+          rlt.push(newRubbish);
+        }
+      } catch (error) {
+        console.error(`Failed to download or save prize ${fileName}:`, error);
+        // Optionally, you can handle the error for this specific prize
+      }
     });
 
     // Wait for all downloads to complete
     await Promise.all(downloadPromises);
     res.send({ status: 1, prizes: rlt });
   } catch (err) {
-      console.error('Error in upload_bulk:', err);
-      res.send({ status: 0, message: 'An error occurred during the upload process.' });
+    console.error("Error in upload_bulk:", err);
+    res.send({
+      status: 0,
+      message: "An error occurred during the upload process.",
+    });
   }
 });
 
