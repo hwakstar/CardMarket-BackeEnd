@@ -30,6 +30,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
 
 // Oripa frontend
 app.use(express.static(path.join(__dirname, "oripa")));
