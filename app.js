@@ -3,8 +3,8 @@ const DbConnect = require("./src/config/db/dbConnect");
 // const DbConnect = require("./src/config/db/dbConnectLocal");
 const cors = require("cors");
 const https = require("https");
-const socketIo = require('socket.io')
-const http = require('http')
+const socketIo = require("socket.io");
+const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
@@ -12,23 +12,19 @@ const bodyParser = require("body-parser");
 const app = express();
 const port = process.env.PORT || 3000;
 
-
 // // Load SSL certificate and key
 // const options = {
-  //   key: fs.readFileSync("server.key"),
-  //   cert: fs.readFileSync("server.cert"),
-  // };
-  
-  const corsOptions = {
-    origin: "*",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    optionSuccessStatus: 200,
-  };
-  
+//   key: fs.readFileSync("server.key"),
+//   cert: fs.readFileSync("server.cert"),
+// };
 
+const corsOptions = {
+  origin: "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  optionSuccessStatus: 200,
+};
 
-app.use(cors(corsOptions));
 app.use(
   bodyParser.urlencoded({
     extended: true,
@@ -51,6 +47,9 @@ app.use(
     parameterLimit: 100000,
   })
 );
+
+app.use(cors(corsOptions));
+
 // Oripa frontend
 app.use(express.static(path.join(__dirname, "oripa")));
 // Affiliate frontend
@@ -156,17 +155,12 @@ const io = socketIo(server, {
 });
 
 io.on("connection", (socket) => {
-
   socket.on("maintance", ({ maintance }) => {
     socket.broadcast.emit("maintance", {
-      maintance: maintance
-    })
-  } )
-
- 
+      maintance: maintance,
+    });
+  });
 });
-
-
 
 // Start the server
 server.listen(port, () => {

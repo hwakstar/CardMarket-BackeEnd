@@ -448,18 +448,18 @@ router.post("/upload_bulk", auth, async (req, res) => {
     let rlt = [];
     // Create an array of promises for downloading files
     const downloadPromises = prizes.map(async (prize) => {
-      let img_els = prize.img_url.split("/");
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const fileName = img_els[img_els.length - 1];
-      const fName = uniqueSuffix + "-" + fileName;
+      // let img_els = prize.img_url.split("/");
+      // const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      // const fileName = img_els[img_els.length - 1];
+      // const fName = uniqueSuffix + "-" + fileName;
 
-      const downloadPath = path.join(uploadDir, fName); // Local path to save the file
+      // const downloadPath = path.join(uploadDir, fName); // Local path to save the file
 
-      const filePath = prize.img_url.slice(49);
+      // const filePath = prize.img_url.slice(49);
 
       try {
-        await downloadFile(bucketName, filePath, downloadPath); // Await the download
-        prize.img_url = downloadPath;
+        //await downloadFile(bucketName, filePath, downloadPath); // Await the download
+        //prize.img_url = downloadPath;
         if (req.body.type == "prize") {
           const newPrize = new adminSchemas.Prize(prize);
           const result = await newPrize.save();
