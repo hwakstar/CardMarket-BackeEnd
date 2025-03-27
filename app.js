@@ -29,9 +29,28 @@ const port = process.env.PORT || 3000;
 
 
 app.use(cors(corsOptions));
-app.use(bodyParser.json({ limit: "10mb" }));
-app.use(bodyParser.urlencoded({ limit: "10mb", extended: true }));
+app.use(
+  bodyParser.urlencoded({
+    extended: true,
+    limit: "50mb",
+    parameterLimit: 100000,
+  })
+);
 
+app.use(
+  bodyParser.json({
+    limit: "50mb",
+    parameterLimit: 100000,
+  })
+);
+
+app.use(
+  bodyParser.raw({
+    limit: "50mb",
+    inflate: true,
+    parameterLimit: 100000,
+  })
+);
 // Oripa frontend
 app.use(express.static(path.join(__dirname, "oripa")));
 // Affiliate frontend
