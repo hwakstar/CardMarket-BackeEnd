@@ -299,6 +299,8 @@ router.post("/set_prize", auth, async (req, res) => {
     }
   }
 
+  console.log("========== end ==========");
+
   await gacha.save();
 
   if (is_err) res.send({ status: 0, msg: error });
