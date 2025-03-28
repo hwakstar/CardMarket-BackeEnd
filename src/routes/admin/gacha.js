@@ -436,6 +436,9 @@ router.post("/unset_rubbish", auth, async (req, res) => {
 
 // set prizes from csv file
 router.post("/upload_bulk", auth, async (req, res) => {
+
+  console.log("dddddddddd");
+
   const { prizes } = req.body;
 
   // Function to download a file from S3
