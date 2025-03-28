@@ -253,6 +253,14 @@ router.post("/set_prize", auth, async (req, res) => {
       gacha.remain_prizes = noLastPrize;
     }
 
+    console.log(`
+
+      ======================================
+        REMAIN_PRIZE_SIZE: ${gacha.remain_prizes.length}
+      ======================================
+      
+      `);
+
     const newPrize = {
       _id: prize._id,
       img_url: prize.img_url,
