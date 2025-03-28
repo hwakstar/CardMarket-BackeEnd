@@ -141,7 +141,6 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
 
         const filename = prize.img_url;
         const filePath = path.join("./", filename);
-        await deleteFile(filePath);
 
         prizeData.img_url = `uploads/prize/${req.file.filename}`;
       }
@@ -175,21 +174,21 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
 
 /* Rubbish Management */
 router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
+  console.log(req.body);
+
   const rubbishData = {
     name: req.body.name,
     cashback: req.body.cashBack,
     totalNumber: req.body.totalNumber,
-    nickname: req.body.nickname
+    nickname: req.body.nickname,
   };
 
   try {
     if (req.body.id) {
       if (req.file) {
-        const rubbish = await adminSchemas.Rubbish.findOne({ _id: req.body.id });
-
-        const filename = rubbish.img_url;
-        const filePath = path.join("./", filename);
-        await deleteFile(filePath);
+        const rubbish = await adminSchemas.Rubbish.findOne({
+          _id: req.body.id,
+        });
 
         rubbishData.img_url = `uploads/rubbish/${req.file.filename}`;
       }
@@ -252,7 +251,6 @@ router.delete("/prize/:id", auth, async (req, res) => {
     const filePath = path.join("./", filename);
 
     try {
-      await deleteFile(filePath);
       await prize.deleteOne();
       res.send({ status: 1, msg: "successDeleted" });
     } catch (err) {
@@ -271,7 +269,6 @@ router.delete("/rubbish/:id", auth, async (req, res) => {
     const filePath = path.join("./", filename);
 
     try {
-      await deleteFile(filePath);
       await rubbish.deleteOne();
       res.send({ status: 1, msg: "successDeleted" });
     } catch (err) {
