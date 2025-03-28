@@ -91,23 +91,22 @@ router.post("/pic", auth, uploadGachaDetail.single("file"), async (req, res) => 
 });
 
 router.post("/seo", auth, async (req, res) => {
-  const { gachaId, title, desc } = req.body;
+  const { gachaID, title, desc } = req.body;
 
   const seoData = {
     title: title,
-    desc: desc
+    desc: desc,
   };
   try {
     let result;
-    if (!gachaId) {
-      result = await adminSchemas.Themes.updateOne({},{$set: seoData});
-    }
-    else {
-      let gacha = await Gacha.findOne({ _id: gachaId });
+    if (!gachaID) {
+      result = await adminSchemas.Themes.updateOne({}, { $set: seoData });
+    } else {
+      let gacha = await Gacha.findOne({ _id: gachaID });
       if (!gacha) return res.send({ status: 0, msg: "failedReq" });
-      
+
       result = await Gacha.updateOne(
-        { _id: gachaId }, // Filter to find the document
+        { _id: gachaID }, // Filter to find the document
         { $set: seoData } // Update object using $set
       );
     }
@@ -129,9 +128,15 @@ router.get("/", async (req, res) => {
     .populate("category");
   const homeSeo = await adminSchemas.Themes.findOne();
   const statis = await adminSchemas.GachaVisitStatus.findOne();
-  const home = { title: homeSeo.title, desc: homeSeo.desc};
+  const home = { title: homeSeo.title, desc: homeSeo.desc };
 
-  if (gachas) res.send({ status: 1, gachaList: gachas, home: home, isStop: statis.currentMaintance});
+  if (gachas)
+    res.send({
+      status: 1,
+      gachaList: gachas,
+      home: home,
+      isStop: statis.currentMaintance,
+    });
   else res.send({ status: 0 });
 });
 
@@ -139,14 +144,16 @@ router.get("/", async (req, res) => {
 router.get("/count/:id", async (req, res) => {
   const gachaid = req.params.id;
   try {
-    const gachas = await Gacha.findOne({_id: gachaid});
+    const gachas = await Gacha.findOne({ _id: gachaid });
     const currentTime = Math.floor(Date.now() / 1000);
-    const yeasterday = currentTime - currentTime % 86400 - 86400;
-    const count = gachas.userLogs.filter((item) => item.time >= yeasterday && item.time < yeasterday + 86400).length;
+    const yeasterday = currentTime - (currentTime % 86400) - 86400;
+    const count = gachas.userLogs.filter(
+      (item) => item.time >= yeasterday && item.time < yeasterday + 86400
+    ).length;
     const allow = await adminSchemas.GachaVisitStatus.findOne();
-    res.send({status: 1, count: count, allow: allow.currentGacha});
+    res.send({ status: 1, count: count, allow: allow.currentGacha });
   } catch (err) {
-    res.send({status: 1})
+    res.send({ status: 1 });
   }
 });
 
@@ -159,7 +166,6 @@ router.get("/:id", async (req, res) => {
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
 
-
   if (gacha) res.send({ status: 1, gacha: gacha, gachas: gachas });
   else res.send({ status: 0 });
 });
@@ -169,7 +175,7 @@ router.get("/category/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
-  const data = await Gacha.find({ category: gacha.category._id});
+  const data = await Gacha.find({ category: gacha.category._id });
   if (gacha) res.send({ status: 1, gacha: data });
   else res.send({ status: 0 });
 });
@@ -208,21 +214,22 @@ router.get("/set_release/:id", auth, async (req, res) => {
 
 // set prize to gacha
 router.post("/set_prize", auth, async (req, res) => {
-  const { gachaId, prizeId, order } = req.body;
+  const { gachaID, prizeId, order } = req.body;
 
   try {
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
-    const gacha = await Gacha.findOne({ _id: gachaId });
+    const gacha = await Gacha.findOne({ _id: gachaID });
+
     if (!prize || !gacha) {
       return res.send({ status: 0, msg: error });
     }
 
     if (prize.kind === "last_prize") {
       const check = gacha.kind.filter((item) => item.value === "last_prize");
-      if (!check.length) return  res.send({status: 0});
+      if (!check.length) return res.send({ status: 0 });
     }
 
-    prize.status++; 
+    prize.status++;
     prize.order = order;
     await prize.save();
 
@@ -257,10 +264,11 @@ router.post("/set_prize", auth, async (req, res) => {
       status: prize.status,
       deliverStatus: prize.deliverStatus,
       createdAt: prize.createdAt,
-      order: prize.order
+      order: prize.order,
     };
     // gacha.show_prizes.push(newPrize);
     gacha.remain_prizes.push(newPrize);
+
     gacha.total_number = gacha.total_number + 1;
     await gacha.save();
 
@@ -272,31 +280,31 @@ router.post("/set_prize", auth, async (req, res) => {
 
 // set rubbish to gacha
 router.post("/set_rubbish", auth, async (req, res) => {
-
-  const { gachaId, rubbishId, count, order } = req.body;
+  const { gachaID, rubbishId, count, order } = req.body;
 
   try {
     const rubbish = await adminSchemas.Rubbish.findOne({ _id: rubbishId });
-    const gacha = await Gacha.findOne({ _id: gachaId });
+    const gacha = await Gacha.findOne({ _id: gachaID });
     if (!rubbish || !gacha) {
       return res.send({ status: 0, msg: error });
     }
 
-    const rubbishBygacha = gacha.remain_rubbishs.find((item) => item._id === rubbishId);
+    const rubbishBygacha = gacha.remain_rubbishs.find(
+      (item) => item._id === rubbishId
+    );
     let cnt = Number(count);
 
     if (rubbishBygacha) {
       rubbishBygacha.count += cnt;
       gacha.rubbish_total_number += cnt;
       gacha.total_number += cnt;
-      gacha.remain_rubbishs.forEach(item => {
-          if (item._id == rubbishId) {
-              item.order = 0;
-          }
+      gacha.remain_rubbishs.forEach((item) => {
+        if (item._id == rubbishId) {
+          item.order = 0;
+        }
       });
-      await Gacha.updateOne({_id: gachaId}, gacha);
-    }
-    else {
+      await Gacha.updateOne({ _id: gachaID }, gacha);
+    } else {
       rubbish.status += 1;
       rubbish.count = Number(count);
       await rubbish.save();
@@ -312,14 +320,14 @@ router.post("/set_rubbish", auth, async (req, res) => {
         status: rubbish.status,
         // deliverStatus: prize.deliverStatus,
         createdAt: rubbish.createdAt,
-        order: order
+        order: order,
       };
       if (cnt) newRubbish.count = cnt;
       gacha.remain_rubbishs.push(newRubbish);
 
       gacha.rubbish_total_number += cnt;
       gacha.total_number += cnt;
-     await gacha.save();
+      await gacha.save();
     }
 
     res.send({ status: 1 });
@@ -330,11 +338,10 @@ router.post("/set_rubbish", auth, async (req, res) => {
 
 // unset prize from gacha
 router.post("/unset_prize", auth, async (req, res) => {
-  const { gachaId, prizeId } = req.body;
+  const { gachaID, prizeId } = req.body;
 
   try {
-    
-    const gacha = await Gacha.findOne({ _id: gachaId });
+    const gacha = await Gacha.findOne({ _id: gachaID });
     const target = gacha.remain_prizes.find((item) => item._id == prizeId);
     if (!target) {
       return res.send({ status: 0, msg: error });
@@ -343,12 +350,12 @@ router.post("/unset_prize", auth, async (req, res) => {
     const remainPrizes = gacha.remain_prizes.filter(
       (data) => data._id != prizeId
     );
-    
+
     // gacha.show_prizes = remainPrizes;
     gacha.remain_prizes = remainPrizes;
     gacha.total_number -= 1;
     await gacha.save();
-    
+
     const prize = await adminSchemas.Prize.findOne({ _id: prizeId });
     prize.status--;
     await prize.save();
@@ -361,12 +368,13 @@ router.post("/unset_prize", auth, async (req, res) => {
 
 // unset rubbish from gacha
 router.post("/unset_rubbish", auth, async (req, res) => {
-  const { gachaId, rubbishId } = req.body;
+  const { gachaID, rubbishId } = req.body;
 
   try {
-    
-    const gacha = await Gacha.findOne({ _id: gachaId });
-    const targetRubbish = gacha.remain_rubbishs.find((item) => item._id == rubbishId);
+    const gacha = await Gacha.findOne({ _id: gachaID });
+    const targetRubbish = gacha.remain_rubbishs.find(
+      (item) => item._id == rubbishId
+    );
     if (!targetRubbish) {
       return res.send({ status: 0, msg: error });
     }
@@ -380,55 +388,25 @@ router.post("/unset_rubbish", auth, async (req, res) => {
     gacha.rubbish_total_number -= count;
     gacha.total_number -= count;
     await gacha.save();
-    
+
     const rubbish = await adminSchemas.Rubbish.findOne({ _id: rubbishId });
     // console.log(rubbish);
     rubbish.status -= 1;
     await rubbish.save();
-    
+
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: error });
   }
 });
 
-
 // set prizes from csv file
 router.post("/upload_bulk", auth, async (req, res) => {
   const { prizes } = req.body;
 
   // Function to download a file from S3
-  const downloadFile = async (bucketName, fileName, downloadPath) => {
-    const params = {
-      Bucket: bucketName,
-      Key: fileName.normalize("NFD"),
-    };
 
-    const command = new GetObjectCommand(params);
-
-    return new Promise((resolve, reject) => {
-      s3Client
-        .send(command)
-        .then((response) => {
-          const fileStream = fs.createWriteStream(downloadPath);
-          pipeline(response.Body, fileStream, (err) => {
-            if (err) {
-              console.error("Pipeline failed:", err);
-              reject(err);
-            } else {
-              console.log(`File downloaded successfully to ${downloadPath}`);
-              resolve();
-            }
-          });
-        })
-        .catch((error) => {
-          console.error("Error downloading file:", error);
-          reject(error);
-        });
-    });
-  };
-
-  const bucketName = "oripacsv"; // Replace with your bucket name
+  // const bucketName = "oripacsv"; // Replace with your bucket name
 
   try {
     // Ensure the uploads directory exists
@@ -488,33 +466,39 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaId, counts, drawDate, user } = req.body;
+  const { gachaID, counts, drawDate, user } = req.body;
   let countkind = counts;
-  const testmode = (req.headers['test'] === 'true');
-  
+  const testmode = req.headers["test"] === "true";
+
   try {
-    const gacha = await Gacha.findOne({ _id: gachaId });
+    const gacha = await Gacha.findOne({ _id: gachaID });
     const statis = await adminSchemas.GachaVisitStatus.findOne();
     let remainRu = [...gacha.remain_rubbishs];
     if (statis.currentMaintance) return res.send({ status: 2 });
-    
+
     if (!gacha.isRelease) return res.send({ status: 0 });
 
     const userData = await Users.findOne({ _id: user._id });
     let drawedPrizes = [];
-    
-    if (counts === 'all') countkind = gacha.remain_prizes.length + gacha.rubbish_total_number;
+
+    if (counts === "all")
+      countkind = gacha.remain_prizes.length + gacha.rubbish_total_number;
     // get poins of drwing prizes
     const drawPoints = gacha.price * countkind;
-    
+
     // return if remain points is less than drawing points
-    if (!testmode && userData.point_remain < drawPoints) return res.send({ status: 0, msg: 1 });
-    
+    if (!testmode && userData.point_remain < drawPoints)
+      return res.send({ status: 0, msg: 1 });
+
     /* -------- Determine ordered prizes -------- */
     // get all order prizes
-    let orderprizes = gacha.remain_prizes.filter((item) => item.order && item.kind !== "last_prize" );
+    let orderprizes = gacha.remain_prizes.filter(
+      (item) => item.order && item.kind !== "last_prize"
+    );
     // get last one prize
-    let lastOnePrize = gacha.remain_prizes.find((item) => item.kind === "last_prize");
+    let lastOnePrize = gacha.remain_prizes.find(
+      (item) => item.kind === "last_prize"
+    );
     if (lastOnePrize) {
       lastOnePrize.order = gacha.total_number;
       orderprizes.push(lastOnePrize);
@@ -533,11 +517,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
     for (let i = 0; i < orderL; i++) {
       const prize = orderprizes[i];
       if (gacha.total_number - remainGrade + countkind < prize.order) break;
-      
+
       const video = await PrizeVideo.findOne({ kind: prize.kind });
       // Assign video URL and gacha_id to the selected prize
       prize.video = video.url;
-      prize.gacha_id = gachaId;
+      prize.gacha_id = gachaID;
 
       // Add the selected prize to the drawn prizes
       drawedPrizes.push(prize);
@@ -545,7 +529,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     /* -------- Determine ordered rubbishes -------- */
     // get all order rubbishes
-    let orderrubbishes = gacha.remain_rubbishs.filter((item) => (item.order != 0 && item.order != undefined) );
+    let orderrubbishes = gacha.remain_rubbishs.filter(
+      (item) => item.order != 0 && item.order != undefined
+    );
     // Sort the array by the 'order' property
     orderrubbishes.sort((a, b) => {
       // Handle cases where 'order' might be undefined
@@ -556,29 +542,33 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     const orderLRubbish = orderrubbishes.length;
     remainGrade = gacha.remain_prizes.length + gacha.rubbish_total_number;
-    
-    const rubbishVideo = await PrizeVideo.findOne({kind: 'rubbish'});
+
+    const rubbishVideo = await PrizeVideo.findOne({ kind: "rubbish" });
     for (let i = 0; i < orderLRubbish; i++) {
       const rubbish = orderrubbishes[i];
 
       if (gacha.total_number - remainGrade + countkind < rubbish.order) break;
-    
-      rubbish.kind = 'rubbish';
+
+      rubbish.kind = "rubbish";
       rubbish.video = rubbishVideo.url;
-      rubbish.gacha_id = gachaId;
+      rubbish.gacha_id = gachaID;
       gacha.rubbish_total_number -= 1;
 
       // Add the selected prize to the drawn prizes
       drawedPrizes.push(rubbish);
     }
-    let remains  = countkind - drawedPrizes.length;
+    let remains = countkind - drawedPrizes.length;
 
     /* --------- Determine random prizes ---------- */
     // get all remain prizes order = 0
-    let gradePrizes = gacha.remain_prizes.filter((item) => item.order === 0 && item.kind !== 'last_prize');
+    let gradePrizes = gacha.remain_prizes.filter(
+      (item) => item.order === 0 && item.kind !== "last_prize"
+    );
     // get all rubbishs isn't count 0
     let remainRubbish = gacha.remain_rubbishs;
-    let gradeRubbishs = remainRubbish.filter(item => item.order == 0 || item.order == undefined);
+    let gradeRubbishs = remainRubbish.filter(
+      (item) => item.order == 0 || item.order == undefined
+    );
 
     // get remain prizes order = 0
     let remainPrizesNum = gradePrizes.length;
@@ -598,30 +588,28 @@ router.post("/draw_gacha", auth, async (req, res) => {
     // add grade prizes into drawedprizs list
     for (let i = 0; i < drawPrizesNum; i++) {
       // Find the video for the selected prize
-      const video = await PrizeVideo.findOne({ kind: gradePrizes[i].kind, });
-      
+      const video = await PrizeVideo.findOne({ kind: gradePrizes[i].kind });
+
       // Assign video URL and gacha_id to the selected prize
       gradePrizes[i].video = video.url;
-      gradePrizes[i].gacha_id = gachaId;
+      gradePrizes[i].gacha_id = gachaID;
       prizeId.push(gradePrizes[i]._id);
       // Add the selected prize to the drawn prizes
       drawedPrizes.push(gradePrizes[i]);
-    }  
+    }
 
     // add rubbish into drawedeprizs list
     for (let i = 0; i < drawRubbishNum; i++) {
-
       // Find the random value;
       const id = Math.floor(Math.random() * remainRubbishsNum);
 
-      gradeRubbishs[id].kind = 'rubbish';
+      gradeRubbishs[id].kind = "rubbish";
       gradeRubbishs[id].video = rubbishVideo.url;
-      gradeRubbishs[id].gacha_id = gachaId;
-
+      gradeRubbishs[id].gacha_id = gachaID;
 
       drawedPrizes.push(gradeRubbishs[id]);
       gacha.rubbish_total_number -= 1;
-      
+
       gradeRubbishs[id].count -= 1;
       if (gradeRubbishs[id].count === 0) {
         gradeRubbishs.splice(id, 1);
@@ -630,33 +618,35 @@ router.post("/draw_gacha", auth, async (req, res) => {
     }
 
     if (!testmode) {
-
       // Add drawedPrizes into optainedPrizes of user
-      
+
       let remainPr = gacha.remain_prizes;
       for (let i = 0; i < countkind; i++) {
         drawedPrizes[i].drawDate = drawDate;
-        drawedPrizes[i].deliverStatus = 'notSelected';
+        drawedPrizes[i].deliverStatus = "notSelected";
         userData.obtained_prizes.push(drawedPrizes[i]);
 
-        if (drawedPrizes[i].kind == 'rubbish') {
+        if (drawedPrizes[i].kind == "rubbish") {
           // Assuming remainRu is an array of objects and drawedPrizes is defined
           for (let j = 0; j < remainRu.length; j++) {
-            if (remainRu[j]._id == drawedPrizes[i]._id && remainRu[j].order && remainRu[j].order != undefined) {
+            if (
+              remainRu[j]._id == drawedPrizes[i]._id &&
+              remainRu[j].order &&
+              remainRu[j].order != undefined
+            ) {
               // Decrement the count if the IDs match
               remainRu[j].count = remainRu[j].count - 1;
             }
           }
-        }
-        else {
-          remainPr = remainPr.filter(item => item._id != drawedPrizes[i]._id);
+        } else {
+          remainPr = remainPr.filter((item) => item._id != drawedPrizes[i]._id);
         }
       }
 
       // update remain rubbish
-      gacha.remain_rubbishs = remainRu.filter(item => item.count != 0);
+      gacha.remain_rubbishs = remainRu.filter((item) => item.count != 0);
 
-      // update prize 
+      // update prize
       gacha.remain_prizes = remainPr;
 
       // Update remain points of user
@@ -665,9 +655,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
       // Update gacha & userData & rubbish
       await gacha.save();
       await userData.save();
-      await Gacha.updateOne({ _id: gachaId }, gacha);
+      await Gacha.updateOne({ _id: gachaID }, gacha);
 
-    // Add new points log
+      // Add new points log
       const newPointLog = new PointLog({
         aff_id: userData.aff_id,
         user_id: userData._id,
@@ -676,7 +666,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
         point_num: drawPoints,
         usage: "drawGacha",
         gacha: gacha.name,
-        number: countkind
+        number: countkind,
       });
       await newPointLog.save();
     }
@@ -691,7 +681,7 @@ router.post("/shipping", auth, async (req, res) => {
   try {
     const userData = await Users.findOne({ _id: user._id });
     const statis = await adminSchemas.GachaVisitStatus.findOne();
-    if (statis.currentMaintance) return res.send({status: 2});
+    if (statis.currentMaintance) return res.send({ status: 2 });
 
     // return all prizes
     if (shippingPrizes.length === 0) {
@@ -700,7 +690,9 @@ router.post("/shipping", auth, async (req, res) => {
       for (let i = 0; i < len; i++) {
         let L = obtainedData.length;
         for (let j = 0; j < L; j++) {
-          if (returningPrizes[i]._id.toString() === obtainedData[j]._id.toString()) {
+          if (
+            returningPrizes[i]._id.toString() === obtainedData[j]._id.toString()
+          ) {
             obtainedData.splice(j, 1);
             break;
           }
@@ -711,9 +703,9 @@ router.post("/shipping", auth, async (req, res) => {
 
       // add returningPrizes into remainPrizes of gacha
       // for (let i = 0; i < returningPrizes.length; i++) {
-      //   const gachaId = returningPrizes[i].gacha_id;
-      //   let gacha = await Gacha.findOne({ _id: gachaId });
-        
+      //   const gachaID = returningPrizes[i].gacha_id;
+      //   let gacha = await Gacha.findOne({ _id: gachaID });
+
       //   delete returningPrizes[i].selected;
       //   delete returningPrizes[i].gacha_id;
       //   delete returningPrizes[i].drawDate;
@@ -722,7 +714,7 @@ router.post("/shipping", auth, async (req, res) => {
 
       //   if (returningPrizes[i].kind == 'rubbish') {
       //     let len = gacha.remain_rubbishs.length;
-      //     for (j = 0; j < len; j++) 
+      //     for (j = 0; j < len; j++)
       //       if (gacha.remain_rubbishs[j]._id == returningPrizes[i]._id) {
       //         gacha.remain_rubbishs[j].count += 1;
       //         break;
@@ -740,7 +732,7 @@ router.post("/shipping", auth, async (req, res) => {
       //     await adminSchemas.Prize.updateOne({_id: returningPrizes[i]._id}, returningPrizes[i]);
       //   }
 
-      //   await Gacha.updateOne({ _id: gachaId }, gacha);
+      //   await Gacha.updateOne({ _id: gachaID }, gacha);
       // }
 
       // add cashback of user
@@ -764,8 +756,8 @@ router.post("/shipping", auth, async (req, res) => {
     await Users.updateOne({ _id: user._id }, userData);
 
     const gachas = await Gacha.find()
-        .sort({ order: 1, createdAt: -1 })
-        .populate("category");
+      .sort({ order: 1, createdAt: -1 })
+      .populate("category");
 
     res.send({ status: 1, gachas: gachas });
   } catch (error) {
