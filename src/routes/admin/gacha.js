@@ -217,6 +217,7 @@ router.post("/set_prize", auth, async (req, res) => {
   console.log("=========== set_prize =============");
 
   const { gachaID, prizes } = req.body;
+  console.log(gachaID);
   const gacha = await Gacha.findOne({ _id: gachaID });
 
   console.log(prizes.length);
