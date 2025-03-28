@@ -224,6 +224,8 @@ router.post("/set_prize", auth, async (req, res) => {
   for (let i = 0; i < prizes.length; i++) {
     const prize_item = prizes[i];
 
+    console.log("==============# ", i);
+
     try {
       // const prize = await adminSchemas.Prize.findOne({ _id: prize_item._id });
 
