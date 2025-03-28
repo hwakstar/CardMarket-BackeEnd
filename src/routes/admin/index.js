@@ -174,8 +174,6 @@ router.post("/prize", uploadPrize.single("file"), async (req, res) => {
 
 /* Rubbish Management */
 router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
-  console.log(req.body);
-
   const rubbishData = {
     name: req.body.name,
     cashback: req.body.cashBack,
