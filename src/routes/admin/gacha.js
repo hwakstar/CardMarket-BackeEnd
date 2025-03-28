@@ -500,7 +500,7 @@ router.post("/upload_bulk", auth, async (req, res) => {
 
     // Wait for all downloads to complete
     Promise.all(downloadPromises);
-    res.send({ status: 1, prizes: rlt });
+    res.send({ status: 1, prizes: prizes });
   } catch (err) {
     console.error("Error in upload_bulk:", err);
     res.send({
