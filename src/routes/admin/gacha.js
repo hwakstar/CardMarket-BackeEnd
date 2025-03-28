@@ -7,7 +7,6 @@ const auth = require("../../middleware/auth");
 
 const uploadGacha = require("../../utils/multer/gacha_multer");
 const uploadGachaDetail = require("../../utils/multer/gachaDetail_multer");
-const deleteFile = require("../../utils/delete");
 
 const Gacha = require("../../models/gacha");
 const adminSchemas = require("../../models/admin");
@@ -15,22 +14,23 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
 
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
-const fs = require('fs');
-const { pipeline } = require('stream');
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const fs = require("fs");
+const { pipeline } = require("stream");
 
 // Configure the AWS SDK
 const s3Client = new S3Client({
   region: process.env.AWS_REGION, // Change to your bucket's region
   credentials: {
-      accessKeyId: process.env.AMAZON_S3_ACCESS_KEY, // Use environment variable
-      secretAccessKey: process.env.AMAZON_S3_SECRET_KEY, // Use environment variable
+    accessKeyId: process.env.AMAZON_S3_ACCESS_KEY, // Use environment variable
+    secretAccessKey: process.env.AMAZON_S3_SECRET_KEY, // Use environment variable
   },
 });
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
-  const { type, name, price, category, kind, awardRarity, order, time } = req.body;
+  const { type, name, price, category, kind, awardRarity, order, time } =
+    req.body;
 
   const gachaData = {
     type: type,
@@ -41,17 +41,16 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
     award_rarity: awardRarity,
     order: order,
     // img_url: `uploads/gacha/${req.file.filename}`,
-    time: time
+    time: time,
   };
   try {
     if (req.body.id) {
       if (req.file) {
         let gacha = await Gacha.findOne({ _id: req.body.id });
         if (!gacha) return res.send({ status: 0, msg: "failedReq" });
-        
+
         const filename = gacha.img_url;
         const filePath = path.join("./", filename);
-        await deleteFile(filePath);
         gachaData.img_url = `uploads/gacha/${req.file.filename}`;
       }
 
@@ -183,7 +182,6 @@ router.delete("/:id", async (req, res) => {
     if (!gacha) res.send({ status: 0, msg: "failedReq" });
 
     try {
-      await deleteFile(filePath);
       await gacha.deleteOne();
 
       res.send({ status: 1 });
