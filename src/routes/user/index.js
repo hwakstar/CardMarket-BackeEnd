@@ -608,10 +608,17 @@ router.get("/get_point_log/:id", auth, (req, res) => {
 
 //save user data from user profile page
 router.post("/update_user", auth, async (req, res) => {
-  const userData = req.body;
+  const { name, email, _id, country } = req.body;
 
   try {
-    await Users.updateOne({ _id: userData._id }, userData);
+    await Users.updateOne(
+      { _id: _id },
+      {
+        name: name,
+        email: email,
+        country: country,
+      }
+    );
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, err: error });
