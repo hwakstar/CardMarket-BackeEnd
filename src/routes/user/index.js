@@ -619,8 +619,13 @@ router.post("/update_user", auth, async (req, res) => {
         country: country,
       }
     );
-    res.send({ status: 1 });
+
+    const user = await Users.findOne({ _id: _id });
+
+    res.send({ status: 1, user: user });
   } catch (error) {
+
+    console.log(error)
     res.send({ status: 0, err: error });
   }
 });
