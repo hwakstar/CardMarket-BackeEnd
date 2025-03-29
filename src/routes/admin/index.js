@@ -223,6 +223,7 @@ router.get("/prize", auth, async (req, res) => {
     const prizes = await adminSchemas.Prize.aggregate([
       { $match: { gachaID: null } },
       { $sort: { createdAt: -1 } },
+      { $limit: 70000 },
     ]).allowDiskUse(true);
 
     res.send({ status: 1, prizes: prizes });
@@ -237,9 +238,11 @@ router.get("/rubbish", auth, async (req, res) => {
   try {
     const rubbishs = await adminSchemas.Rubbish.find({
       gachaID: null,
-    }).sort({
-      createdAt: -1,
-    });
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .limit(70000);
 
     res.send({ status: 1, rubbishs: rubbishs });
   } catch (error) {
