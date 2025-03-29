@@ -10,19 +10,21 @@ const Gacha = require("../../models/gacha");
 
 
 // get time selected gacha
-router.get("/:userid/:gachaid", auth, async (req, res) => {
+router.get("/:userid/:gachaID", auth, async (req, res) => {
   const userid = req.params.userid;
-  const gachaid = req.params.gachaid;
+  const gachaID = req.params.gachaID;
 
-  try{
-    const drawLogData = await Gacha.findOne({ _id: gachaid });
+  try {
+    const drawLogData = await Gacha.findOne({ _id: gachaID });
 
-    const userDrawLog = drawLogData.userLogs.find(log => log.userid.toString() === userid);
+    const userDrawLog = drawLogData.userLogs.find(
+      (log) => log.userid.toString() === userid
+    );
 
     if (userDrawLog == null) {
       return res.send({
         status: 0,
-        msg: 'notdraw'
+        msg: "notdraw",
       });
     }
 
@@ -31,31 +33,36 @@ router.get("/:userid/:gachaid", auth, async (req, res) => {
       gacha: userDrawLog.time,
     });
   } catch (error) {
-    res.send({ status: 0});
-  };
-}) 
-
+    res.send({ status: 0 });
+  }
+});
 
 // set time seleted gacha
 router.post("/", auth, async (req, res) => {
-  const { userid, gachaid } = req.body;
+  const { userid, gachaID } = req.body;
 
   try {
     // Find or create the draw log for the specific gacha
-    let drawLogData = await Gacha.findOne({ _id: gachaid });
+    let drawLogData = await Gacha.findOne({ _id: gachaID });
 
-    const currentTime = Math.floor(new Date(new Intl.DateTimeFormat('ja-JP', {
-      timeZone: 'Asia/Tokyo', // Specify the time zone
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false // Use 24-hour format
-    }).format(Date.now())) / 1000);
+    const currentTime = Math.floor(
+      new Date(
+        new Intl.DateTimeFormat("ja-JP", {
+          timeZone: "Asia/Tokyo", // Specify the time zone
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false, // Use 24-hour format
+        }).format(Date.now())
+      ) / 1000
+    );
 
-    const userDrawLog = drawLogData.userLogs.find(log => log.userid === userid); // Assuming userLogs is an array of objects
+    const userDrawLog = drawLogData.userLogs.find(
+      (log) => log.userid === userid
+    ); // Assuming userLogs is an array of objects
 
     if (userDrawLog) {
       // Update existing gacha time
@@ -67,7 +74,7 @@ router.post("/", auth, async (req, res) => {
 
     // Save the draw log data
     await drawLogData.save();
-    await Gacha.updateOne({_id: gachaid}, drawLogData);
+    await Gacha.updateOne({ _id: gachaID }, drawLogData);
 
     res.send({ status: 1 });
   } catch (error) {

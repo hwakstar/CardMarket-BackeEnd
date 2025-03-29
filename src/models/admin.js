@@ -12,28 +12,34 @@ const categorySchema = new Schema({
 
 // Prize
 const prizeSchema = new Schema({
+  gachaID: { type: String },
   img_url: { type: String },
+  video: { type: String },
   name: { type: String },
   cashback: { type: Number },
   kind: { type: String },
   trackingNumber: { type: String },
   deliveryCompany: { type: String },
   status: { type: Number, default: 0 },
-  order: {type: Number, default: 0},
-  deliverStatus: {type: String, default: "notSelected"},
+  order: { type: Number, default: 0 },
+  deliverStatus: { type: String, default: "notSelected" },
+  drawDate: { type: Date },
   createdAt: { type: Date, default: Date.now },
 });
 
 // Rubbish
 const rubbishSchema = new mongoose.Schema({
+  gachaID: { type: String },
   img_url: { type: String },
+  video: { type: String },
   name: { type: String },
   cashback: { type: Number },
-  totalNumber: {type: Number},
-  nickname: {type: String},
+  totalNumber: { type: Number },
+  nickname: { type: String },
   status: { type: Number, default: 0 },
-  count: {type: Number, default: 1},
-  order: {type: Number, default: 0},
+  count: { type: Number, default: 1 },
+  order: { type: Number, default: 0 },
+  kind: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

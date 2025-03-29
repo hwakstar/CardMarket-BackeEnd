@@ -220,18 +220,24 @@ router.post("/rubbish", uploadRubbish.single("file"), async (req, res) => {
 
 router.get("/prize", auth, async (req, res) => {
   try {
-    const prizes = await adminSchemas.Prize.find().sort({
-      createdAt: -1,
-    });
+    const prizes = await adminSchemas.Prize.aggregate([
+      { $match: { gachaID: null } },
+      { $sort: { createdAt: -1 } },
+    ]).allowDiskUse(true);
+
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
+    console.log(error);
+
     res.send({ status: 0 });
   }
 });
 
 router.get("/rubbish", auth, async (req, res) => {
   try {
-    const rubbishs = await adminSchemas.Rubbish.find().sort({
+    const rubbishs = await adminSchemas.Rubbish.find({
+      gachaID: null,
+    }).sort({
       createdAt: -1,
     });
 
@@ -335,7 +341,11 @@ router.get("/get_point", auth, async (req, res) => {
   adminSchemas.Point.find()
     .sort("point_num")
     .then((points) => {
-      return res.send({ status: 1, points: points, isStop: statis.currentMaintance });
+      return res.send({
+        status: 1,
+        points: points,
+        isStop: statis.currentMaintance,
+      });
     })
     .catch((err) => res.send({ status: 0, err: err }));
 });
@@ -482,8 +492,7 @@ router.post("/changeDeliverStatus", auth, async (req, res) => {
 
     const obtainedPrizes = user.obtained_prizes;
 
-    const targetPrize = obtainedPrizes.find((prize) => prize._id == prizeId
-  );
+    const targetPrize = obtainedPrizes.find((prize) => prize._id == prizeId);
 
     targetPrize.deliverStatus = "shipped";
     targetPrize.drawDate = drawDate;
@@ -537,7 +546,10 @@ router.post("/statistics", auth, async (req, res) => {
       }
     });
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
-    const currentStatus = {gacha: gachaVisitStatus.currentGacha, invite: gachaVisitStatus.currentInvite};
+    const currentStatus = {
+      gacha: gachaVisitStatus.currentGacha,
+      invite: gachaVisitStatus.currentInvite,
+    };
     const maintance = gachaVisitStatus.currentMaintance;
 
     res.send({
@@ -547,7 +559,7 @@ router.post("/statistics", auth, async (req, res) => {
       periodPendings,
       periodDeliverings,
       currentStatus: currentStatus,
-      maintance: maintance
+      maintance: maintance,
     });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to get data." });
@@ -709,40 +721,43 @@ router.post("/changeBgColor", auth, async (req, res) => {
 });
 
 // change logo
-router.post("/changeLogo", auth, uploadLogo.single("file"), async (req, res) => {
-  try {
-    let logoUrl;
-    if (req.file?.filename !== undefined) {
-      logoUrl = `uploads/logo/${req.file.filename}`;
-    }
-
-    const themes = await adminSchemas.Themes.find();
-    if (themes.length === 0) {
-      // create new theme data
-      const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
-      await newTheme.save();
-    } else {
-      if (logoUrl && themes[0].logoUrl) {
-        const filePath = path.join("./", themes[0].logoUrl);
-        await deleteFile(filePath);
+router.post(
+  "/changeLogo",
+  auth,
+  uploadLogo.single("file"),
+  async (req, res) => {
+    try {
+      let logoUrl;
+      if (req.file?.filename !== undefined) {
+        logoUrl = `uploads/logo/${req.file.filename}`;
       }
 
-      console.log('kkkkkkkkk')
-      await adminSchemas.Themes.updateOne(
-        { _id: themes[0] },
-        { logoUrl: logoUrl }
-      );
-    }
+      const themes = await adminSchemas.Themes.find();
+      if (themes.length === 0) {
+        // create new theme data
+        const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
+        await newTheme.save();
+      } else {
+        if (logoUrl && themes[0].logoUrl) {
+          const filePath = path.join("./", themes[0].logoUrl);
+          await deleteFile(filePath);
+        }
 
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({ status: 0, msg: error });
-  }}
+        await adminSchemas.Themes.updateOne(
+          { _id: themes[0] },
+          { logoUrl: logoUrl }
+        );
+      }
+
+      res.send({ status: 1 });
+    } catch (error) {
+      res.send({ status: 0, msg: error });
+    }
+  }
 );
 
 // get theme
 router.get("/getThemeData", async (req, res) => {
-  console.log("this is test");
   try {
     const themes = await adminSchemas.Themes.find();
     if (themes.length > 0) {
@@ -795,7 +810,7 @@ router.get("/get_carousels", async (req, res) => {
     const carousels = await adminSchemas.Carousels.find();
     return res.send({ status: 1, carousels: carousels });
   } catch (error) {
-    res.send({ status: 0, err: err });
+    res.send({ status: 0, err: error });
   }
 });
 
@@ -879,41 +894,38 @@ router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
 
 // Coupon management
 const generateRandomCode = (length = 6) => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  let randomCode = '';
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let randomCode = "";
   for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * letters.length);
-      randomCode += letters[randomIndex];
+    const randomIndex = Math.floor(Math.random() * letters.length);
+    randomCode += letters[randomIndex];
   }
   return randomCode;
-}
+};
 
 router.post("/coupon", auth, async (req, res) => {
   const { name, cashBack, allow, flag, code } = req.body;
   let randomCode = generateRandomCode();
   while (1) {
-    const newcode = await adminSchemas.Coupon.findOne({ code: randomCode});
+    const newcode = await adminSchemas.Coupon.findOne({ code: randomCode });
     if (newcode === null) break;
     randomCode = generateRandomCode();
   }
 
   try {
-    const couponData = { 
+    const couponData = {
       name: name,
-      code: randomCode, 
+      code: randomCode,
       cashback: cashBack,
-      allow: allow 
+      allow: allow,
     };
     if (!flag) {
-      console.log('ok')
       const newCategory = new adminSchemas.Coupon(couponData);
       await newCategory.save();
-      console.log(newCategory)
       res.send({ status: 1, msg: "successAdded" });
-    }
-    else {
+    } else {
       couponData.code = code;
-      await adminSchemas.Coupon.updateOne({code: code}, couponData);
+      await adminSchemas.Coupon.updateOne({ code: code }, couponData);
       res.send({ status: 1, msg: "successUpdated" });
     }
   } catch (error) {

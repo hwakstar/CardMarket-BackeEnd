@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const gachaSchema = new mongoose.Schema(
   {
     img_url: { type: String, required: true },
-    detail_img_url: { type: String, default: ''},
+    detail_img_url: { type: String, default: "" },
     name: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
@@ -11,16 +11,13 @@ const gachaSchema = new mongoose.Schema(
     type: { type: String },
     award_rarity: { type: Number },
     order: { type: Number, default: 1 },
-    time: {type: Number, default: 0},
+    time: { type: Number, default: 0 },
     total_number: { type: Number, default: 0 },
-    rubbish_total_number: { type: Number, default: 0 },
+    remove_number: { type: Number, default: 0 },
     isRelease: { type: Boolean, default: false },
-    show_prizes: {type: Array},
-    remain_prizes: { type: Array },
-    remain_rubbishs: {type: Array },
-    userLogs: {type: Array},
-    title: { type: String, default: ''},
-    desc: { type: String, default: ''},
+    title: { type: String, default: "" },
+    desc: { type: String, default: "" },
+    userLogs: { type: Array },
   },
   {
     timestamps: true,
@@ -28,6 +25,7 @@ const gachaSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
+
 
 const Gacha = mongoose.model("Gacha", gachaSchema, "gacha");
 
