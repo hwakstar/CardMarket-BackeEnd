@@ -167,8 +167,6 @@ router.get("/count/:id", async (req, res) => {
 
 // get gacha by id
 router.get("/user/:id", async (req, res) => {
-  console.log(req.params);
-
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
@@ -217,7 +215,7 @@ router.get("/category/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
-  const data = await Gacha.find({ category: gacha.category._id });
+  const data = await Gacha.find({ category: gacha?.category._id });
   if (gacha) res.send({ status: 1, gacha: data });
   else res.send({ status: 0 });
 });
@@ -507,7 +505,6 @@ router.post("/draw_gacha", auth, async (req, res) => {
       res_data.push(item);
     }
 
-    // console.log(un_random_prizes.length);
     while (1) {
       if (!random_n_p) break;
       let r_n = Math.floor(Math.random() * (un_random_prizes.length - 1));
@@ -516,21 +513,24 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
       r_n_el["video"] = video.url;
       res_data.push(r_n_el);
-      un_random_prizes.slice(r_n, 1);
+      un_random_prizes.splice(r_n, 1);
       random_n_p--;
     }
 
     while (1) {
       if (!random_n_r) break;
-      let r_r = Math.floor(Math.random() * (un_random_rubbishes.length - 1));
+      let r_r = Math.floor(Math.random() * un_random_rubbishes.length);
       let r_r_el = un_random_rubbishes[r_r];
       let video = await PrizeVideo.findOne({ kind: "rubbish" });
       r_r_el["kind"] = "rubbish";
       r_r_el["video"] = video.url;
       res_data.push(r_r_el);
+
       un_random_rubbishes[r_r].count--;
-      if (un_random_rubbishes[r_r].count == 0)
-        un_random_rubbishes.slice(r_r, 1);
+
+      if (un_random_rubbishes[r_r].count == 0) {
+        un_random_rubbishes.splice(r_r, 1);
+      }
       random_n_r--;
     }
 
@@ -540,27 +540,24 @@ router.post("/draw_gacha", auth, async (req, res) => {
         let data = item;
         data.drawDate = drawDate;
         await userData.obtained_prizes.push(data);
-        if (item.count == undefined || item.count == 0) {
-          await adminSchemas.Prize.updateOne({ _id: item._id }, { status: 1 });
-        } else {
-          if (item.count == 1) {
+        if (item.kind == "rubbish") {
+          if (item.count == 0) {
             await adminSchemas.Rubbish.updateOne(
               { _id: item._id },
-              { status: 0 }
+              { status: 1 }
             );
           } else {
             await adminSchemas.Rubbish.updateOne(
               { _id: item._id },
-              { count: item.count-- }
+              { count: item.count }
             );
           }
+        } else {
+          await adminSchemas.Prize.updateOne({ _id: item._id }, { status: 1 });
         }
       }
-
       userData.point_remain -= drawPoints;
-
       gacha.remove_number += counts;
-
       await userData.save();
       await gacha.save();
     }
