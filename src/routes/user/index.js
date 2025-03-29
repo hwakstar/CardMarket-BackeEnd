@@ -622,7 +622,25 @@ router.post("/update_user", auth, async (req, res) => {
 
     const user = await Users.findOne({ _id: _id });
 
-    res.send({ status: 1, user: user });
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      point_remain: user.point_remain,
+      shipAddress_id: user.shipAddress_id,
+      address: user.address,
+      city: user.city,
+      inviteCode: user.inviteCode,
+      inviteCount: user.inviteCount,
+      invited: user.invited,
+      country: user.country,
+    };
+
+    // get rank data
+    const rank = await userRankData(user._id, user.rank_id);
+    userData.rankData = rank;
+
+    res.send({ status: 1, user: userData });
   } catch (error) {
 
     console.log(error)
