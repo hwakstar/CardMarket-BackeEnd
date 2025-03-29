@@ -166,6 +166,25 @@ router.get("/count/:id", async (req, res) => {
 });
 
 // get gacha by id
+router.get("/user/:id", async (req, res) => {
+  console.log(req.params);
+
+  const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
+    "category"
+  );
+  const gachas = await Gacha.find()
+    .sort({ order: 1, createdAt: -1 })
+    .populate("category");
+
+  if (gacha)
+    res.send({
+      status: 1,
+      gacha: gacha,
+      gachas: gachas,
+    });
+  else res.send({ status: 0 });
+});
+
 router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
@@ -473,21 +492,19 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     let res_data = [];
 
-    if (target_prizes.length > 0) {
-      target_prizes.forEach(async (item) => {
-        let video = await PrizeVideo.findOne({ kind: item.kind });
-        item["video"] = video.url;
-        res_data.push(item);
-      });
+    for (let i = 0; i < target_prizes.length; i++) {
+      const item = target_prizes[i];
+      let video = await PrizeVideo.findOne({ kind: item.kind });
+      item["video"] = video.url;
+      res_data.push(item);
     }
 
-    if (target_rubbishes.length > 0) {
-      target_rubbishes.forEach(async (item) => {
-        let video = await PrizeVideo.findOne({ kind: "rubbish" });
-        item["kind"] = "rubbish";
-        item["video"] = video.url;
-        res_data.push(item);
-      });
+    for (let i = 0; i < target_rubbishes.length; i++) {
+      const item = target_rubbishes[i];
+      let video = await PrizeVideo.findOne({ kind: "rubbish" });
+      item["kind"] = "rubbish";
+      item["video"] = video.url;
+      res_data.push(item);
     }
 
     // console.log(un_random_prizes.length);
@@ -518,7 +535,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
     }
 
     if (!testmode) {
-      res_data.forEach(async (item) => {
+      for (let i = 0; i < res_data.length; i++) {
+        const item = res_data[i];
         let data = item;
         data.drawDate = drawDate;
         await userData.obtained_prizes.push(data);
@@ -536,9 +554,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
               { count: item.count-- }
             );
           }
-          const rubbish = await adminSchemas.Rubbish.findOne({ _id: item._id });
         }
-      });
+      }
 
       userData.point_remain -= drawPoints;
 
