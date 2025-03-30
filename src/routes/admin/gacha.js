@@ -582,6 +582,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
       prizes: res_data,
     });
   } catch (error) {
+    console.log(error);
+
     res.send({
       status: 0,
     });
