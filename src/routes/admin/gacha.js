@@ -513,6 +513,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       let r_n_el = un_random_prizes[r_n];
       console.log("========== ", r_n_el.kind);
       let video = await PrizeVideo.findOne({ kind: r_n_el.kind });
+      console.log(video);
       console.log(video.url);
       r_n_el["video"] = video.url;
       res_data.push(r_n_el);
