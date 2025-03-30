@@ -302,11 +302,13 @@ router.post("/set_prize", auth, async (req, res) => {
       )
         return res.send({ status: 0 });
 
-      await adminSchemas.Prize.findOneAndDelete({
-        gachaID: gachaID,
-        kind: "last_prize",
-      });
-      Is_LastPrize = true;
+      if (last_prize.length == 1) {
+        Is_LastPrize = true;
+        await adminSchemas.Prize.findOneAndDelete({
+          gachaID: gachaID,
+          kind: "last_prize",
+        });
+      }
 
       prizes.forEach((item) => (item["gachaID"] = gachaID));
 
