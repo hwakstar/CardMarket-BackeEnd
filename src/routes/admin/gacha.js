@@ -354,7 +354,7 @@ router.post("/set_rubbish", auth, async (req, res) => {
     } else {
       rubbishes.forEach((item) => (item["gachaID"] = gachaID));
 
-      await adminSchemas.Rubbish.insertMany(prizes);
+      await adminSchemas.Rubbish.insertMany(rubbishes);
       gacha.total_number += rubbishes.length;
     }
 
