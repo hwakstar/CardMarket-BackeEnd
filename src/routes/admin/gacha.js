@@ -458,7 +458,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       },
     });
 
-    console.log(target_rubbishes);
+    console.log(target_prizes);
 
     console.log("remove_number ", gacha.remove_number);
     console.log("counts: ", counts);
