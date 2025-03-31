@@ -1,10 +1,11 @@
 {
   "files": {
     "main.css": "/static/css/main.166c39ed.css",
-    "main.js": "/static/js/main.85462b9e.js",
+    "main.js": "/static/js/main.2d7dda1d.js",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.07ed6d5fa32c1d54af0f.ttf",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.0ff70dcbf135d859ebf3.ttf",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.93f719f4d62bfa3e748c.woff2",
+    "static/media/coin.png": "/static/media/coin.63af60f5b20d418862ce.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.bb8d5a145e22822103fb.woff2",
     "static/media/on-gacha_logo.png": "/static/media/on-gacha_logo.4bc63264ea79ce85ae6e.png",
     "static/media/paidy.png": "/static/media/paidy.e6aafbef42c386b92950.png",
@@ -13,7 +14,6 @@
     "static/media/login.png": "/static/media/login.a952913a7a42e036aa49.png",
     "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.bc3722686635b5f86132.woff2",
     "static/media/upload.png": "/static/media/upload.011989731c79ae349704.png",
-    "static/media/coin.png": "/static/media/coin.3c6066b9431b5e080e1b.png",
     "static/media/admin-logo.png": "/static/media/admin-logo.929b09097ee36a4175ee.png",
     "static/media/fa-v4compatibility.ttf": "/static/media/fa-v4compatibility.0f6cb412603527bda691.ttf",
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.6cfec8414be20e2c3426.woff2",
@@ -22,6 +22,6 @@
   },
   "entrypoints": [
     "static/css/main.166c39ed.css",
-    "static/js/main.85462b9e.js"
+    "static/js/main.2d7dda1d.js"
   ]
 }

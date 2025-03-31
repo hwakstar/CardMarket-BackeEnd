@@ -58,7 +58,8 @@ const generateRandomCode = (length = 8) => {
   };
 
 router.post("/register", async (req, res) => {
-  const { name, country, email, password, affId, linkId, userId, randomcode } = req.body;
+  const { name, country, email, password, affId, linkId, userId, randomcode } =
+    req.body;
   try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
@@ -68,7 +69,7 @@ router.post("/register", async (req, res) => {
 
     let generatecode = generateRandomCode();
     while (1) {
-      const newcode = await Users.findOne({ invitecode: generatecode});
+      const newcode = await Users.findOne({ invitecode: generatecode });
       if (newcode === null) break;
       generatecode = generateRandomCode();
     }
@@ -84,7 +85,7 @@ router.post("/register", async (req, res) => {
       hashedPass: hashedPassword,
       inviteCode: generatecode,
     };
-  
+
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
     console.log("new userObj================45");
@@ -173,29 +174,32 @@ router.post("/register", async (req, res) => {
       await newAffEarn.save();
     }
 
-    const token = jwt.sign({ email }, "RANDOM-TOKEN", { expiresIn: '30m'});
+    const token = jwt.sign({ email }, "RANDOM-TOKEN", { expiresIn: "30m" });
 
     // Mail send
     const params = {
-      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Source: "verifi@on-gacha.net", // Your verified domain email
       Destination: {
         ToAddresses: [email], // Recipient email
       },
       Message: {
         Subject: {
-          Data: 'Verify Your Email',
-          Charset: 'UTF-8',
+          Data: "Verify Your Email",
+          Charset: "UTF-8",
         },
         Body: {
           Html: {
             Data: `
-              <h1>Email Verification</h1>
-              <p>Click the link below to verify your email:</p>
+              <h1>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h1>
+              <p>[this verification url]</p>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 Verify Email
               </a>
+              <p>※このリンクの有効期限は24時間です。
+              もしこのメールに覚えがない場合は、破棄していただいて構いません。
+              </p>
             `,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
         },
       },
@@ -204,9 +208,12 @@ router.post("/register", async (req, res) => {
     try {
       const command = new SendEmailCommand(params);
       await sesClient.send(command);
-      res.send({status: 1, msg: "successRegistered" });
+      res.send({ status: 1, msg: "successRegistered" });
     } catch (error) {
-      console.error('Error sending email:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error sending email:",
+        error.response ? error.response.data : error.message
+      );
       res.send({ status: 0, msg: "failedReq" });
     }
   } catch (error) {
@@ -217,31 +224,32 @@ router.post("/register", async (req, res) => {
 router.post("/gmail-send", async (req, res) => {
   const { email } = req.body;
   try {
-    const token = jwt.sign(
-      { email }, "RANDOM-TOKEN", { expiresIn: '30m'}
-    );
+    const token = jwt.sign({ email }, "RANDOM-TOKEN", { expiresIn: "30m" });
 
     // Mail send
     const params = {
-      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Source: "verifi@on-gacha.net", // Your verified domain email
       Destination: {
         ToAddresses: [email], // Recipient email
       },
       Message: {
         Subject: {
-          Data: 'Verify Your Email',
-          Charset: 'UTF-8',
+          Data: "Verify Your Email",
+          Charset: "UTF-8",
         },
         Body: {
           Html: {
             Data: `
-              <h1>Email Verification</h1>
-              <p>Click the link below to verify your email:</p>
+              <h1>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h1>
+              <p>[this verification url]</p>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 Verify Email
               </a>
+              <p>※このリンクの有効期限は24時間です。
+              もしこのメールに覚えがない場合は、破棄していただいて構いません。
+              </p>
             `,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
         },
       },
@@ -249,10 +257,13 @@ router.post("/gmail-send", async (req, res) => {
 
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
-    console.log('Email sent successfully');
+    console.log("Email sent successfully");
     res.send({ status: 1, msg: "emailSent" });
   } catch (error) {
-    console.error('Error sending email:', error.response ? error.response.data : error.message);
+    console.error(
+      "Error sending email:",
+      error.response ? error.response.data : error.message
+    );
     res.send({ status: 0, msg: "emailFailed" });
   }
 });
@@ -263,10 +274,10 @@ router.post("/activate", async (req, res) => {
   if (token) {
     jwt.verify(token, "RANDOM-TOKEN", async (err, decoded) => {
       if (err) {
-        console.log('Activation error');
+        console.log("Activation error");
         return res.send({
           status: 0,
-          msg: 'Explink'
+          msg: "Explink",
         });
       }
       const { email } = jwt.decode(token);
@@ -291,16 +302,21 @@ router.post("/activate", async (req, res) => {
         inviteCode: user.inviteCode,
         inviteCount: user.inviteCount,
         invited: user.invited,
-        createtime: user.createdAt
+        createtime: user.createdAt,
       };
-  
+
       // get rank data
       const rank = await userRankData(user._id);
       userData.rankData = rank;
-  
+
       const tokken = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
-      res.send({ status: 1, msg: "successVerifyed" , user: userData, token: tokken});
+      res.send({
+        status: 1,
+        msg: "successVerifyed",
+        user: userData,
+        token: tokken,
+      });
     });
   } else {
     return res.send({ status: 0, msg: "failedVerifyed" });
@@ -314,7 +330,7 @@ router.post("/login", async (req, res) => {
     const user = await Users.findOne({ email: email });
 
     if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
-    if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify"});
+    if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
     if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
 
     const checkPass = await bcrypt.compare(password, user.hashedPass);
@@ -334,7 +350,7 @@ router.post("/login", async (req, res) => {
       inviteCode: user.inviteCode,
       inviteCount: user.inviteCount,
       invited: user.invited,
-      createtime: user.createdAt
+      createtime: user.createdAt,
     };
 
     // get rank data
@@ -350,7 +366,6 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/sns", async (req, res) => {
-
   const { phonenumber } = req.body;
 
   const code = generateSNSCode();
@@ -359,16 +374,14 @@ router.post("/sns", async (req, res) => {
 
   const regex = /^\+?[1-9]\d{1,14}$/;
 
-
   if (!phonenumber && !regex.test(phonenumber)) {
     return res.send({ status: 0, msg: "invalidPhonenumber" });
   }
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-  await sendSms(phonenumber, message)
-  res.send({ status: 1 })
-
+  await sendSms(phonenumber, message);
+  res.send({ status: 1 });
 });
 
 router.post("/sns_test", async (req, res) => {
@@ -384,7 +397,7 @@ router.post("/sns_test", async (req, res) => {
   const params = {
     phone_number: phoneNumber,
     text_message: message,
-    click_count: true
+    click_count: true,
   };
 
   try {
@@ -393,9 +406,9 @@ router.post("/sns_test", async (req, res) => {
       params,
       {
         headers: {
-          "Authorization": "Bearer YOUR_API_TOKEN", // Replace with your Nexlink2 token
-          "Content-Type": "application/json"
-        }
+          Authorization: "Bearer YOUR_API_TOKEN", // Replace with your Nexlink2 token
+          "Content-Type": "application/json",
+        },
       }
     );
     verificationCodes.set(phoneNumber, { code, expiresAt });
@@ -403,45 +416,41 @@ router.post("/sns_test", async (req, res) => {
     res.json({
       status: 1,
       code,
-      sandboxResponse: response.data // Include API response for testing
+      sandboxResponse: response.data, // Include API response for testing
     });
   } catch (error) {
     console.error("Error:", error.response?.data || error.message);
     res.status(500).json({
       status: 0,
-      error: error.response?.data || error.message
+      error: error.response?.data || error.message,
     });
   }
 });
 
-router.post('/sns/verify-code', (req, res) => {
-
-
+router.post("/sns/verify-code", (req, res) => {
   const { phoneNumber, code } = req.body;
-
 
   if (!phoneNumber || !code) {
     return res.send({ status: 0 });
   }
 
-
   const storedData = verificationCodes.get(phoneNumber);
 
   if (!storedData) {
-    return res.send({ status: 0, msg: 'Invalid Verification code!' });
+    return res.send({ status: 0, msg: "Invalid Verification code!" });
   }
 
   if (Date.now() > storedData.expiresAt) {
     verificationCodes.delete(phoneNumber);
-    return res.send({status: 0, msg: 'Verification code expired' });
+    return res.send({ status: 0, msg: "Verification code expired" });
   }
 
   if (storedData.code === code) {
     verificationCodes.delete(phoneNumber);
-    return res.send({ status: 1});
+    return res.send({ status: 1 });
   }
 
-  res.send({status: 0,  msg: 'Invalid verification code' });
+  res.send({ status: 0, msg: "Invalid verification code" });
 });
 
 router.post("/forgot", async (req, res) => {
@@ -451,18 +460,20 @@ router.post("/forgot", async (req, res) => {
     const user = await Users.findOne({ email });
     if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
 
-    const token = jwt.sign({ _id: user._id }, "RANDOM-TOKEN", { expiresIn: '10m'});
+    const token = jwt.sign({ _id: user._id }, "RANDOM-TOKEN", {
+      expiresIn: "10m",
+    });
 
     // Mail send
     const params = {
-      Source: 'Oripa@on-gacha.net', // Your verified domain email
+      Source: "verifi@on-gacha.net", // Your verified domain email
       Destination: {
         ToAddresses: [email], // Recipient email
       },
       Message: {
         Subject: {
-          Data: 'Password Reset link',
-          Charset: 'UTF-8',
+          Data: "Password Reset link",
+          Charset: "UTF-8",
         },
         Body: {
           Html: {
@@ -472,7 +483,7 @@ router.post("/forgot", async (req, res) => {
               <hr />
               <p>This email may contain sensetive information</p>
             `,
-            Charset: 'UTF-8',
+            Charset: "UTF-8",
           },
         },
       },
@@ -480,15 +491,18 @@ router.post("/forgot", async (req, res) => {
 
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
-    console.log('Email sent successfully');
-    
+    console.log("Email sent successfully");
+
     user.resetPasswordLink = token;
-    await Users.updateOne({email}, user);
-    
-    res.send({ status: 1, msg: "emailSent"});
+    await Users.updateOne({ email }, user);
+
+    res.send({ status: 1, msg: "emailSent" });
   } catch (error) {
-    console.error('Error sending email:', error.response ? error.response.data : error.message);
-    res.send({ status: 0, msg: "emailFailed"});
+    console.error(
+      "Error sending email:",
+      error.response ? error.response.data : error.message
+    );
+    res.send({ status: 0, msg: "emailFailed" });
   }
 });
 
