@@ -459,8 +459,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
     });
 
     let random_number = counts - target_prizes.length - target_rubbishes.length;
+    console.log("random_number: ", random_number);
 
     let random_n_p = Math.floor(Math.random() * random_number);
+    console.log("random_np: ", random_n_p);
+
     let random_n_r = random_number - random_n_p;
 
     let un_random_prizes = await adminSchemas.Prize.find({
@@ -479,6 +482,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       random_n_p = un_random_prizes.length;
       random_n_r = random_number - random_n_p;
     }
+    console.log("random_np1: ", random_n_p);
 
     let random_n_r_total = 0;
     for (let i = 0; i < un_random_rubbishes.length; i++) {
@@ -489,6 +493,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
       random_n_r = random_n_r_total;
       random_n_p = random_number - random_n_r;
     }
+
+    console.log("random_np2: ", random_n_p);
 
     let res_data = [];
 
