@@ -507,6 +507,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     for (let i = 0; i < target_prizes.length; i++) {
       const item = target_prizes[i];
+      console.log("item ============");
+      console.log(item);
       let video = await PrizeVideo.findOne({ kind: item.kind });
       item["video"] = video.url;
       res_data.push(item);
