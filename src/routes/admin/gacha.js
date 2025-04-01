@@ -459,16 +459,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
     });
 
 
-    console.log("remove_number ", gacha.remove_number);
-    console.log("counts: ", counts);
-    console.log("traget_prizes_length: ", target_prizes.length);
-    console.log("target_rubbishes_length: ", target_rubbishes.length);
 
     let random_number = counts - target_prizes.length - target_rubbishes.length;
-    console.log("random_number: ", random_number);
-
     let random_n_p = Math.floor(Math.random() * random_number);
-    console.log("random_np: ", random_n_p);
 
     let random_n_r = random_number - random_n_p;
 
@@ -488,7 +481,6 @@ router.post("/draw_gacha", auth, async (req, res) => {
       random_n_p = un_random_prizes.length;
       random_n_r = random_number - random_n_p;
     }
-    console.log("random_np1: ", random_n_p);
 
     let random_n_r_total = 0;
     for (let i = 0; i < un_random_rubbishes.length; i++) {
@@ -500,14 +492,10 @@ router.post("/draw_gacha", auth, async (req, res) => {
       random_n_p = random_number - random_n_r;
     }
 
-    console.log("random_np2: ", random_n_p);
-
     let res_data = [];
 
     for (let i = 0; i < target_prizes.length; i++) {
       const item = target_prizes[i];
-      console.log("item ============");
-      console.log(item);
       let video = await PrizeVideo.findOne({ kind: item.kind });
       item["video"] = video.url;
       res_data.push(item);
@@ -524,11 +512,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
     while (1) {
       if (!random_n_p) break;
 
-      console.log("random_n_p in radom_prizes ", random_n_p);
       let r_n = Math.floor(Math.random() * un_random_prizes.length);
       let r_n_el = un_random_prizes[r_n];
-      console.log("=======r_n_el =======");
-      console.log(r_n_el);
       let video = await PrizeVideo.findOne({ kind: r_n_el.kind });
       r_n_el["video"] = video.url;
       res_data.push(r_n_el);
@@ -577,6 +562,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
       }
       userData.point_remain -= drawPoints;
       gacha.remove_number += counts;
+      console.log("gacha_remove_number: ");
+      console.log(gacha.remove_number);
+
       await userData.save();
       await gacha.save();
     }
