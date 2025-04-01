@@ -452,7 +452,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       }
 
       // Fetch targeted prizes and rubbish
-      const target_prizes = await Prize.find({
+      const target_prizes = await adminSchemas.Prize.find({
         gachaID: gachaID,
         status: 0,
         order: {
@@ -461,7 +461,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
         },
       }).session(session);
 
-      const target_rubbishes = await Rubbish.find({
+      const target_rubbishes = await adminSchemas.Rubbish.find({
         gachaID: gachaID,
         status: 0,
         order: {
@@ -476,13 +476,13 @@ router.post("/draw_gacha", auth, async (req, res) => {
       let random_n_p = Math.floor(Math.random() * random_number);
       let random_n_r = random_number - random_n_p;
 
-      const un_random_prizes = await Prize.find({
+      const un_random_prizes = await adminSchemas.Prize.find({
         gachaID: gachaID,
         order: 0,
         status: 0,
       }).session(session);
 
-      const un_random_rubbishes = await Rubbish.find({
+      const un_random_rubbishes = await adminSchemas.Rubbish.find({
         gachaID: gachaID,
         order: 0,
         status: 0,
@@ -558,19 +558,21 @@ router.post("/draw_gacha", auth, async (req, res) => {
           userData.obtained_prizes.push(item);
           if (item.kind === "rubbish") {
             if (item.count === 0) {
-              await Rubbish.updateOne({ _id: item._id }, { status: 1 }).session(
-                session
-              );
+              await adminSchemas.Rubbish.updateOne(
+                { _id: item._id },
+                { status: 1 }
+              ).session(session);
             } else {
-              await Rubbish.updateOne(
+              await adminSchemas.Rubbish.updateOne(
                 { _id: item._id },
                 { count: item.count }
               ).session(session);
             }
           } else {
-            await Prize.updateOne({ _id: item._id }, { status: 1 }).session(
-              session
-            );
+            await adminSchemas.Prize.updateOne(
+              { _id: item._id },
+              { status: 1 }
+            ).session(session);
           }
         }
         userData.point_remain -= drawPoints;
