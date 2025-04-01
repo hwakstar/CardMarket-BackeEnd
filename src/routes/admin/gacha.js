@@ -437,10 +437,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     try {
       // Fetch gacha and user data with locking
-      let gacha = await Gacha.findOne({ _id: gachaID }).session(session).lock();
-      const userData = await Users.findOne({ _id: user._id })
-        .session(session)
-        .lock();
+      let gacha = await Gacha.findOne({ _id: gachaID }).session(session);
+      const userData = await Users.findOne({ _id: user._id }).session(session);
       console.log(
         "-------------------------start -----------------------------"
       );
