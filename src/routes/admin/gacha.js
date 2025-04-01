@@ -430,168 +430,186 @@ router.post("/upload_bulk", auth, async (req, res) => {
 // handle draw gacha
 router.post("/draw_gacha", auth, async (req, res) => {
   const { gachaID, counts, drawDate, user } = req.body;
-  let gacha = await Gacha.findOne({ _id: gachaID });
-  const userData = await Users.findOne({ _id: user._id });
-
   try {
-    const testmode = req.headers["test"] === "true";
-    let drawPoints = gacha.price * counts;
+    // Start a MongoDB transaction for atomicity
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!testmode && userData.point_remain < drawPoints)
-      return res.send({ status: 0, msg: 1 });
+    try {
+      // Fetch gacha and user data with locking
+      let gacha = await Gacha.findOne({ _id: gachaID }).session(session).lock();
+      const userData = await Users.findOne({ _id: user._id })
+        .session(session)
+        .lock();
+      console.log(
+        "-------------------------start -----------------------------"
+      );
 
-    target_prizes = await adminSchemas.Prize.find({
-      gachaID: gachaID,
-      status: 0,
-      order: {
-        $gte: gacha.remove_number + 1,
-        $lte: gacha.remove_number + counts,
-      },
-    });
+      const testmode = req.headers["test"] === "true";
+      let drawPoints = gacha.price * counts;
 
-    target_rubbishes = await adminSchemas.Rubbish.find({
-      gachaID: gachaID,
-      status: 0,
-      order: {
-        $gte: gacha.remove_number + 1,
-        $lte: gacha.remove_number + counts,
-      },
-    });
-
-
-
-    let random_number = counts - target_prizes.length - target_rubbishes.length;
-    let random_n_p = Math.floor(Math.random() * random_number);
-
-    let random_n_r = random_number - random_n_p;
-
-    let un_random_prizes = await adminSchemas.Prize.find({
-      gachaID: gachaID,
-      order: 0,
-      status: 0,
-    });
-
-    let un_random_rubbishes = await adminSchemas.Rubbish.find({
-      gachaID: gachaID,
-      order: 0,
-      status: 0,
-    });
-
-    if (un_random_prizes.length < random_n_p) {
-      random_n_p = un_random_prizes.length;
-      random_n_r = random_number - random_n_p;
-    }
-
-    let random_n_r_total = 0;
-    for (let i = 0; i < un_random_rubbishes.length; i++) {
-      random_n_r_total += un_random_rubbishes[i].count;
-    }
-
-    if (random_n_r_total < random_n_r) {
-      random_n_r = random_n_r_total;
-      random_n_p = random_number - random_n_r;
-    }
-
-    let res_data = [];
-
-    for (let i = 0; i < target_prizes.length; i++) {
-      const item = target_prizes[i];
-      let video = await PrizeVideo.findOne({ kind: item.kind });
-      item["video"] = video.url;
-      res_data.push(item);
-    }
-
-    for (let i = 0; i < target_rubbishes.length; i++) {
-      const item = target_rubbishes[i];
-      let video = await PrizeVideo.findOne({ kind: "rubbish" });
-      item["kind"] = "rubbish";
-      item["video"] = video.url;
-      res_data.push(item);
-    }
-
-    while (1) {
-      if (!random_n_p) break;
-
-      let r_n = Math.floor(Math.random() * un_random_prizes.length);
-      let r_n_el = un_random_prizes[r_n];
-      let video = await PrizeVideo.findOne({ kind: r_n_el.kind });
-      r_n_el["video"] = video.url;
-      res_data.push(r_n_el);
-      un_random_prizes.splice(r_n, 1);
-      random_n_p--;
-    }
-
-    while (1) {
-      if (!random_n_r) break;
-      let r_r = Math.floor(Math.random() * un_random_rubbishes.length);
-      let r_r_el = un_random_rubbishes[r_r];
-      let video = await PrizeVideo.findOne({ kind: "rubbish" });
-      r_r_el["kind"] = "rubbish";
-      r_r_el["video"] = video.url;
-      res_data.push(r_r_el);
-
-      un_random_rubbishes[r_r].count--;
-
-      if (un_random_rubbishes[r_r].count == 0) {
-        un_random_rubbishes.splice(r_r, 1);
+      if (!testmode && userData.point_remain < drawPoints) {
+        await session.abortTransaction();
+        return res.send({ status: 0, msg: 1 }); // Insufficient points
       }
-      random_n_r--;
-    }
 
-    if (!testmode) {
-      for (let i = 0; i < res_data.length; i++) {
-        const item = res_data[i];
-        let data = item;
-        data.drawDate = drawDate;
-        await userData.obtained_prizes.push(data);
-        if (item.kind == "rubbish") {
-          if (item.count == 0) {
-            await adminSchemas.Rubbish.updateOne(
-              { _id: item._id },
-              { status: 1 }
-            );
+      // Fetch targeted prizes and rubbish
+      const target_prizes = await Prize.find({
+        gachaID: gachaID,
+        status: 0,
+        order: {
+          $gte: gacha.remove_number + 1,
+          $lte: gacha.remove_number + counts,
+        },
+      }).session(session);
+
+      const target_rubbishes = await Rubbish.find({
+        gachaID: gachaID,
+        status: 0,
+        order: {
+          $gte: gacha.remove_number + 1,
+          $lte: gacha.remove_number + counts,
+        },
+      }).session(session);
+
+      // Random prize/rubbish logic
+      let random_number =
+        counts - target_prizes.length - target_rubbishes.length;
+      let random_n_p = Math.floor(Math.random() * random_number);
+      let random_n_r = random_number - random_n_p;
+
+      const un_random_prizes = await Prize.find({
+        gachaID: gachaID,
+        order: 0,
+        status: 0,
+      }).session(session);
+
+      const un_random_rubbishes = await Rubbish.find({
+        gachaID: gachaID,
+        order: 0,
+        status: 0,
+      }).session(session);
+
+      if (un_random_prizes.length < random_n_p) {
+        random_n_p = un_random_prizes.length;
+        random_n_r = random_number - random_n_p;
+      }
+
+      let random_n_r_total = 0;
+      for (let i = 0; i < un_random_rubbishes.length; i++) {
+        random_n_r_total += un_random_rubbishes[i].count;
+      }
+
+      if (random_n_r_total < random_n_r) {
+        random_n_r = random_n_r_total;
+        random_n_p = random_number - random_n_r;
+      }
+
+      // Build response data
+      let res_data = [];
+
+      for (let item of target_prizes) {
+        const video = await PrizeVideo.findOne({
+          kind: item.kind,
+        }).session(session);
+        item.video = video.url;
+        res_data.push(item);
+      }
+
+      for (let item of target_rubbishes) {
+        const video = await PrizeVideo.findOne({
+          kind: "rubbish",
+        }).session(session);
+        item.kind = "rubbish";
+        item.video = video.url;
+        res_data.push(item);
+      }
+
+      let prizePool = [...un_random_prizes];
+      while (random_n_p > 0) {
+        const r_n = Math.floor(Math.random() * prizePool.length);
+        const r_n_el = prizePool[r_n];
+        const video = await PrizeVideo.findOne({
+          kind: r_n_el.kind,
+        }).session(session);
+        r_n_el.video = video.url;
+        res_data.push(r_n_el);
+        prizePool.splice(r_n, 1);
+        random_n_p--;
+      }
+
+      let rubbishPool = [...un_random_rubbishes];
+      while (random_n_r > 0) {
+        const r_r = Math.floor(Math.random() * rubbishPool.length);
+        const r_r_el = rubbishPool[r_r];
+        const video = await PrizeVideo.findOne({
+          kind: "rubbish",
+        }).session(session);
+        r_r_el.kind = "rubbish";
+        r_r_el.video = video.url;
+        res_data.push(r_r_el);
+        r_r_el.count--;
+        if (r_r_el.count === 0) rubbishPool.splice(r_r, 1);
+        random_n_r--;
+      }
+
+      // Update database (non-test mode)
+      if (!testmode) {
+        for (let item of res_data) {
+          item.drawDate = drawDate;
+          userData.obtained_prizes.push(item);
+          if (item.kind === "rubbish") {
+            if (item.count === 0) {
+              await Rubbish.updateOne({ _id: item._id }, { status: 1 }).session(
+                session
+              );
+            } else {
+              await Rubbish.updateOne(
+                { _id: item._id },
+                { count: item.count }
+              ).session(session);
+            }
           } else {
-            await adminSchemas.Rubbish.updateOne(
-              { _id: item._id },
-              { count: item.count }
+            await Prize.updateOne({ _id: item._id }, { status: 1 }).session(
+              session
             );
           }
-        } else {
-          await adminSchemas.Prize.updateOne({ _id: item._id }, { status: 1 });
         }
+        userData.point_remain -= drawPoints;
+        gacha.remove_number += counts;
+
+        await userData.save({ session });
+        await gacha.save({ session });
+        console.log(
+          "-------------------------end -----------------------------"
+        );
       }
-      userData.point_remain -= drawPoints;
-      gacha.remove_number += counts;
-      console.log("gacha_remove_number: ");
-      console.log(gacha.remove_number);
 
-      await userData.save();
-      await gacha.save();
+      // Log points usage
+      const newPointLog = new PointLog({
+        aff_id: userData.aff_id,
+        user_id: userData._id,
+        user_name: userData.name,
+        user_country: userData.country,
+        point_num: drawPoints,
+        usage: "drawGacha",
+        gacha: gacha.name,
+        number: counts,
+      });
+      await newPointLog.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      res.send({ status: 1, prizes: res_data });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    // Add new points log
-    const newPointLog = new PointLog({
-      aff_id: userData.aff_id,
-      user_id: userData._id,
-      user_name: userData.name,
-      user_country: userData.country,
-      point_num: drawPoints,
-      usage: "drawGacha",
-      gacha: gacha.name,
-      number: counts,
-    });
-    await newPointLog.save();
-
-    res.send({
-      status: 1,
-      prizes: res_data,
-    });
   } catch (error) {
     console.log(error);
-
-    res.send({
-      status: 0,
-    });
+    res.send({ status: 0 });
   }
 });
 
