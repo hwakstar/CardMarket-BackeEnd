@@ -375,6 +375,9 @@ router.post("/login", async (req, res) => {
       res.send({ status: 3 });
     }
   } catch (error) {
+
+    console.log(error);
+
     res.send({ status: 0, msg: "failedReq", err: error });
   }
 });
