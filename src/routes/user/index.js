@@ -192,7 +192,7 @@ router.post("/register", async (req, res) => {
         Body: {
           Html: {
             Data: `
-              <h3>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h3>
+              <p>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。</p>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 オンガチャメール認証リンク
               </a>
@@ -241,7 +241,7 @@ router.post("/gmail-send", async (req, res) => {
         Body: {
           Html: {
             Data: `
-              <h3>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h3>
+              <p>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。<p>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
                 オンガチャメール認証リンク
               </a>
