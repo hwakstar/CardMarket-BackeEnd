@@ -23,6 +23,8 @@ const axios = require('axios');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
+const eventDate = new Date("2025-04-05T17:00:00");
+
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -43,19 +45,19 @@ const verificationCodes = new Map();
 
 // Generate random code
 const generateRandomCode = (length = 8) => {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  let randomCode = '';
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  let randomCode = "";
   for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * letters.length);
-      randomCode += letters[randomIndex];
+    const randomIndex = Math.floor(Math.random() * letters.length);
+    randomCode += letters[randomIndex];
   }
   return randomCode;
-}
+};
 
 // Generate random 6-digit code
-  const generateSNSCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
+const generateSNSCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId, randomcode } =
@@ -311,12 +313,18 @@ router.post("/activate", async (req, res) => {
 
       const tokken = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
-      res.send({
-        status: 1,
-        msg: "successVerifyed",
-        user: userData,
-        token: tokken,
-      });
+      const currentDate = Date.now();
+
+      if (eventDate.getTime() < currentDate) {
+        res.send({
+          status: 1,
+          msg: "successVerifyed",
+          user: userData,
+          token: tokken,
+        });
+      } else {
+        res.send({ status: 3 });
+      }
     });
   } else {
     return res.send({ status: 0, msg: "failedVerifyed" });
@@ -359,7 +367,13 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
-    res.send({ status: 1, msg: "successLogin", user: userData, token });
+    const currentDate = Date.now();
+
+    if (eventDate.getTime() < currentDate) {
+      res.send({ status: 1, msg: "successLogin", user: userData, token });
+    } else {
+      res.send({ status: 3 });
+    }
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", err: error });
   }
