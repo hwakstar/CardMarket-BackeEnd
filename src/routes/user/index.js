@@ -186,16 +186,15 @@ router.post("/register", async (req, res) => {
       },
       Message: {
         Subject: {
-          Data: "Verify Your Email",
+          Data: "アカウント認証メール",
           Charset: "UTF-8",
         },
         Body: {
           Html: {
             Data: `
-              <h1>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h1>
-              <p>[this verification url]</p>
+              <h3>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h3>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
-                Verify Email
+                オンガチャメール認証リンク
               </a>
               <p>※このリンクの有効期限は24時間です。
               もしこのメールに覚えがない場合は、破棄していただいて構いません。
@@ -236,16 +235,15 @@ router.post("/gmail-send", async (req, res) => {
       },
       Message: {
         Subject: {
-          Data: "Verify Your Email",
+          Data: "アカウント認証メール",
           Charset: "UTF-8",
         },
         Body: {
           Html: {
             Data: `
-              <h1>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h1>
-              <p>[this verification url]</p>
+              <h3>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。【メールアドレスを確認する】</h3>
               <a href="http://on-gacha.net/auth/login?token=${token}&verified=true">
-                Verify Email
+                オンガチャメール認証リンク
               </a>
               <p>※このリンクの有効期限は24時間です。
               もしこのメールに覚えがない場合は、破棄していただいて構いません。
