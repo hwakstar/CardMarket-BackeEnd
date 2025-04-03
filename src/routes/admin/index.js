@@ -860,6 +860,8 @@ router.post(
 
       existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
+
+      console.log(error);
       res.send({ status: 0 });
     }
   }
