@@ -462,6 +462,7 @@ router.get("/deliveries", auth, async (req, res) => {
       for (let i = 0; i < user.obtained_prizes.length; i++) {
         const obtainedPrize = {};
         obtainedPrize.userId = user._id;
+        obtainedPrize.phoneNumber = user?.phoneNumber;
         obtainedPrize.userName = user.name;
         obtainedPrize.userEmail = user.email;
         obtainedPrize.shipAddress = user.shipAddress_id;
