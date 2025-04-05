@@ -25,6 +25,9 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 const eventDate = new Date("2025-04-05T17:00:00");
 
+const { Mutex } = require('async-mutex')
+const mutex = new Mutex()
+
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -62,7 +65,10 @@ const generateSNSCode = () => {
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId, randomcode } =
     req.body;
-  try {
+  
+    const release = await mutex.acquire();
+  
+    try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
     if (isEmailExist) {
@@ -219,6 +225,8 @@ router.post("/register", async (req, res) => {
     }
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
+  } finally {
+    release()
   }
 });
 
