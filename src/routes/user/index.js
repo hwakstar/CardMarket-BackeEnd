@@ -23,7 +23,7 @@ const axios = require('axios');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
-const eventDate = new Date("2025-04-05T17:00:00");
+const eventDate = new Date("1925-04-05T17:00:00");
 
 const { Mutex } = require('async-mutex')
 const mutex = new Mutex()
