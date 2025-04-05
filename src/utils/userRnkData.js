@@ -25,12 +25,12 @@ const userRankData = async (user_id) => {
     $or: [
       {
         last: false,
-        end_amount: { $gt: totalPointsAmount },
-        start_amount: { $lte: totalPointsAmount },
+        end_amount: { $lte: totalPointsAmount },
+        start_amount: { $gt: totalPointsAmount },
       },
       {
         last: true,
-        start_amount: { $lte: totalPointsAmount },
+        start_amount: { $gt: totalPointsAmount },
       },
     ],
   });
