@@ -20,6 +20,9 @@ const userRankData = async (user_id) => {
   ]);
   const totalPointsAmount = result.length ? result[0].totalPoints : 0;
 
+  console.log("==================================")
+  console.log(totalPointsAmount)
+
   const userRank = await AdminSchema.Rank.find({
     $or: [
       {
@@ -33,6 +36,9 @@ const userRankData = async (user_id) => {
       },
     ],
   });
+
+  console.log("================================")
+  console.log(userRank)
   await UserSchema.updateOne({ _id: user_id }, { rank_id: userRank[0]._id });
 
   return { rank: userRank[0], totalPointsAmount: totalPointsAmount };
