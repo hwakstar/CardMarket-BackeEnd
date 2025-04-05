@@ -26,7 +26,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { Mutex } = require('async-mutex');
 const mutex = new Mutex();
 
-const eventDate = new Date("2025-04-05T17:00:00");
+const eventDate = new Date("1925-04-05T17:00:00");
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
