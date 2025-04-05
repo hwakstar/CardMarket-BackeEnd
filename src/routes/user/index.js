@@ -23,6 +23,9 @@ const axios = require('axios');
 const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
+const { Mutex } = require('async-mutex');
+const mutex = new Mutex();
+
 const eventDate = new Date("2025-04-05T17:00:00");
 
 const sesClient = new SESClient({
@@ -62,6 +65,9 @@ const generateSNSCode = () => {
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId, randomcode } =
     req.body;
+
+    const release = await mutex.acquire();
+
   try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
@@ -219,6 +225,9 @@ router.post("/register", async (req, res) => {
     }
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
+  } finally {
+    // Release the mutex
+    release();
   }
 });
 
@@ -398,8 +407,8 @@ router.post("/sns", async (req, res) => {
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-    await sendSms(phonenumber, message);
-    res.send({ status: 1 });
+  await sendSms(phonenumber, message);
+  res.send({ status: 1 });
 });
 
 router.post("/sns_test", async (req, res) => {
