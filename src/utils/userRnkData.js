@@ -20,17 +20,16 @@ const userRankData = async (user_id) => {
   ]);
   const totalPointsAmount = result.length ? result[0].totalPoints : 0;
 
-  // update user rank as totalPointsAmount
   const userRank = await AdminSchema.Rank.find({
     $or: [
       {
         last: false,
-        end_amount: { $lte: totalPointsAmount },
-        start_amount: { $gt: totalPointsAmount },
+        end_amount: { $gt: totalPointsAmount },
+        start_amount: { $lte: totalPointsAmount },
       },
       {
         last: true,
-        start_amount: { $gt: totalPointsAmount },
+        start_amount: { $lte: totalPointsAmount },
       },
     ],
   });
