@@ -398,8 +398,8 @@ router.post("/sns", async (req, res) => {
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-  await sendSms(phonenumber, message);
-  res.send({ status: 1 });
+    await sendSms(phonenumber, message);
+    res.send({ status: 1 });
 });
 
 router.post("/sns_test", async (req, res) => {
