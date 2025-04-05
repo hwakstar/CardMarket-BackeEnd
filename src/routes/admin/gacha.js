@@ -275,11 +275,23 @@ router.post("/set_prize", auth, async (req, res) => {
       }
 
       if (target_prize.kind == "last_prize") {
-        await adminSchemas.Prize.findOneAndDelete({
+
+        const count = await adminSchemas.Prize.countDocuments({
           gachaID: gachaID,
           kind: "last_prize",
         });
-        Is_LastPrize = true;
+
+        if(count > 0) {
+          await adminSchemas.Prize.findOneAndDelete({
+            gachaID: gachaID,
+            kind: "last_prize",
+          });
+          Is_LastPrize = true;
+        } else if (count > 1) {
+          return res.send({ status: 0 })
+        }
+
+        
       }
 
       let aa = await adminSchemas.Prize.create({
@@ -333,7 +345,6 @@ router.post("/set_prize", auth, async (req, res) => {
     });
   }
 });
-
 // set rubbish to gacha
 router.post("/set_rubbish", auth, async (req, res) => {
   const { gachaID, rubbishes, rubbishId, count } = req.body;
