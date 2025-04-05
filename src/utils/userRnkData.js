@@ -39,6 +39,8 @@ const userRankData = async (user_id) => {
 
   console.log("================================")
   console.log(userRank)
+
+  if (userRank.length > 0)
   await UserSchema.updateOne({ _id: user_id }, { rank_id: userRank[0]._id });
 
   return { rank: userRank[0], totalPointsAmount: totalPointsAmount };
