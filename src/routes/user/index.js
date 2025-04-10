@@ -179,7 +179,7 @@ router.post("/register", async (req, res) => {
 
     // Mail send
     const params = {
-      Source: "verifi@on-gacha.net", // Your verified domain email
+      Source: "オンガチャ運営<verify@on-gacha.net>", // Your verified domain email
       Destination: {
         ToAddresses: [email], // Recipient email
       },
@@ -235,7 +235,7 @@ router.post("/gmail-send", async (req, res) => {
 
     // Mail send
     const params = {
-      Source: "verifi@on-gacha.net", // Your verified domain email
+      Source: "オンガチャ運営<verify@on-gacha.net>", // Your verified domain email
       Destination: {
         ToAddresses: [email], // Recipient email
       },
