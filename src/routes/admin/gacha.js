@@ -755,7 +755,8 @@ router.post("/shipping", auth, async (req, res) => {
 
     const returnOrder = [];
     for (let i = 0; i < returningPrizes.length; i++) {
-      returnOrder.push(returningPrizes[i]._id);
+      let re_id = new mongoose.Types.ObjectId(returningPrizes[i]._id);
+      returnOrder.push(re_id);
     }
 
     let unreturnedTickets = await adminSchemas.GachaTicketSchema.find({
