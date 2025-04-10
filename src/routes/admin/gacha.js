@@ -189,20 +189,43 @@ router.get("/user/:id", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
+  console.log(req.params.id);
+
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
   const gachas = await Gacha.find()
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
-  const prizes = await adminSchemas.Prize.find({
-    gachaID: req.params.id,
-    status: 0,
-  });
-  const rubbishs = await adminSchemas.Rubbish.find({
-    gachaID: req.params.id,
-    status: 0,
-  });
+
+  let gachaID_ = new mongoose.Types.ObjectId(req.params.id);
+
+  let prizes = await adminSchemas.GachaTicketSchema.aggregate(
+    // Pipeline
+    [
+      // Stage 1
+      {
+        $match: {
+          // enter query here
+          gachaID: gachaID_,
+        },
+      },
+
+      // Stage 2
+      {
+        $group: {
+          _id: "$img_url",
+          count: { $count: {} },
+          kind: { $first: "$kind" },
+          img_url: { $first: "$img_url" },
+          name: { $first: "$name" },
+          //...
+        },
+      },
+    ]
+  );
+
+  console.log(prizes);
 
   if (gacha)
     res.send({
@@ -210,7 +233,6 @@ router.get("/:id", async (req, res) => {
       gacha: gacha,
       gachas: gachas,
       prizes: prizes,
-      rubbishs: rubbishs,
     });
   else res.send({ status: 0 });
 });
@@ -712,7 +734,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
 // });
 
 router.post("/shipping", auth, async (req, res) => {
-  const { shippingPrizes, returningPrizes, cashback, user } = req.body;
+  const { shippingPrizes, returningPrizes, user } = req.body;
+
+  let cashback = 0;
 
   try {
     const statis = await adminSchemas.GachaVisitStatus.findOne();
@@ -726,7 +750,16 @@ router.post("/shipping", auth, async (req, res) => {
 
     const returnOrder = [];
     for (let i = 0; i < returningPrizes.length; i++) {
-      returnOrder.push(returningPrizes[i].order);
+      returnOrder.push(returningPrizes[i]._id);
+    }
+
+    let unreturnedTickets = await adminSchemas.GachaTicketSchema.find({
+      _id: { $in: returnOrder },
+      deliverStatus: "awaiting",
+    });
+
+    for (let i = 0; i < unreturnedTickets.length; i++) {
+      cashback = unreturnedTickets[i].cashback;
     }
 
     if (shipOrder.length > 0) {
