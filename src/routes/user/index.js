@@ -803,7 +803,10 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   if (id == undefined) return res.send({ status: 0 });
 
   try {
-    const tickets = await adminSchemas.GachaTicketSchema.find({ userID: id });
+    const tickets = await adminSchemas.GachaTicketSchema.find({
+      userID: id,
+      deliverStatus: { $ne: "returned" },
+    });
     const userShipAddress = await shipAddress.findOne({ user_id: id });
 
     res.send({

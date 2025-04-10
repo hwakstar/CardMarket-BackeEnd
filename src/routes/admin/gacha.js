@@ -753,6 +753,8 @@ router.post("/shipping", auth, async (req, res) => {
       shipOrder.push(shippingPrizes[i].order);
     }
 
+    ObjectId.createFromHexString;
+
     const returnIds = [];
     for (let i = 0; i < returningPrizes.length; i++) {
       returnIds.push(returningPrizes[i]._id);
@@ -762,7 +764,7 @@ router.post("/shipping", auth, async (req, res) => {
 
     let unreturnedTickets = await adminSchemas.GachaTicketSchema.find({
       _id: { $in: returnIds },
-      deliverStatus: "awaiting",
+      deliverStatus: { $ne: "returned" },
     });
 
     console.log(unreturnedTickets);
