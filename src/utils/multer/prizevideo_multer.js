@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
     cb(null, uploadDir); // Upload file to this directory
   },
   filename: (req, file, cb) => {
-    cb(null, req.body.kind); // Use a unique filename
+    cb(null, req.body.kind + ".mp4"); // Use a unique filename
   },
 });
 
