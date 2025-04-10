@@ -755,8 +755,7 @@ router.post("/shipping", auth, async (req, res) => {
 
     const returnIds = [];
     for (let i = 0; i < returningPrizes.length; i++) {
-      let re_id = new mongoose.Types.ObjectId(returningPrizes[i]._id);
-      returnIds.push(re_id);
+      returnIds.push(returningPrizes[i]._id);
     }
 
     console.log(returnIds);
