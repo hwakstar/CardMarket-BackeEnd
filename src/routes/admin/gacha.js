@@ -529,6 +529,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
     console.log("Counts: ", Number(counts));
     console.log("Prizes Length: ", prizes.length);
 
+    Users.updateOne(
+      { _id: user._id },
+      { $inc: { point_remain: -Number(counts) * gacha.price } }
+    );
+
     adminSchemas.GachaTicketSchema.updateMany(
       {
         gachaID: gachaID,
