@@ -759,6 +759,8 @@ router.post("/shipping", auth, async (req, res) => {
       returnIds.push(re_id);
     }
 
+    console.log(returnIds);
+
     let unreturnedTickets = await adminSchemas.GachaTicketSchema.find({
       _id: { $in: returnIds },
       deliverStatus: "awaiting",
