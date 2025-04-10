@@ -12,12 +12,15 @@ const DbConnect = async () => {
         dbName: db_name,
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        tls: true, // Add this line
+        // tls: true, // Add this line
       })
       .then(() => {
         console.log("mongodb connected");
       })
-      .catch((err) => console.log(err.message));
+      .catch((err) => {
+        console.log(" === Mongodb Connect Error ===");
+        console.log(err);
+      });
 
     // Connection events
     mongoose.connection.on("connected", () => {

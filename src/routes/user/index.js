@@ -19,14 +19,15 @@ const AffPayment = require("../../affiliate/models/PaymentModel");
 
 const uploadBlog = require("../../utils/multer/blog_multer");
 const userRankData = require("../../utils/userRnkData");
-const axios = require('axios');
-const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
+const axios = require("axios");
+const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
+const { SNSClient, PublishCommand } = require("@aws-sdk/client-sns");
 
 const eventDate = new Date("1925-04-05T17:00:00");
 
-const { Mutex } = require('async-mutex')
-const mutex = new Mutex()
+const { Mutex } = require("async-mutex");
+const shipAddress = require("../../models/shipAddress");
+const mutex = new Mutex();
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
@@ -65,10 +66,10 @@ const generateSNSCode = () => {
 router.post("/register", async (req, res) => {
   const { name, country, email, password, affId, linkId, userId, randomcode } =
     req.body;
-  
-    const release = await mutex.acquire();
-  
-    try {
+
+  const release = await mutex.acquire();
+
+  try {
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
     if (isEmailExist) {
@@ -96,8 +97,6 @@ router.post("/register", async (req, res) => {
 
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
-    console.log("new userObj================45");
-    // console.log(userObj);
     // add new rank id
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
@@ -112,6 +111,7 @@ router.post("/register", async (req, res) => {
     // }
 
     // if new user is someone who invites by randomcode
+
     if (randomcode) {
       const inviter = await Users.findOne({ inviteCode: randomcode });
       if (inviter.inviteCount) {
@@ -122,14 +122,7 @@ router.post("/register", async (req, res) => {
       }
     }
 
-    console.log("new userObj================");
-    // console.log(userObj);
-    // save new user into db
     const newUser = await new Users(userObj).save();
-
-    console.log("new Users================");
-    // console.log(newUser);
-    console.log("new Users================");
 
     // if new user is someone invited by affiliate
     if (affId && affId !== "null" && linkId && linkId !== "null") {
@@ -215,6 +208,11 @@ router.post("/register", async (req, res) => {
     try {
       const command = new SendEmailCommand(params);
       await sesClient.send(command);
+
+      console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+      console.log("/           NEW USER REGISRED        //");
+      console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+
       res.send({ status: 1, msg: "successRegistered" });
     } catch (error) {
       console.error(
@@ -226,7 +224,7 @@ router.post("/register", async (req, res) => {
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
   } finally {
-    release()
+    release();
   }
 });
 
@@ -265,7 +263,11 @@ router.post("/gmail-send", async (req, res) => {
 
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
-    console.log("Email sent successfully");
+
+    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+    console.log("/     EMAIL SEND SUCCESSFULLY        //");
+    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+
     res.send({ status: 1, msg: "emailSent" });
   } catch (error) {
     console.error(
@@ -373,18 +375,8 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
-    const currentDate = Date.now();
-
-    if (
-      eventDate.getTime() < currentDate ||
-      user.email == "goodwill.2024.inc@gmail.com"
-    ) {
-      res.send({ status: 1, msg: "successLogin", user: userData, token });
-    } else {
-      res.send({ status: 3 });
-    }
+    res.send({ status: 1, msg: "successLogin", user: userData, token });
   } catch (error) {
-
     console.log(error);
 
     res.send({ status: 0, msg: "failedReq", err: error });
@@ -408,49 +400,6 @@ router.post("/sns", async (req, res) => {
 
   await sendSms(phonenumber, message);
   res.send({ status: 1 });
-});
-
-router.post("/sns_test", async (req, res) => {
-  const { phoneNumber } = req.body;
-  const code = generateSNSCode();
-  const message = `オンガチャの認証コードは${code}です。`;
-  const expiresAt = Date.now() + 10 * 60 * 1000; // 5 minutes expiration
-
-  if (!phoneNumber || !phoneNumber.match(/^\+\d{10,15}$/)) {
-    return res.send({ status: 0 });
-  }
-
-  const params = {
-    phone_number: phoneNumber,
-    text_message: message,
-    click_count: true,
-  };
-
-  try {
-    const response = await axios.post(
-      "https://sandbox.sms2.nexlink2.jp/api/v1/short_messages",
-      params,
-      {
-        headers: {
-          Authorization: "Bearer YOUR_API_TOKEN", // Replace with your Nexlink2 token
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    verificationCodes.set(phoneNumber, { code, expiresAt });
-    console.log("Nexlink2 response:", response.data); // Log for verification
-    res.json({
-      status: 1,
-      code,
-      sandboxResponse: response.data, // Include API response for testing
-    });
-  } catch (error) {
-    console.error("Error:", error.response?.data || error.message);
-    res.status(500).json({
-      status: 0,
-      error: error.response?.data || error.message,
-    });
-  }
 });
 
 router.post("/sns/verify-code", (req, res) => {
@@ -517,7 +466,10 @@ router.post("/forgot", async (req, res) => {
 
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
-    console.log("Email sent successfully");
+
+    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+    console.log("/     EMAIL SEND SUCCESSFULLY        //");
+    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
 
     user.resetPasswordLink = token;
     await Users.updateOne({ email }, user);
@@ -540,24 +492,25 @@ router.post("/reset", async (req, res) => {
       if (err) {
         return res.send({
           status: 0,
-          msg: 'Explink'
+          msg: "Explink",
         });
       }
-      const user = await Users.findOne({ resetPasswordLink: resetPasswordLink });
+      const user = await Users.findOne({
+        resetPasswordLink: resetPasswordLink,
+      });
       if (!user) {
-        return res.send({ status: 0, msg: 'failedReset'});
+        return res.send({ status: 0, msg: "failedReset" });
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.hashedPass = hashedPassword;
-      user.resetPasswordLink = '';
-      await Users.updateOne({_id: user._id}, user);
-      res.send({ status: 1, msg: 'successReset'})
+      user.resetPasswordLink = "";
+      await Users.updateOne({ _id: user._id }, user);
+      res.send({ status: 1, msg: "successReset" });
     });
   } catch (err) {
-    res.send({ status: 0, msg: 'failedReset'});
+    res.send({ status: 0, msg: "failedReset" });
   }
-
 });
 
 router.post("/changePwd", auth, async (req, res) => {
@@ -589,17 +542,17 @@ router.get("/get_user/:id", auth, async (req, res) => {
     // create user data
     const user = await Users.findOne({ _id: id });
     const statis = await adminSchemas.GachaVisitStatus.findOne();
-    const createtime = new Intl.DateTimeFormat('ja-JP', {
-      timeZone: 'Asia/Tokyo', // Specify the time zone
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false // Use 24-hour format
+    const createtime = new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo", // Specify the time zone
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false, // Use 24-hour format
     }).format(new Date(user.createdAt));
-    
+
     const userData = {
       _id: user._id,
       name: user.name,
@@ -612,7 +565,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
       inviteCount: user.inviteCount,
       invited: user.invited,
       country: user.country,
-      createtime: createtime
+      createtime: createtime,
     };
 
     // get rank data
@@ -625,7 +578,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
       msg: "get User succeeded.",
       user: userData,
       invite: allow.currentInvite,
-      isStop: statis.currentMaintance
+      isStop: statis.currentMaintance,
     });
   } catch (error) {
     res.send({ status: 0, msg: "failedReq", error: error });
@@ -679,11 +632,9 @@ router.post("/update_user", auth, async (req, res) => {
     // get rank data
     const rank = await userRankData(user._id, user.rank_id);
     userData.rankData = rank;
-
     res.send({ status: 1, user: userData });
   } catch (error) {
-
-    console.log(error)
+    console.log(error);
     res.send({ status: 0, err: error });
   }
 });
@@ -849,52 +800,53 @@ router.delete("/del_shipping_address/:id", auth, async (req, res) => {
 router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   const id = req.params.id;
 
+  if (id == undefined) return res.send({ status: 0 });
+
   try {
-    const userData = await Users.findOne({ _id: id }).populate(
-      "shipAddress_id"
-    );
-    // console.log(userData.obtained_prizes);
+    const tickets = await adminSchemas.GachaTicketSchema.find({ userID: id });
+    const userShipAddress = await shipAddress.findOne({ user_id: id });
+
     res.send({
       status: 1,
-      obtainedPrizes: userData.obtained_prizes,
-      shipAddress: userData.shipAddress_id,
+      obtainedPrizes: tickets,
+      shipAddress: userShipAddress,
     });
   } catch (error) {
+    console.log(error);
+
     res.send({ status: 0 });
   }
 });
 
 async function sendSms(phoneNumber, message) {
-    
-  console.log('=====================')
-  console.log(phoneNumber)
-  console.log(message)
-  console.log('=====================')
+  console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+  console.log(`\/\    Phone Number: ${phoneNumber}     /\/`);
+  console.log("/    SNS SENT  ==============>        //");
+  console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
 
-   const params = {
-     PhoneNumber: '+81' + phoneNumber, // E.164 format: +12345678901
-     Message: message,
-     MessageAttributes: {
-       'AWS.SNS.SMS.SenderID': {
-         DataType: 'String',
-         StringValue: 'Oripa',
-       },
-       'AWS.SNS.SMS.SMSType': {
-         DataType: 'String',
-         StringValue: 'Transactional',
-       },
-     },
-   };
- 
-   const command = new PublishCommand(params);
- 
-   try {
-     const response = await snsClient.send(command);
-     console.log('Message sent successfully:', response);
-   } catch (error) {
-     console.error('Error sending message:', error);
-   }
- }
- 
+  const params = {
+    PhoneNumber: "+81" + phoneNumber, // E.164 format: +12345678901
+    Message: message,
+    MessageAttributes: {
+      "AWS.SNS.SMS.SenderID": {
+        DataType: "String",
+        StringValue: "Oripa",
+      },
+      "AWS.SNS.SMS.SMSType": {
+        DataType: "String",
+        StringValue: "Transactional",
+      },
+    },
+  };
+
+  const command = new PublishCommand(params);
+
+  try {
+    const response = await snsClient.send(command);
+    console.log("Message sent successfully:", response);
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+}
 
 module.exports = router;

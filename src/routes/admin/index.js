@@ -454,53 +454,93 @@ router.post("/chang_auth", auth, async (req, res) => {
 
 /* Deliever management */
 router.get("/deliveries", auth, async (req, res) => {
+  // console.log(" deliveries ");
+
   try {
-    const users = await Users.find().populate("shipAddress_id");
+    let prizes = await adminSchemas.GachaTicketSchema.aggregate(
+      // Pipeline
+      [
+        // Stage 1
+        {
+          $match: {
+            // enter query here
+            sold: true,
+            deliverStatus: { $ne: "returned" },
+          },
+        },
 
-    let obtainedPrizes = [];
-    users.map(async (user) => {
-      for (let i = 0; i < user.obtained_prizes.length; i++) {
-        const obtainedPrize = {};
-        obtainedPrize.userId = user._id;
-        obtainedPrize.userName = user.name;
-        obtainedPrize.userEmail = user.email;
-        obtainedPrize.shipAddress = user.shipAddress_id;
+        // Stage 2
+        {
+          $lookup: {
+            from: "users",
+            localField: "userID",
+            foreignField: "_id",
+            as: "userDetails",
+          },
+        },
 
-        const prize = user.obtained_prizes[i];
-        if (prize.deliverStatus && prize.deliverStatus !== "notSelected") {
-          obtainedPrize.drawId = prize.drawDate;
-          obtainedPrize.prizeId = prize._id;
-          obtainedPrize.prizeName = prize.name;
-          obtainedPrize.prizeImg = prize.img_url;
-          obtainedPrize.prizeKind = prize.kind;
-          obtainedPrize.prizeTrackingNumber = prize.trackingNumber;
-          obtainedPrize.prizeDeliveryCompany = prize.deliveryCompany;
-          obtainedPrize.prizeDeliverStatus = prize.deliverStatus;
+        // Stage 3
+        {
+          $unwind: "$userDetails",
+        },
 
-          obtainedPrizes.push(obtainedPrize);
-        }
-      }
-    });
+        // Stage 4
+        {
+          $lookup: {
+            from: "shipAddress",
+            localField: "userID",
+            foreignField: "user_id",
+            as: "shipAddress",
+          },
+        },
 
-    res.send({ status: 1, prizes: obtainedPrizes });
+        // Stage 5
+        {
+          $unwind: "$shipAddress",
+        },
+
+        // Stage 6
+        {
+          $project: {
+            // specifications
+            _id: 1,
+            userName: "$userDetails.name",
+            userEmail: "$userDetails.email",
+            shipAddress: 1,
+            prizeName: "$name",
+            prizeImg: "$img_url",
+            prizeKind: "$kind",
+            prizeTrackingNumber: "$trackingNumber",
+            prizeDeliveryCompany: "$deliveryCompany",
+            prizeDeliverStatus: "$deliverStatus",
+          },
+        },
+      ],
+
+      // Options
+      {}
+
+      // Created with Studio 3T, the IDE for MongoDB - https://studio3t.com/
+    );
+
+    console.log("======== deliveries prizes length ========");
+    console.log(prizes.length);
+
+    res.send({ status: 1, prizes: prizes });
   } catch (error) {
-    res.send({ status: 0, err: err });
+    res.send({ status: 0, err: error });
   }
 });
 
 router.post("/changeDeliverStatus", auth, async (req, res) => {
-  const { userId, prizeId, status, drawDate } = req.body;
+  const { ticketId } = req.body;
   try {
-    const user = await Users.findOne({ _id: userId });
+    let dd = await adminSchemas.GachaTicketSchema.updateOne(
+      { _id: ticketId },
+      { deliverStatus: "shipped", deliveryTime: Date.now() }
+    );
 
-    const obtainedPrizes = user.obtained_prizes;
-
-    const targetPrize = obtainedPrizes.find((prize) => prize._id == prizeId);
-
-    targetPrize.deliverStatus = "shipped";
-    targetPrize.drawDate = drawDate;
-    await Users.updateOne({ _id: userId }, user);
-
+    console.log(dd);
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to change status." });
@@ -846,21 +886,20 @@ router.post(
     try {
       const existVidData = await PrizeVideo.findOne({ kind: req.body.kind });
 
-      if (existVidData) {
-        const filePath = path.join("./", existVidData.url);
-        if (filePath) await deleteFile(filePath);
+      // if (existVidData) {
+      //   const filePath = path.join("./", existVidData.url);
+      //   if (filePath) await deleteFile(filePath);
 
-        await existVidData.deleteOne();
-      }
+      //   await existVidData.deleteOne();
+      // }
 
-      if (req.file) vidData.url = `uploads/prizeVideo/${req.file.filename}`;
+      if (req.file) vidData.url = `uploads/prizeVideo/${req.body.kind}`;
 
       const newPrizeVideo = new PrizeVideo(vidData);
       await newPrizeVideo.save();
 
       existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
-
       console.log(error);
       res.send({ status: 0 });
     }
@@ -885,10 +924,10 @@ router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
   try {
     const prizeVideo = await PrizeVideo.findOne({ _id: id });
 
-    if (prizeVideo.url) {
-      const filePath = path.join("./", prizeVideo.url);
-      if (filePath) await deleteFile(filePath);
-    }
+    // if (prizeVideo.url) {
+    //   const filePath = path.join("./", prizeVideo.url);
+    //   if (filePath) await deleteFile(filePath);
+    // }
     await prizeVideo.deleteOne();
 
     return res.send({ status: 1 });

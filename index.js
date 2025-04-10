@@ -845,23 +845,22 @@ router.post(
     const vidData = { kind: req.body.kind };
 
     try {
-      const existVidData = await PrizeVideo.findOne({ kind: req.body.kind });
+      // const existVidData = await PrizeVideo.findOne({ kind: req.body.kind });
 
-      if (existVidData) {
-        const filePath = path.join("./", existVidData.url);
-        if (filePath) await deleteFile(filePath);
+      // if (existVidData) {
+      //   const filePath = path.join("./", existVidData.url);
+      //   if (filePath) await deleteFile(filePath);
 
-        await existVidData.deleteOne();
-      }
+      //   await existVidData.deleteOne();
+      // }
 
-      if (req.file) vidData.url = `uploads/prizeVideo/${req.file.filename}`;
+      if (req.file) vidData.url = `uploads/prizeVideo/${req.body.kind}`;
 
       const newPrizeVideo = new PrizeVideo(vidData);
       await newPrizeVideo.save();
 
       existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
-
       console.log(error);
 
       res.send({ status: 0 });
@@ -887,14 +886,15 @@ router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
   try {
     const prizeVideo = await PrizeVideo.findOne({ _id: id });
 
-    if (prizeVideo.url) {
-      const filePath = path.join("./", prizeVideo.url);
-      if (filePath) await deleteFile(filePath);
-    }
+    // if (prizeVideo.url) {
+    //   const filePath = path.join("./", prizeVideo.url);
+    //   if (filePath) await deleteFile(filePath);
+    // }
     await prizeVideo.deleteOne();
 
     return res.send({ status: 1 });
   } catch (error) {
+    console.log(error);
     res.send({ status: 0, err: error });
   }
 });

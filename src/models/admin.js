@@ -43,11 +43,28 @@ const rubbishSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+const gachaTicketSchema = new mongoose.Schema({
+  gachaID: { type: mongoose.Schema.Types.ObjectId, ref: "Gacha" },
+  userID: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  name: { type: String },
+  trackingNumber: { type: String },
+  deliveryCompany: { type: String },
+  unique_id: { type: String },
+  deliverStatus: { type: String },
+  kind: { type: String },
+  img_url: { type: String },
+  cashback: { type: Number },
+  order: { type: Number },
+  sold: { type: Boolean, default: false },
+  soldTime: { type: Date },
+  deliveryTime: { type: Date },
+});
+
 // Coupon
 const couponSchema = new Schema({
   name: { type: String },
   cashback: { type: Number },
-  code: {type: String},
+  code: { type: String },
   allow: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
@@ -73,8 +90,8 @@ const rankSchema = new Schema({
 const themeSchema = new Schema({
   logoUrl: { type: String },
   bgColor: { type: String },
-  title: {type: String, default: ''},
-  desc: {type: String, default: ''}
+  title: { type: String, default: "" },
+  desc: { type: String, default: "" },
 });
 
 // Terms of service
@@ -87,7 +104,7 @@ const termsSchema = new Schema({
 const gachavisitSchema = new Schema({
   currentGacha: { type: Boolean, default: false },
   currentInvite: { type: Boolean, default: false },
-  currentMaintance: {type: Boolean, default: false},
+  currentMaintance: { type: Boolean, default: false },
 });
 
 // Carousel
@@ -114,7 +131,16 @@ const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
 const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
 const Administrator = mongoose.model("Admin", AdminSchema, "admin");
-const GachaVisitStatus = mongoose.model("GachaVisitStatus", gachavisitSchema, "statis")
+const GachaVisitStatus = mongoose.model(
+  "GachaVisitStatus",
+  gachavisitSchema,
+  "statis"
+);
+const GachaTicketSchema = mongoose.model(
+  "GachaTicketSchema",
+  gachaTicketSchema,
+  "ticket"
+);
 
 const adminSchemas = {
   Category: Category,
@@ -127,7 +153,8 @@ const adminSchemas = {
   Carousels: Carousels,
   Coupon: Coupon,
   Administrator: Administrator,
-  GachaVisitStatus: GachaVisitStatus
+  GachaVisitStatus: GachaVisitStatus,
+  GachaTicketSchema: GachaTicketSchema,
 };
 
 module.exports = adminSchemas;

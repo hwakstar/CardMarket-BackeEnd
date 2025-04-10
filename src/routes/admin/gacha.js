@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const mongoose = require("mongoose");
+const schedule = require("node-schedule");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
 
@@ -22,15 +23,16 @@ const fs = require("fs");
 const { pipeline } = require("stream");
 const { count } = require("console");
 
+const logger = require("../../utils/logger");
+
 const mutex = new Mutex();
-// Configure the AWS SDK
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION, // Change to your bucket's region
-  credentials: {
-    accessKeyId: process.env.AMAZON_S3_ACCESS_KEY, // Use environment variable
-    secretAccessKey: process.env.AMAZON_S3_SECRET_KEY, // Use environment variable
-  },
+
+const job = schedule.scheduleJob("0 * * * *", () => {
+  console.log("I run once a day");
 });
+
+// static function
+var gachaInfo = {};
 
 // add gacha
 router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
@@ -255,107 +257,124 @@ router.get("/set_release/:id", auth, async (req, res) => {
   }
 });
 
-// set prize to gacha
 router.post("/set_prize", auth, async (req, res) => {
-  const { gachaID, prizes, prizeId, order } = req.body;
+  const { gachaID, prizes } = req.body;
+
+  prizes.forEach((item) => (item["gachaID"] = gachaID));
 
   let gacha = await Gacha.findOne({ _id: gachaID });
+  gacha.total_number += prizes.length;
+  gacha.save();
 
-  let Is_LastPrize = false;
-
-  try {
-    if (prizeId) {
-      let target_prize = await adminSchemas.Prize.findOne({ _id: prizeId });
-
-      if (
-        gacha.kind.find((item) => item.value == "last_prize") == undefined &&
-        target_prize.kind == "last_prize"
-      ) {
-        return res.send({ status: 0 });
-      }
-
-      if (target_prize.kind == "last_prize") {
-
-        const count = await adminSchemas.Prize.countDocuments({
-          gachaID: gachaID,
-          kind: "last_prize",
-        });
-
-
-        if(count > 0) {
-          await adminSchemas.Prize.findOneAndDelete({
-            gachaID: gachaID,
-            kind: "last_prize",
-          });
-          Is_LastPrize = true;
-        } else if (count > 1) {
-          return res.send({ status: 0 })
-        }
-
-        
-      }
-
-      let aa = await adminSchemas.Prize.create({
-        gachaID: gachaID,
-        img_url: target_prize.img_url,
-        name: target_prize.name,
-        cashback: target_prize.cashback,
-        kind: target_prize.kind,
-        trackingNumber: target_prize.trackingNumber,
-        deliveryCompany: target_prize.deliveryCompany,
-        order: order,
-      });
-
-      gacha.total_number++;
-    } else {
-      let last_prize = prizes.filter((item) => item.kind == "last_prize");
-
-      if (last_prize.length > 1) return res.send({ status: 0 });
-
-      if (
-        gacha.kind.find((item) => item.value == "last_prize") == undefined &&
-        last_prize.length == 1
-      )
-        return res.send({ status: 0 });
-
-      if (last_prize.length == 1) {
-        const count = await adminSchemas.Prize.countDocuments({
-          gachaID: gachaID,
-          kind: "last_prize",
-        });
-
-
-        if(count > 0) {
-          await adminSchemas.Prize.findOneAndDelete({
-            gachaID: gachaID,
-            kind: "last_prize",
-          });
-          Is_LastPrize = true;
-        } else if (count > 1) {
-          return res.send({ status: 0 })
-        }
-      }
-
-      prizes.forEach((item) => (item["gachaID"] = gachaID));
-
-      await adminSchemas.Prize.insertMany(prizes);
-
-      gacha.total_number += prizes.length;
-    }
-
-    if (Is_LastPrize) {
-      gacha.total_number--;
-    }
-
-    await gacha.save();
-
-    res.send({ status: 1 });
-  } catch (error) {
-    res.send({
-      status: 0,
+  adminSchemas.GachaTicketSchema.insertMany(prizes)
+    .then(() => {
+      setPreInfo();
+      res.send({ status: 1 });
+    })
+    .catch((err) => {
+      logger.error("An error occured: ", err);
+      res.send({ status: 0 });
     });
-  }
 });
+
+// set prize to gacha
+// router.post("/set_prize", auth, async (req, res) => {
+//   const { gachaID, prizes, prizeId, order } = req.body;
+
+//   let gacha = await Gacha.findOne({ _id: gachaID });
+
+//   let Is_LastPrize = false;
+
+//   try {
+//     if (prizeId) {
+//       let target_prize = await adminSchemas.Prize.findOne({ _id: prizeId });
+
+//       if (
+//         gacha.kind.find((item) => item.value == "last_prize") == undefined &&
+//         target_prize.kind == "last_prize"
+//       ) {
+//         return res.send({ status: 0 });
+//       }
+
+//       if (target_prize.kind == "last_prize") {
+
+//         const count = await adminSchemas.Prize.countDocuments({
+//           gachaID: gachaID,
+//           kind: "last_prize",
+//         });
+
+//         if(count > 0) {
+//           await adminSchemas.Prize.findOneAndDelete({
+//             gachaID: gachaID,
+//             kind: "last_prize",
+//           });
+//           Is_LastPrize = true;
+//         } else if (count > 1) {
+//           return res.send({ status: 0 })
+//         }
+
+//       }
+
+//       let aa = await adminSchemas.Prize.create({
+//         gachaID: gachaID,
+//         img_url: target_prize.img_url,
+//         name: target_prize.name,
+//         cashback: target_prize.cashback,
+//         kind: target_prize.kind,
+//         trackingNumber: target_prize.trackingNumber,
+//         deliveryCompany: target_prize.deliveryCompany,
+//         order: order,
+//       });
+
+//       gacha.total_number++;
+//     } else {
+//       let last_prize = prizes.filter((item) => item.kind == "last_prize");
+
+//       if (last_prize.length > 1) return res.send({ status: 0 });
+
+//       if (
+//         gacha.kind.find((item) => item.value == "last_prize") == undefined &&
+//         last_prize.length == 1
+//       )
+//         return res.send({ status: 0 });
+
+//       if (last_prize.length == 1) {
+//         const count = await adminSchemas.Prize.countDocuments({
+//           gachaID: gachaID,
+//           kind: "last_prize",
+//         });
+
+//         if(count > 0) {
+//           await adminSchemas.Prize.findOneAndDelete({
+//             gachaID: gachaID,
+//             kind: "last_prize",
+//           });
+//           Is_LastPrize = true;
+//         } else if (count > 1) {
+//           return res.send({ status: 0 })
+//         }
+//       }
+
+//       prizes.forEach((item) => (item["gachaID"] = gachaID));
+
+//       await adminSchemas.Prize.insertMany(prizes);
+
+//       gacha.total_number += prizes.length;
+//     }
+
+//     if (Is_LastPrize) {
+//       gacha.total_number--;
+//     }
+
+//     await gacha.save();
+
+//     res.send({ status: 1 });
+//   } catch (error) {
+//     res.send({
+//       status: 0,
+//     });
+//   }
+// });
 // set rubbish to gacha
 router.post("/set_rubbish", auth, async (req, res) => {
   const { gachaID, rubbishes, rubbishId, count } = req.body;
@@ -452,229 +471,305 @@ router.post("/upload_bulk", auth, async (req, res) => {
   }
 });
 
-// handle draw gacha
-
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaID, counts, drawDate, user } = req.body;
+  const { gachaID, counts, user } = req.body;
 
-  // Acquire the mutex before proceeding
-  const release = await mutex.acquire();
+  let gacha = gachaInfo[gachaID];
 
   try {
-    // Fetch gacha and user data
-    let gacha = await Gacha.findOne({ _id: gachaID });
-    const userData = await Users.findOne({ _id: user._id });
-    console.log("-------------------------start -----------------------------");
+    if (gacha.remove_number + Number(counts) > gacha.total_number)
+      return res.send({ status: 0, msg: "SoldOutOrLittleNumber" });
 
-    const testmode = req.headers["test"] === "true";
-    let drawPoints = gacha.price * counts;
+    if (gacha.kind[0].label == "once_per_day") {
+      let ticket = await adminSchemas.GachaTicketSchema.findOne({
+        userID: user._id,
+        gachaID: gachaID,
+      });
 
-    if (!testmode && userData.point_remain < drawPoints) {
-      return res.send({ status: 0, msg: 1 }); // Insufficient points
+      if (ticket) return res.send({ status: 0, msg: "YouBoughtEarly" });
     }
 
-    // Fetch targeted prizes and rubbish
-    const target_prizes = await adminSchemas.Prize.find({
+    if (user.point_remain < counts * gacha.price)
+      return res.send({ status: 0, msg: "NotEnoughMoney" });
+
+    let prizes = await adminSchemas.GachaTicketSchema.find({
       gachaID: gachaID,
-      status: 0,
       order: {
-        $gte: gacha.remove_number + 1,
-        $lte: gacha.remove_number + counts,
+        $lte: gacha.remove_number + Number(counts),
+        $gt: gacha.remove_number,
       },
     });
 
-    const target_rubbishes = await adminSchemas.Rubbish.find({
-      gachaID: gachaID,
-      status: 0,
-      order: {
-        $gte: gacha.remove_number + 1,
-        $lte: gacha.remove_number + counts,
+    console.log(
+      "/\\_/\\/\\_/\\/\\_/\\ GACHA REMOVE NUMBER /\\_/\\/\\_/\\/\\_/\\"
+    );
+    console.log("Gacha Remove Number: ", gacha.remove_number);
+    console.log("Counts: ", Number(counts));
+    console.log("Prizes Length: ", prizes.length);
+
+    adminSchemas.GachaTicketSchema.updateMany(
+      {
+        gachaID: gachaID,
+        order: {
+          $lte: gacha.remove_number + Number(counts),
+          $gt: gacha.remove_number,
+        },
       },
-    });
-
-    // Random prize/rubbish logic
-    let random_number = counts - target_prizes.length - target_rubbishes.length;
-    let random_n_p = Math.floor(Math.random() * random_number);
-    let random_n_r = random_number - random_n_p;
-
-    const un_random_prizes = await adminSchemas.Prize.find({
-      gachaID: gachaID,
-      order: 0,
-      status: 0,
-    });
-
-    const un_random_rubbishes = await adminSchemas.Rubbish.find({
-      gachaID: gachaID,
-      order: 0,
-      status: 0,
-    });
-
-    if (un_random_prizes.length < random_n_p) {
-      random_n_p = un_random_prizes.length;
-      random_n_r = random_number - random_n_p;
-    }
-
-    let random_n_r_total = 0;
-    for (let i = 0; i < un_random_rubbishes.length; i++) {
-      random_n_r_total += un_random_rubbishes[i].count;
-    }
-
-    if (random_n_r_total < random_n_r) {
-      random_n_r = random_n_r_total;
-      random_n_p = random_number - random_n_r;
-    }
-
-    // Build response data
-    let res_data = [];
-
-    for (let item of target_prizes) {
-      const video = await PrizeVideo.findOne({
-        kind: item.kind,
-      });
-      item.video = video.url;
-      res_data.push(item);
-    }
-
-    for (let item of target_rubbishes) {
-      const video = await PrizeVideo.findOne({
-        kind: "rubbish",
-      });
-      item.kind = "rubbish";
-      item.video = video.url;
-      res_data.push(item);
-    }
-
-    let prizePool = [...un_random_prizes];
-    while (random_n_p > 0) {
-      const r_n = Math.floor(Math.random() * prizePool.length);
-      const r_n_el = prizePool[r_n];
-      const video = await PrizeVideo.findOne({
-        kind: r_n_el.kind,
-      });
-      r_n_el.video = video.url;
-      res_data.push(r_n_el);
-      prizePool.splice(r_n, 1);
-      random_n_p--;
-    }
-
-    let rubbishPool = [...un_random_rubbishes];
-    while (random_n_r > 0) {
-      const r_r = Math.floor(Math.random() * rubbishPool.length);
-      const r_r_el = rubbishPool[r_r];
-      const video = await PrizeVideo.findOne({
-        kind: "rubbish",
-      });
-      r_r_el.kind = "rubbish";
-      r_r_el.video = video.url;
-      res_data.push(r_r_el);
-      r_r_el.count--;
-      if (r_r_el.count === 0) rubbishPool.splice(r_r, 1);
-      random_n_r--;
-    }
-
-    // Update database (non-test mode)
-    if (!testmode) {
-      for (let item of res_data) {
-        item.drawDate = drawDate;
-        userData.obtained_prizes.push(item);
-        if (item.kind === "rubbish") {
-          if (item.count === 0) {
-            await adminSchemas.Rubbish.updateOne(
-              { _id: item._id },
-              { status: 1 }
-            );
-          } else {
-            await adminSchemas.Rubbish.updateOne(
-              { _id: item._id },
-              { count: item.count }
-            );
-          }
-        } else {
-          await adminSchemas.Prize.updateOne({ _id: item._id }, { status: 1 });
-        }
+      {
+        $set: {
+          userID: user._id,
+          sold: true,
+          deliverStatus: "notSelected",
+          soldTime: Date.now(),
+        },
       }
-      userData.point_remain -= drawPoints;
-      gacha.remove_number += counts;
+    )
+      .then(() => {})
+      .catch((err) => console.log(err));
 
-      await userData.save();
-      await gacha.save();
-      console.log("-------------------------end -----------------------------");
-    }
+    let gacha__ = await Gacha.findOne({ _id: gachaID });
+    gacha__.remove_number += Number(counts);
+    gacha__.save();
 
-    // Log points usage
-    const newPointLog = new PointLog({
-      aff_id: userData.aff_id,
-      user_id: userData._id,
-      user_name: userData.name,
-      user_country: userData.country,
-      point_num: drawPoints,
-      usage: "drawGacha",
-      gacha: gacha.name,
-      number: counts,
-    });
-    await newPointLog.save();
+    gacha.remove_number += Number(counts);
 
-    res.send({ status: 1, prizes: res_data });
-  } catch (error) {
-    console.log(error);
-    res.send({ status: 0 });
-  } finally {
-    // Release the mutex
-    release();
+    res.send({ status: 1, prizes: prizes });
+  } catch (err) {
+    console.log(err);
   }
 });
+
+// handle draw gacha
+
+// router.post("/draw_gacha", auth, async (req, res) => {
+//   const { gachaID, counts, drawDate, user } = req.body;
+
+//   // Acquire the mutex before proceeding
+//   const release = await mutex.acquire();
+
+//   try {
+//     // Fetch gacha and user data
+//     let gacha = await Gacha.findOne({ _id: gachaID });
+//     const userData = await Users.findOne({ _id: user._id });
+//     console.log("-------------------------start -----------------------------");
+
+//     const testmode = req.headers["test"] === "true";
+//     let drawPoints = gacha.price * counts;
+
+//     if (!testmode && userData.point_remain < drawPoints) {
+//       return res.send({ status: 0, msg: 1 }); // Insufficient points
+//     }
+
+//     // Fetch targeted prizes and rubbish
+//     const target_prizes = await adminSchemas.Prize.find({
+//       gachaID: gachaID,
+//       status: 0,
+//       order: {
+//         $gte: gacha.remove_number + 1,
+//         $lte: gacha.remove_number + counts,
+//       },
+//     });
+
+//     const target_rubbishes = await adminSchemas.Rubbish.find({
+//       gachaID: gachaID,
+//       status: 0,
+//       order: {
+//         $gte: gacha.remove_number + 1,
+//         $lte: gacha.remove_number + counts,
+//       },
+//     });
+
+//     // Random prize/rubbish logic
+//     let random_number = counts - target_prizes.length - target_rubbishes.length;
+//     let random_n_p = Math.floor(Math.random() * random_number);
+//     let random_n_r = random_number - random_n_p;
+
+//     const un_random_prizes = await adminSchemas.Prize.find({
+//       gachaID: gachaID,
+//       order: 0,
+//       status: 0,
+//     });
+
+//     const un_random_rubbishes = await adminSchemas.Rubbish.find({
+//       gachaID: gachaID,
+//       order: 0,
+//       status: 0,
+//     });
+
+//     if (un_random_prizes.length < random_n_p) {
+//       random_n_p = un_random_prizes.length;
+//       random_n_r = random_number - random_n_p;
+//     }
+
+//     let random_n_r_total = 0;
+//     for (let i = 0; i < un_random_rubbishes.length; i++) {
+//       random_n_r_total += un_random_rubbishes[i].count;
+//     }
+
+//     if (random_n_r_total < random_n_r) {
+//       random_n_r = random_n_r_total;
+//       random_n_p = random_number - random_n_r;
+//     }
+
+//     // Build response data
+//     let res_data = [];
+
+//     for (let item of target_prizes) {
+//       const video = await PrizeVideo.findOne({
+//         kind: item.kind,
+//       });
+//       item.video = video.url;
+//       res_data.push(item);
+//     }
+
+//     for (let item of target_rubbishes) {
+//       const video = await PrizeVideo.findOne({
+//         kind: "rubbish",
+//       });
+//       item.kind = "rubbish";
+//       item.video = video.url;
+//       res_data.push(item);
+//     }
+
+//     let prizePool = [...un_random_prizes];
+//     while (random_n_p > 0) {
+//       const r_n = Math.floor(Math.random() * prizePool.length);
+//       const r_n_el = prizePool[r_n];
+//       const video = await PrizeVideo.findOne({
+//         kind: r_n_el.kind,
+//       });
+//       r_n_el.video = video.url;
+//       res_data.push(r_n_el);
+//       prizePool.splice(r_n, 1);
+//       random_n_p--;
+//     }
+
+//     let rubbishPool = [...un_random_rubbishes];
+//     while (random_n_r > 0) {
+//       const r_r = Math.floor(Math.random() * rubbishPool.length);
+//       const r_r_el = rubbishPool[r_r];
+//       const video = await PrizeVideo.findOne({
+//         kind: "rubbish",
+//       });
+//       r_r_el.kind = "rubbish";
+//       r_r_el.video = video.url;
+//       res_data.push(r_r_el);
+//       r_r_el.count--;
+//       if (r_r_el.count === 0) rubbishPool.splice(r_r, 1);
+//       random_n_r--;
+//     }
+
+//     // Update database (non-test mode)
+//     if (!testmode) {
+//       for (let item of res_data) {
+//         item.drawDate = drawDate;
+//         userData.obtained_prizes.push(item);
+//         if (item.kind === "rubbish") {
+//           if (item.count === 0) {
+//             await adminSchemas.Rubbish.updateOne(
+//               { _id: item._id },
+//               { status: 1 }
+//             );
+//           } else {
+//             await adminSchemas.Rubbish.updateOne(
+//               { _id: item._id },
+//               { count: item.count }
+//             );
+//           }
+//         } else {
+//           await adminSchemas.Prize.updateOne({ _id: item._id }, { status: 1 });
+//         }
+//       }
+//       userData.point_remain -= drawPoints;
+//       gacha.remove_number += counts;
+
+//       await userData.save();
+//       await gacha.save();
+//       console.log("-------------------------end -----------------------------");
+//     }
+
+//     // Log points usage
+//     const newPointLog = new PointLog({
+//       aff_id: userData.aff_id,
+//       user_id: userData._id,
+//       user_name: userData.name,
+//       user_country: userData.country,
+//       point_num: drawPoints,
+//       usage: "drawGacha",
+//       gacha: gacha.name,
+//       number: counts,
+//     });
+//     await newPointLog.save();
+
+//     res.send({ status: 1, prizes: res_data });
+//   } catch (error) {
+//     console.log(error);
+//     res.send({ status: 0 });
+//   } finally {
+//     // Release the mutex
+//     release();
+//   }
+// });
 
 router.post("/shipping", auth, async (req, res) => {
   const { shippingPrizes, returningPrizes, cashback, user } = req.body;
 
   try {
-    const userData = await Users.findOne({ _id: user._id });
     const statis = await adminSchemas.GachaVisitStatus.findOne();
     if (statis.currentMaintance) return res.send({ status: 2 });
     // return all prizes
-    if (shippingPrizes.length === 0) {
-      let len = returningPrizes.length;
-      let obtainedData = userData.obtained_prizes;
-      for (let i = 0; i < len; i++) {
-        let L = obtainedData.length;
-        for (let j = 0; j < L; j++) {
-          if (returningPrizes[i]._id == obtainedData[j]._id) {
-            obtainedData.splice(j, 1);
-            break;
-          }
-        }
-      }
-      userData.obtained_prizes = obtainedData;
-      await userData.save();
 
-      // add cashback of user
-      userData.point_remain += cashback;
+    const shipOrder = [];
+    for (let i = 0; i < shippingPrizes.length; i++) {
+      shipOrder.push(shippingPrizes[i].order);
     }
 
-    // Change obtainedPrizes status from notSelected to awaiting
-    userData.obtained_prizes.forEach((obtained_prize) => {
-      const found = shippingPrizes.some(
-        (shippingPrize) => shippingPrize._id === obtained_prize._id.toString()
+    const returnOrder = [];
+    for (let i = 0; i < returningPrizes.length; i++) {
+      returnOrder.push(returningPrizes[i].order);
+    }
+
+    if (shipOrder.length > 0) {
+      await adminSchemas.GachaTicketSchema.updateMany(
+        {
+          userID: ObjectId.createFromHexString(user._id),
+          order: { $in: shipOrder },
+        },
+        { deliverStatus: "awaiting" }
+      );
+    } else {
+      await adminSchemas.GachaTicketSchema.updateMany(
+        { userID: user._id, order: { $in: returnOrder } },
+        { deliverStatus: "returned" }
       );
 
-      if (found) {
-        // Change deliveryStatus of obtainedPrizes if a matching _id is found
-        obtained_prize.deliverStatus = "awaiting";
-        delete obtained_prize.selected;
-      }
-    });
+      await Users.updateOne(
+        { _id: user._id },
+        { $inc: { point_remain: cashback } }
+      );
+    }
 
-    // update user data
-    await Users.updateOne({ _id: user._id }, userData);
-
-    const gachas = await Gacha.find()
+    const gachas = await Gacha.find({ isRelease: true })
       .sort({ order: 1, createdAt: -1 })
       .populate("category");
 
     res.send({ status: 1, gachas: gachas });
   } catch (error) {
+    console.log(error);
+
     res.send({ status: 0 });
   }
 });
+
+const setPreInfo = () => {
+  Gacha.find({}).then((gcs) => {
+    logger.info(" ========= PRE INFO ===========");
+    gcs.forEach((gc) => {
+      gachaInfo[gc._id] = gc;
+    });
+  });
+};
+
+setPreInfo();
 
 module.exports = router;
