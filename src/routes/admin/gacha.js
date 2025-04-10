@@ -770,7 +770,7 @@ router.post("/shipping", auth, async (req, res) => {
     console.log(unreturnedTickets);
 
     for (let i = 0; i < unreturnedTickets.length; i++) {
-      cashback = unreturnedTickets[i].cashback;
+      cashback += unreturnedTickets[i].cashback;
     }
 
     if (shipOrder.length > 0) {
