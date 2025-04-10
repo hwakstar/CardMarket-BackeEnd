@@ -275,24 +275,20 @@ router.post("/set_prize", auth, async (req, res) => {
       }
 
       if (target_prize.kind == "last_prize") {
-
         const count = await adminSchemas.Prize.countDocuments({
           gachaID: gachaID,
           kind: "last_prize",
         });
 
-
-        if(count > 0) {
+        if (count > 0) {
           await adminSchemas.Prize.findOneAndDelete({
             gachaID: gachaID,
             kind: "last_prize",
           });
           Is_LastPrize = true;
         } else if (count > 1) {
-          return res.send({ status: 0 })
+          return res.send({ status: 0 });
         }
-
-        
       }
 
       let aa = await adminSchemas.Prize.create({
@@ -324,15 +320,14 @@ router.post("/set_prize", auth, async (req, res) => {
           kind: "last_prize",
         });
 
-
-        if(count > 0) {
+        if (count > 0) {
           await adminSchemas.Prize.findOneAndDelete({
             gachaID: gachaID,
             kind: "last_prize",
           });
           Is_LastPrize = true;
         } else if (count > 1) {
-          return res.send({ status: 0 })
+          return res.send({ status: 0 });
         }
       }
 
@@ -647,8 +642,9 @@ router.post("/shipping", auth, async (req, res) => {
       userData.obtained_prizes = obtainedData;
       await userData.save();
 
-      // add cashback of user
-      userData.point_remain += cashback;
+      if (obtainedData.length > 0)
+        // add cashback of user
+        userData.point_remain += cashback;
     }
 
     // Change obtainedPrizes status from notSelected to awaiting
