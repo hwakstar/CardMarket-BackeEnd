@@ -778,7 +778,7 @@ router.post("/shipping", auth, async (req, res) => {
       );
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
-        { userID: user._id, order: { $in: returnOrder } },
+        { _id: { $in: returnOrder } },
         { deliverStatus: "returned" }
       );
 
