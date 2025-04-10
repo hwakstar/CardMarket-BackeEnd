@@ -620,7 +620,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
 });
 
 router.post("/shipping", auth, async (req, res) => {
-  const { shippingPrizes, returningPrizes, cashback, user } = req.body;
+  const { shippingPrizes, returningPrizes, user } = req.body;
+
+  let cashback = 0;
 
   try {
     const userData = await Users.findOne({ _id: user._id });
@@ -635,10 +637,14 @@ router.post("/shipping", auth, async (req, res) => {
         for (let j = 0; j < L; j++) {
           if (returningPrizes[i]._id == obtainedData[j]._id) {
             obtainedData.splice(j, 1);
+            cashback += returningPrizes[i].cashback;
             break;
           }
         }
       }
+
+      console.log("cashback: ", cashback);
+
       userData.obtained_prizes = obtainedData;
       await userData.save();
 
