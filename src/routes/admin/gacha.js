@@ -508,7 +508,8 @@ router.post("/draw_gacha", auth, async (req, res) => {
         gachaID: gachaID,
       });
 
-      if (ticket) return res.send({ status: 0, msg: "YouBoughtEarly" });
+      if (Date.now() - ticket.soldTime.getTime() < 86400000)
+        return res.send({ status: 0, msg: "YouBoughtEarly" });
     }
 
     if (user.point_remain < counts * gacha.price)
