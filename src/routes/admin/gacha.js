@@ -648,7 +648,7 @@ router.post("/shipping", auth, async (req, res) => {
       userData.obtained_prizes = obtainedData;
       await userData.save();
 
-      if (obtainedData.length > 0)
+      if (cashback > 0)
         // add cashback of user
         userData.point_remain += cashback;
     }
