@@ -67,9 +67,9 @@ const couponSchema = new Schema({
   name: { type: String },
   cashback: { type: Number },
   code: { type: String },
-  allow: { type: Boolean, default: false },
+  allow: { type: Boolean },
   used: { type: Boolean, default: false },
-  UserID: { type: mongoose.Types.ObjectId, ref: "users" },
+  UserID: { type: mongoose.Types.ObjectId, ref: "Users" },
   createdAt: { type: Date, default: Date.now() },
   expireTime: { type: Date },
 });

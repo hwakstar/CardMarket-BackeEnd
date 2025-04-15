@@ -117,8 +117,11 @@ router.post("/check_popup", auth, async (req, res) => {
         name: "PopUp",
         code: couponCode,
         allow: true,
+
         expireTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes later
       });
+
+      console.log(newCoupon);
 
       await newCoupon.save();
     }
