@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const adminSchemas = require("../models/admin");
 
-module.exports = function (req, res, next) {
+module.exports = async function (req, res, next) {
   // Get token from header
   const token = req.header("Token");
 
@@ -11,6 +12,10 @@ module.exports = function (req, res, next) {
 
   // Verify token
   try {
+    const statis = await adminSchemas.GachaVisitStatus.findOne();
+    if (statis.currentMaintance)
+      return res.send({ status: 2, msg: "Now Mainteniance Mode" });
+
     jwt.verify(token, "RANDOM-TOKEN", (error, decoded) => {
       if (error) {
         return res.status(401).json({ msg: "Token is not valid" });

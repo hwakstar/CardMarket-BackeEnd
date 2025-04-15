@@ -17,6 +17,7 @@ const stripe = require("stripe")(process.env.STRIPE_API_SECRET_KEY);
 const axios = require("axios");
 const Client = require("@amazonpay/amazon-pay-api-sdk-nodejs");
 const { v4: uuidv4 } = require("uuid");
+const PoingLog = require("../../models/pointLog");
 
 const config = {
   publicKeyId: process.env.AMAZON_PUBLIC_KEY_ID,
@@ -39,10 +40,10 @@ router.post("/purchase", auth, async (req, res) => {
     const rank = await userRankData(user._id);
     //when first purchase, inviter add 500pt
     // console.log(rank.totalPointsAmount,user.invited )
-    if (rank.totalPointsAmount === 0 && user.invited) {
-      const inviter = await Users.findOne({ inviteCode: user.invited });
-      inviter.point_remain += 300;
-      await Users.updateOne({ inviteCode: user.invited }, inviter);
+    if (rank.totalPointsAmount === 1000 && user.invited) {
+      const inviter = await Users.findOne({ inviteCode: user.otherCode });
+      inviter.point_remain += 700;
+      await inviter.save();
     }
     user.point_remain += point_num;
     await user.save();
@@ -188,7 +189,7 @@ router.post("/create-payment-intent", auth, async (req, res) => {
 
 // Amazon payment
 router.post("/create-checkout-session", auth, async (req, res) => {
-  const { amount } = req.body;
+  const { amount, pointNum } = req.body;
   const payload = {
     webCheckoutDetails: {
       checkoutReviewReturnUrl: process.env.AMAZON_CHECKOUT_REVIEW_RETURN_URL,
@@ -199,6 +200,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       canHandlePendingAuthorization: false,
       chargeAmount: {
         amount: amount.toString(),
+        point_num: pointNum.toStrig(),
         currencyCode: "JPY",
       },
     },
@@ -276,12 +278,17 @@ router.post("/update-checkout-session", auth, async (req, res) => {
     const originalAmount =
       sessionResponse.data.paymentDetails.chargeAmount.amount;
 
+    const originalPointNum =
+      sessionResponse.data.paymentDetails.chargeAmount.point_num;
+
     const updatePayload = {
       webCheckoutDetails: {
         checkoutResultReturnUrl:
           process.env.AMAZON_CHECKOUT_RESULT_RETURN_URL +
           "?amount=" +
-          originalAmount,
+          originalAmount +
+          "?point_num" +
+          originalPointNum,
       },
       paymentDetails: {
         paymentIntent: "AuthorizeWithCapture",
@@ -398,16 +405,9 @@ router.post("/paidy/retrieve-payment", auth, async (req, res) => {
           "Paidy-Version": "2018-04-10",
           Authorization: `Bearer ${process.env.PAIDY_SECRET_KEY}`,
         },
-        body: {
-          buyer: {
-            name1: req.body.user.name,
-            name2: "",
-            email: req.body.user.email,
-            phone: "",
-          },
-        },
       }
     );
+
     res.send({ status: 1, payment: response.data.amount });
   } catch (err) {
     // console.log(err)

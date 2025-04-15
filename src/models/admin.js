@@ -44,8 +44,8 @@ const rubbishSchema = new mongoose.Schema({
 });
 
 const gachaTicketSchema = new mongoose.Schema({
-  gachaID: { type: mongoose.Schema.Types.ObjectId, ref: "Gacha" },
-  userID: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  gachaID: { type: mongoose.Schema.Types.ObjectId, ref: "gacha" },
+  userID: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
   name: { type: String },
   trackingNumber: { type: String },
   deliveryCompany: { type: String },
@@ -57,7 +57,9 @@ const gachaTicketSchema = new mongoose.Schema({
   order: { type: Number },
   sold: { type: Boolean, default: false },
   soldTime: { type: Date },
+  type: { type: String, default: "" },
   deliveryTime: { type: Date },
+  expireTime: { type: Date },
 });
 
 // Coupon
@@ -66,7 +68,10 @@ const couponSchema = new Schema({
   cashback: { type: Number },
   code: { type: String },
   allow: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
+  used: { type: Boolean, default: false },
+  UserID: { type: mongoose.Types.ObjectId, ref: "users" },
+  createdAt: { type: Date, default: Date.now() },
+  expireTime: { type: Date },
 });
 
 // Point
@@ -84,6 +89,26 @@ const rankSchema = new Schema({
   end_amount: { type: Number },
   img_url: { type: String, required: true },
   last: { type: Boolean, required: true },
+});
+
+const popupRateSchema = new Schema({
+  discount_winning: { type: Number },
+  discount_normal: { type: Number },
+  coupon_winning: { type: Number },
+  coupon_normal: { type: Number },
+  winning_rate: { type: Number },
+  normal_rate: { type: Number },
+});
+
+const popupUserSchema = new Schema({
+  userID: { type: mongoose.Types.ObjectId, ref: "urers" },
+  date: { type: Date, default: Date.now() },
+  type: { type: String, default: "" },
+  discount_rate: { type: Number },
+  coupon_number: { type: Number },
+  coupon_code: { type: String },
+  gotPopup: { type: Boolean, default: false },
+  expireTime: { type: Date },
 });
 
 // Theme
@@ -107,6 +132,17 @@ const gachavisitSchema = new Schema({
   currentMaintance: { type: Boolean, default: false },
 });
 
+const gachaLimitSchema = new Schema({
+  gachaID: { type: mongoose.Types.ObjectId, ref: "gacha" },
+  userID: { type: mongoose.Types.ObjectId, ref: "users" },
+  number: { type: Number, default: 0 },
+});
+
+const couponHistory = new Schema({
+  userID: { type: mongoose.Types.ObjectId, ref: "users" },
+  couponID: { type: mongoose.Types.ObjectId, ref: "coupon" },
+});
+
 // Carousel
 const carouselSchema = new Schema({
   link: { type: String, required: true },
@@ -121,6 +157,12 @@ const AdminSchema = new Schema({
   authority: { type: Object },
 });
 
+const HiddenGachaRecordSchema = new Schema({
+  userID: { type: mongoose.Types.ObjectId, ref: "Users" },
+  gachaID: { type: mongoose.Types.ObjectId, ref: "gacha" },
+  date: { type: Date, default: Date.now() },
+});
+
 const Category = mongoose.model("Category", categorySchema, "category");
 const Prize = mongoose.model("Prize", prizeSchema, "prize");
 const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
@@ -131,6 +173,20 @@ const Terms = mongoose.model("Term", termsSchema, "terms");
 const Themes = mongoose.model("Theme", themeSchema, "themes");
 const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
 const Administrator = mongoose.model("Admin", AdminSchema, "admin");
+const GachaLimit = mongoose.model("gachaLimit", gachaLimitSchema, "gachaLimit");
+const PopupRate = mongoose.model("popupRate", popupRateSchema, "popupRate");
+const PopupUser = mongoose.model("popupUser", popupUserSchema, "popupUser");
+const HiddenGachaRecord = mongoose.model(
+  "hiddenGachaHistory",
+  HiddenGachaRecordSchema,
+  "hiddenGachaHistory"
+);
+
+const CouponHistory = mongoose.model(
+  "couponHistory",
+  couponHistory,
+  "couponHistory"
+);
 const GachaVisitStatus = mongoose.model(
   "GachaVisitStatus",
   gachavisitSchema,
@@ -153,8 +209,13 @@ const adminSchemas = {
   Carousels: Carousels,
   Coupon: Coupon,
   Administrator: Administrator,
+  GachaLimit: GachaLimit,
   GachaVisitStatus: GachaVisitStatus,
   GachaTicketSchema: GachaTicketSchema,
+  PopupRate: PopupRate,
+  PopupUser: PopupUser,
+  CouponHistory: CouponHistory,
+  HiddenGachaRecord: HiddenGachaRecord,
 };
 
 module.exports = adminSchemas;

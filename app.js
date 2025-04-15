@@ -168,3 +168,77 @@ server.listen(port, () => {
 });
 // execute database connection
 DbConnect();
+
+// ==============================
+//     SCHEDULED
+// ==============================
+
+var schedule = require("node-schedule");
+const GachaTicketSchema = require("./src/models/admin").GachaTicketSchema;
+const UserSchema = require("./src/models/user").UserSchema; // Assuming you have a UserSchema
+
+function Schedule_Of_Oripa() {
+  console.log(`
+    ==========================
+          Scheduled!
+    ==========================    
+    `);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Set time to midnight
+
+  const nextDay = new Date(currentDate);
+  nextDay.setDate(currentDate.getDate() + 1);
+
+  GachaTicketSchema.aggregate([
+    {
+      $match: {
+        expireDate: {
+          $gte: currentDate, // Greater than or equal to current date
+          $lt: nextDay, // Less than the start of the next day
+        },
+        deliverStatus: "notSelected",
+      },
+    },
+    {
+      $group: {
+        _id: "$user_id", // Group by user_id
+        totalCashback: { $sum: "$cashback" }, // Sum the cashback amounts
+      },
+    },
+  ])
+    .then((tickets) => {
+      // Check if tickets are found
+      if (tickets.length === 0) {
+        console.log("No tickets found for today.");
+        return;
+      }
+
+      // Process each ticket
+      const updatePromises = tickets.map((ticket) => {
+        // Update the deliverStatus of the GachaTicket
+        return GachaTicketSchema.updateOne(
+          { user_id: ticket._id, deliverStatus: "notSelected" }, // Find the ticket by user_id
+          { $set: { deliverStatus: "returned" } } // Set deliverStatus to "returned"
+        ).then(() => {
+          // Update the user's points
+          return UserSchema.updateOne(
+            { _id: ticket._id }, // Find user by user_id
+            { $inc: { point_remain: ticket.totalCashback } } // Increment point_remain by totalCashback
+          );
+        });
+      });
+
+      // Wait for all updates to complete
+      return Promise.all(updatePromises);
+    })
+    .then(() => {
+      console.log("All tickets processed and users updated successfully.");
+    })
+    .catch((error) => {
+      console.error("Error processing tickets:", error);
+    });
+}
+
+// Example of scheduling the function to run daily at midnight
+schedule.scheduleJob({ hour: 0, minute: 0 }, Schedule_Of_Oripa);

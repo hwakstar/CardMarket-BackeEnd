@@ -63,13 +63,138 @@ const generateSNSCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-router.post("/register", async (req, res) => {
-  const { name, country, email, password, affId, linkId, userId, randomcode } =
-    req.body;
+router.post("/check_popup", auth, async (req, res) => {
+  let startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00.000
 
-  const release = await mutex.acquire();
+  let endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  let popupUser = await adminSchemas.PopupUser.findOne({
+    userID: req.body.user._id,
+    date: { $gte: startOfDay, $lt: endOfDay },
+  });
+
+  if (!popupUser) {
+    let popupRate = await adminSchemas.PopupRate.findOne({});
+
+    let randomNumber = Math.random() * 100;
+
+    let popup_type = "";
+    let popup_discount = 0;
+    let popup_coupon = 0;
+    let couponCode = "";
+
+    if (randomNumber < popupRate.normoal_rate) {
+      res.send({ status: 0, msg: "none" });
+    } else if (randomNumber > popupRate.winning_rate) {
+      if (req.body.login) {
+        popup_type = "discount";
+        popup_discount = popupRate.discount_winning;
+      } else {
+        popup_type = "coupon";
+        popup_coupon = popupRate.coupon_winning;
+      }
+    } else {
+      if (req.body.login) {
+        popup_type = "discount";
+        popup_discount = popupRate.discount_normal;
+      } else {
+        popup_type = "coupon";
+        popup_coupon = popupRate.coupon_normal;
+      }
+    }
+
+    if (popup_type == "coupon") {
+      couponCode = generateRandomCode(6);
+      let newCoupon = new adminSchemas.Coupon({
+        userID: req.body.user._id,
+        cashback: popup_coupon,
+        name: "PopUp",
+        code: couponCode,
+        expireTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes later
+      });
+
+      await newCoupon.save();
+    }
+
+    console.log(popup_discount);
+
+    let newPopUpUser = new adminSchemas.PopupUser({
+      userID: req.body.user._id,
+      type: popup_type,
+      discount_rate: popup_discount,
+      coupon_code: couponCode,
+      coupon_number: popup_coupon,
+      expireTime: new Date(Date.now() + 30 * 60 * 1000),
+    });
+
+    await newPopUpUser.save();
+
+    if (popup_type == "coupon") {
+      res.send({
+        status: 1,
+        type: "coupon",
+        code: couponCode,
+        cashback: popup_coupon,
+        gotPopup: false,
+        _id: newPopUpUser._id,
+      });
+    } else {
+      res.send({
+        status: 1,
+        type: "discount",
+        rate: popup_discount,
+        gotPopup: false,
+        _id: newPopUpUser._id,
+      });
+    }
+  } else {
+    if (popupUser.gotPopup) {
+      res.send({ status: 0 });
+    } else {
+      res.send({
+        status: 2,
+        _id: popupUser._id,
+        type: popupUser.type,
+        rate: popupUser.discount_rate,
+        code: popupUser.coupon_code,
+        cashback: popupUser.coupon_number,
+        gotPopup: popupUser.gotPopup,
+      });
+    }
+  }
+});
+
+router.post("/confirm_popup", auth, async (req, res) => {
+  let popupUser = await adminSchemas.PopupUser.findOne({
+    _id: req.body._id,
+  });
+
+  popupUser.gotPopup = true;
+  await popupUser.save();
+  res.send({ status: 1 });
+});
+
+router.post("/register", async (req, res) => {
+  const {
+    name,
+    country,
+    email,
+    password,
+    affId,
+    linkId,
+    userId,
+    randomcode,
+    lineId,
+  } = req.body;
 
   try {
+    const isLineIdExist = await Users.findOne({ line_user_id: lineId });
+    if (isLineIdExist) {
+      return res.send({ status: 0, msg: "existLineId" });
+    }
+
     // check email exist
     const isEmailExist = await Users.findOne({ email: email });
     if (isEmailExist) {
@@ -77,13 +202,6 @@ router.post("/register", async (req, res) => {
     }
 
     let generatecode = generateRandomCode();
-    while (1) {
-      const newcode = await Users.findOne({ invitecode: generatecode });
-      if (newcode === null) break;
-      generatecode = generateRandomCode();
-    }
-
-    // hass password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // create new user object
@@ -93,6 +211,7 @@ router.post("/register", async (req, res) => {
       email: email,
       hashedPass: hashedPassword,
       inviteCode: generatecode,
+      otherCode: randomcode,
     };
 
     // add affiliate id if user introduced by affiliate
@@ -101,25 +220,12 @@ router.post("/register", async (req, res) => {
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
 
-    // if new user is someone who invites by another user
-    // if (userId && userId !== "null") {
-    //   userObj.point_remain = 1000;
-
-    //   const inviter = await Users.findOne({ _id: userId });
-    //   inviter.point_remain += 1000;
-    //   await Users.updateOne({ _id: userId }, inviter);
-    // }
-
     // if new user is someone who invites by randomcode
 
     if (randomcode) {
       const inviter = await Users.findOne({ inviteCode: randomcode });
-      if (inviter.inviteCount) {
-        inviter.point_remain += 300;
-        inviter.inviteCount -= 1;
-        userObj.invited = randomcode;
-        await Users.updateOne({ inviteCode: randomcode }, inviter);
-      }
+      inviter.point_remain += 300;
+      inviter.save();
     }
 
     const newUser = await new Users(userObj).save();
@@ -210,7 +316,7 @@ router.post("/register", async (req, res) => {
       await sesClient.send(command);
 
       console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
-      console.log("/           NEW USER REGISRED        //");
+      console.log(`NEW USER: ${newUser.email} REGISRED       `);
       console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
 
       res.send({ status: 1, msg: "successRegistered" });
@@ -223,8 +329,6 @@ router.post("/register", async (req, res) => {
     }
   } catch (error) {
     res.send({ status: 0, msg: "failedReq" });
-  } finally {
-    release();
   }
 });
 
@@ -819,6 +923,12 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
 
     res.send({ status: 0 });
   }
+});
+
+router.get("/check_invite_code", (req, res) => {
+  adminSchemas.GachaVisitStatus.findOne().then((status) => {
+    res.send(status);
+  });
 });
 
 async function sendSms(phoneNumber, message) {

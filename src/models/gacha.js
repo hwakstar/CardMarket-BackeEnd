@@ -18,6 +18,16 @@ const gachaSchema = new mongoose.Schema(
     title: { type: String, default: "" },
     desc: { type: String, default: "" },
     userLogs: { type: Array },
+    secret: { type: Boolean, default: false },
+    limitNumber: { type: Number, default: -1 },
+    purchase: { type: Boolean, default: false },
+    purchaseLimit: { type: Number, default: 0 },
+
+    period: { type: Boolean, default: false },
+    startTime: { type: Date },
+    endTime: { type: Date },
+
+    discountRate: { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -25,7 +35,6 @@ const gachaSchema = new mongoose.Schema(
     toObject: { virtuals: true },
   }
 );
-
 
 const Gacha = mongoose.model("Gacha", gachaSchema, "gacha");
 

@@ -513,6 +513,7 @@ router.get("/deliveries", auth, async (req, res) => {
             prizeTrackingNumber: "$trackingNumber",
             prizeDeliveryCompany: "$deliveryCompany",
             prizeDeliverStatus: "$deliverStatus",
+            prizeDeliverTime: "$deliveryTime",
           },
         },
       ],
@@ -522,9 +523,6 @@ router.get("/deliveries", auth, async (req, res) => {
 
       // Created with Studio 3T, the IDE for MongoDB - https://studio3t.com/
     );
-
-    console.log("======== deliveries prizes length ========");
-    console.log(prizes.length);
 
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
@@ -540,7 +538,6 @@ router.post("/changeDeliverStatus", auth, async (req, res) => {
       { deliverStatus: "shipped", deliveryTime: Date.now() }
     );
 
-    console.log(dd);
     res.send({ status: 1 });
   } catch (error) {
     res.send({ status: 0, msg: "Failed to change status." });
