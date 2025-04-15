@@ -778,11 +778,6 @@ router.post(
         const newTheme = adminSchemas.Themes({ logoUrl: logoUrl });
         await newTheme.save();
       } else {
-        if (logoUrl && themes[0].logoUrl) {
-          const filePath = path.join("./", themes[0].logoUrl);
-          await deleteFile(filePath);
-        }
-
         await adminSchemas.Themes.updateOne(
           { _id: themes[0] },
           { logoUrl: logoUrl }
