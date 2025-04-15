@@ -143,6 +143,13 @@ router.post("/admincode", auth, async (req, res) => {
     user.point_remain += coupon.cashback;
     await user.save();
 
+    adminSchemas.Coupon.updateOne(
+      { code: code },
+      {
+        $set: { used: true },
+      }
+    );
+
     // add new point log
     const newPointLogObj = {
       user_id: user_id,

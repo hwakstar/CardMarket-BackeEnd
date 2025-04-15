@@ -85,10 +85,14 @@ router.post("/check_popup", auth, async (req, res) => {
     let popup_coupon = 0;
     let couponCode = "";
 
+    let divide = false;
+    let divideRan = Math.random() * 100;
+    if (divideRan > 50) divide = true;
+
     if (randomNumber < popupRate.normoal_rate) {
       res.send({ status: 0, msg: "none" });
     } else if (randomNumber > popupRate.winning_rate) {
-      if (req.body.login) {
+      if (divide) {
         popup_type = "discount";
         popup_discount = popupRate.discount_winning;
       } else {
@@ -96,7 +100,7 @@ router.post("/check_popup", auth, async (req, res) => {
         popup_coupon = popupRate.coupon_winning;
       }
     } else {
-      if (req.body.login) {
+      if (divide) {
         popup_type = "discount";
         popup_discount = popupRate.discount_normal;
       } else {
@@ -112,6 +116,7 @@ router.post("/check_popup", auth, async (req, res) => {
         cashback: popup_coupon,
         name: "PopUp",
         code: couponCode,
+        allow: true,
         expireTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes later
       });
 
