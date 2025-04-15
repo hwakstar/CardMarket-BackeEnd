@@ -294,7 +294,7 @@ router.post("/register", async (req, res) => {
           Html: {
             Data: `
               <p>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。</p>
-              <a href="http://35.78.72.181:3000/auth/login?token=${token}&verified=true">
+              <a href="https://testsite.on-gacha.net/auth/login?token=${token}&verified=true">
                 オンガチャメール認証リンク
               </a>
               <p>※このリンクの有効期限は24時間です。
@@ -348,7 +348,7 @@ router.post("/gmail-send", async (req, res) => {
           Html: {
             Data: `
               <p>このたびはオンガチャにご登録いただき、ありがとうございます。下のボタンをクリックして、メールアドレスの確認を完了してください。<p>
-              <a href="http://35.78.72.181:3000/auth/login?token=${token}&verified=true">
+              <a href="https://testsite.on-gacha.net/auth/login?token=${token}&verified=true">
                 オンガチャメール認証リンク
               </a>
               <p>※このリンクの有効期限は24時間です。
@@ -554,7 +554,7 @@ router.post("/forgot", async (req, res) => {
           Html: {
             Data: `
               <h1>Please use the following link to reset your password</h1>
-              <a href="http://35.78.72.181:3000/auth/forgot?token=${token}"> <h2> Reset Password </h2> </a>
+              <a href="https://testsite.on-gacha.net/auth/forgot?token=${token}"> <h2> Reset Password </h2> </a>
               <hr />
               <p>This email may contain sensetive information</p>
             `,
