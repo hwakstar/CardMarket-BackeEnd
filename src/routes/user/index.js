@@ -150,19 +150,15 @@ router.post("/check_popup", auth, async (req, res) => {
       });
     }
   } else {
-    if (popupUser.gotPopup) {
-      res.send({ status: 0 });
-    } else {
-      res.send({
-        status: 2,
-        _id: popupUser._id,
-        type: popupUser.type,
-        rate: popupUser.discount_rate,
-        code: popupUser.coupon_code,
-        cashback: popupUser.coupon_number,
-        gotPopup: popupUser.gotPopup,
-      });
-    }
+    res.send({
+      status: 2,
+      _id: popupUser._id,
+      type: popupUser.type,
+      rate: popupUser.discount_rate,
+      code: popupUser.coupon_code,
+      cashback: popupUser.coupon_number,
+      gotPopup: popupUser.gotPopup,
+    });
   }
 });
 
