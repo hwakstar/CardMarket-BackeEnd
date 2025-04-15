@@ -935,6 +935,11 @@ router.get("/check_invite_code", (req, res) => {
   });
 });
 
+router.get("/popup_rate", auth, async (req, res) => {
+  let popupRate = await adminSchemas.PopupRate.findOne();
+  res.send({ ...popupRate });
+});
+
 async function sendSms(phoneNumber, message) {
   console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
   console.log(`\/\    Phone Number: ${phoneNumber}     /\/`);

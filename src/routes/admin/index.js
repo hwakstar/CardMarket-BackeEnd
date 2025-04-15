@@ -999,4 +999,23 @@ router.delete("/coupon/:id", auth, async (req, res) => {
     res.send({ status: 0, msg: "failedReq" });
   }
 });
+
+router.get("/popup_rate", auth, async (req, res) => {
+  let popupRate = await adminSchemas.PopupRate.findOne();
+  res.send({ status: 1, rate: popupRate });
+});
+
+router.post("/popup_update", auth, async (req, res) => {
+  await adminSchemas.PopupRate.findOneAndUpdate(
+    {},
+    {
+      $set: {
+        ...req.body,
+      },
+    }
+  );
+
+  res.send({ status: 1 });
+});
+
 module.exports = router;
