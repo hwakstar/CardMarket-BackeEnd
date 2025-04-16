@@ -827,7 +827,7 @@ router.get("/check_hidden", auth, async (req, res) => {
 
 const setPreInfo = () => {
   Gacha.find({}).then((gcs) => {
-    logger.info(" ========= PRE INFO ===========");
+    console.log("⚙️ Prepare Gacha Information");
     gcs.forEach((gc) => {
       // Gacha Info Storing
       gachaInfo[gc._id] = gc;
