@@ -268,7 +268,8 @@ router.get("/check_hidden", auth, async (req, res) => {
       },
     });
     console.log("✔️ Counts: ", counts);
-    if (counts > 0) {
+    let random_count = Math.floor(Math.random() * 10 + 10);
+    if (counts > random_count) {
       let hiddenGachas = await Gacha.find({ secret: true, isRelease: true });
       let random_num = Math.floor(Math.random() * hiddenGachas.length);
 
