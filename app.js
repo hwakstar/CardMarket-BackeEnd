@@ -133,15 +133,6 @@ app.get("/", (req, res) => {
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "oripa", "index.html"));
 });
-// Affiliate Frontend
-// app.get("/", (req, res) => {
-//   res.sendFile(path.join(__dirname, "affiliate", "index.html"));
-// });
-
-// Create HTTPS server
-// https.createServer(options, app).listen(port, () => {
-//   console.log(`HTTPS Server running on https://localhost:${port}`);
-// });
 
 const server = http.createServer(app);
 
@@ -162,28 +153,17 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start the server
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`💻 running: ${port}`);
 });
-// execute database connection
 DbConnect();
 
-// ==============================
-//     SCHEDULED
-// ==============================
-
+// ⏳ Scheduled Function => ✅ Returning Tickets
 var schedule = require("node-schedule");
 const GachaTicketSchema = require("./src/models/admin").GachaTicketSchema;
 const UserSchema = require("./src/models/user").UserSchema; // Assuming you have a UserSchema
 
 function Schedule_Of_Oripa() {
-  console.log(`
-    ==========================
-          Scheduled!
-    ==========================    
-    `);
-
   const currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0); // Set time to midnight
 
@@ -210,7 +190,6 @@ function Schedule_Of_Oripa() {
     .then((tickets) => {
       // Check if tickets are found
       if (tickets.length === 0) {
-        console.log("No tickets found for today.");
         return;
       }
 
@@ -232,11 +211,9 @@ function Schedule_Of_Oripa() {
       // Wait for all updates to complete
       return Promise.all(updatePromises);
     })
-    .then(() => {
-      console.log("All tickets processed and users updated successfully.");
-    })
+    .then(() => {})
     .catch((error) => {
-      console.error("Error processing tickets:", error);
+      console.error("💥 Schedule Error:", error);
     });
 }
 

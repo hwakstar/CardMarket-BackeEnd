@@ -320,9 +320,7 @@ router.post("/register", async (req, res) => {
       const command = new SendEmailCommand(params);
       await sesClient.send(command);
 
-      console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
-      console.log(`NEW USER: ${newUser.email} REGISRED       `);
-      console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+      console.log(`👨 NEW USER: ${newUser.email} REGISRED`);
 
       res.send({ status: 1, msg: "successRegistered" });
     } catch (error) {
@@ -373,9 +371,7 @@ router.post("/gmail-send", async (req, res) => {
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
 
-    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
-    console.log("/     EMAIL SEND SUCCESSFULLY        //");
-    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+    console.log("📧 Email Sent!");
 
     res.send({ status: 1, msg: "emailSent" });
   } catch (error) {
@@ -393,7 +389,7 @@ router.post("/activate", async (req, res) => {
   if (token) {
     jwt.verify(token, "RANDOM-TOKEN", async (err, decoded) => {
       if (err) {
-        console.log("Activation error");
+        console.log("💥 Activation Error: ", err);
         return res.send({
           status: 0,
           msg: "Explink",
@@ -486,7 +482,7 @@ router.post("/login", async (req, res) => {
 
     res.send({ status: 1, msg: "successLogin", user: userData, token });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Login Error", error);
 
     res.send({ status: 0, msg: "failedReq", err: error });
   }
@@ -576,9 +572,7 @@ router.post("/forgot", async (req, res) => {
     const command = new SendEmailCommand(params);
     await sesClient.send(command);
 
-    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
-    console.log("/     EMAIL SEND SUCCESSFULLY        //");
-    console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+    console.log("📧 Forget Email Sent");
 
     user.resetPasswordLink = token;
     await Users.updateOne({ email }, user);
@@ -743,7 +737,7 @@ router.post("/update_user", auth, async (req, res) => {
     userData.rankData = rank;
     res.send({ status: 1, user: userData });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Update User Error: ", error);
     res.send({ status: 0, err: error });
   }
 });
@@ -924,7 +918,7 @@ router.get("/obtainedPrizes/:id", auth, async (req, res) => {
       shipAddress: userShipAddress,
     });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Obtained Prize Error: ", error);
 
     res.send({ status: 0 });
   }
@@ -937,10 +931,7 @@ router.get("/check_invite_code", (req, res) => {
 });
 
 async function sendSms(phoneNumber, message) {
-  console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
-  console.log(`\/\    Phone Number: ${phoneNumber}     /\/`);
-  console.log("/    SNS SENT  ==============>        //");
-  console.log("/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\/\\_/\\");
+  console.log(`📱 SNS SENT ➡️ ${phoneNumber}`);
 
   const params = {
     PhoneNumber: "+81" + phoneNumber, // E.164 format: +12345678901
@@ -961,7 +952,7 @@ async function sendSms(phoneNumber, message) {
 
   try {
     const response = await snsClient.send(command);
-    console.log("Message sent successfully:", response);
+    console.log("✅ Message Sent:", response);
   } catch (error) {
     console.error("Error sending message:", error);
   }

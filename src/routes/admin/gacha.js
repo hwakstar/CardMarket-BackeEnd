@@ -693,7 +693,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     res.send({ status: 1, prizes: prizes });
   } catch (err) {
-    console.log(err);
+    console.log("💥 Draw Gacha Error: ", err);
   }
 });
 
@@ -728,7 +728,7 @@ router.post("/shipping", auth, async (req, res) => {
       type: { $ne: "shipping" },
     });
 
-    console.log(unreturnedTickets);
+    console.log("🎫 Selected Tickets For Returning: ", unreturnedTickets);
 
     for (let i = 0; i < unreturnedTickets.length; i++) {
       cashback += unreturnedTickets[i].cashback;
@@ -760,7 +760,7 @@ router.post("/shipping", auth, async (req, res) => {
 
     res.send({ status: 1, gachas: gachas });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Shipping or Returning Error: ", error);
 
     res.send({ status: 0 });
   }

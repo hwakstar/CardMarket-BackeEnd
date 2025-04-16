@@ -15,22 +15,21 @@ const DbConnect = async () => {
         // tls: true, // Add this line
       })
       .then(() => {
-        console.log("mongodb connected");
+        console.log("✅ MongoDB Connected!");
       })
       .catch((err) => {
-        console.log(" === Mongodb Connect Error ===");
-        console.log(err);
+        console.log("💥 DB Connection Error: ", err);
       });
 
     // Connection events
     mongoose.connection.on("connected", () => {
-      console.log("Mongoose connected to DB");
+      console.log("✅ Mongoose Connected");
     });
     mongoose.connection.on("error", (err) => {
-      console.log(err.message);
+      console.log("💥 Mongoose Connection Error: ", err);
     });
     mongoose.connection.on("disconnected", () => {
-      console.log("Mongoose connection is disconnected");
+      console.log("❌ Mongoose Connection Disconnected");
     });
 
     // Handle process termination
@@ -39,7 +38,7 @@ const DbConnect = async () => {
       process.exit(0);
     });
   } catch (error) {
-    console.log(`Error: ${error.message}`);
+    console.log("💥 DB Connection Error: ", error);
     process.exit();
   }
 };
