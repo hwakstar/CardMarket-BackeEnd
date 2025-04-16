@@ -595,7 +595,9 @@ router.post("/upload_bulk", auth, async (req, res) => {
 });
 
 router.post("/draw_gacha", auth, async (req, res) => {
-  const { gachaID, counts, user } = req.body;
+  const { gachaID, counts } = req.body;
+
+  let user = await Users.findOne({ _id: req.body.user._id });
 
   let gacha = gachaInfo[gachaID];
   let gachaLimit = gacha.limitNumber;
@@ -677,7 +679,10 @@ router.post("/draw_gacha", auth, async (req, res) => {
     }
 
     // 💰 Check User Remain Points
-    if (user.point_remain < counts * gacha.price * (100 - discountRate) * 0.01)
+    if (
+      user.point_remain <
+      Number(counts) * gacha.price * (100 - discountRate) * 0.01
+    )
       return res.send({ status: 0, msg: "NotEnoughMoney" });
 
     // 🏆 Find Prizes
