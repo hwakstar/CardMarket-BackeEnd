@@ -69,6 +69,7 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
     if (req.body.id) {
       if (req.file) {
         let gacha = await Gacha.findOne({ _id: req.body.id });
+
         if (!gacha) return res.send({ status: 0, msg: "failedReq" });
 
         const filename = gacha.img_url;
@@ -82,14 +83,18 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
       );
 
       if (result) {
-        if (result.period) {
-          clearTimeout(oripaTimers[result._id]);
-          let remainTime = result.endTime.getTime() - Date.now();
-          let timer = setTimeout(() => {
-            result.isRelease = false;
-            result.save();
+        let gacha = await Gacha.findOne({ _id: req.body.id });
+
+        if (gacha.period) {
+          clearTimeout(oripaTimers[gacha._id]);
+          let remainTime = gacha.endTime.getTime() - Date.now();
+
+          let timer = setTimeout(async () => {
+            let ugacha = await Gacha.findOne({ _id: req.body.id });
+            ugacha.isRelease = false;
+            ugacha.save();
           }, remainTime);
-          oripaTimers[result._id] = timer;
+          oripaTimers[gacha._id] = timer;
         }
 
         return res.send({ status: 1, msg: "successUpdated" });
@@ -111,6 +116,7 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
       res.send({ status: 1, msg: "successAdded" });
     } else res.send({ status: 0, msg: "failedAdded" });
   } catch (error) {
+    console.error(error);
     res.send({ status: 0, msg: "failedReq" });
   }
 });
@@ -129,6 +135,7 @@ router.post(
 
       res.send({ status: 1, msg: "successAdded" });
     } catch (error) {
+      console.log("💥 Post or Add Error: ", error);
       res.send({ status: 0, msg: "failedReq" });
     }
   }
@@ -302,6 +309,10 @@ router.delete("/:id", async (req, res) => {
 
     try {
       await gacha.deleteOne();
+
+      adminSchemas.deleteMany({
+        gachaID: req.params._id,
+      });
 
       res.send({ status: 1 });
     } catch (err) {
@@ -575,8 +586,9 @@ router.post("/draw_gacha", auth, async (req, res) => {
       },
     ]);
 
-    if (userPurchase.total < purchaseLimit)
-      return res.send({ status: 0, msg: "ForbiddenAccess" });
+    if (userPurchase.total < purchaseLimit || userPurchase.length == 0) {
+      return res.send({ status: 0, msg: "PurchaseOnlyGacha" });
+    }
   }
 
   // ✅ Check Limit Gacha
@@ -590,15 +602,15 @@ router.post("/draw_gacha", auth, async (req, res) => {
       let newUserLimit = new adminSchemas.GachaLimit({
         gachaID: gachaID,
         userID: user._id,
-        limitNumber: 1,
+        number: 1,
       });
 
       newUserLimit.save();
     } else {
-      if (userlimit?.limitNumber > gachaLimit) {
+      if (userlimit?.number == gachaLimit) {
         return res.send({ status: 0, msg: "OutOfLimit" });
       } else {
-        userlimit.limitNumber++;
+        userlimit.number++;
         userlimit.save();
       }
     }
