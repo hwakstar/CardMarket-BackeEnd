@@ -121,12 +121,8 @@ router.post("/check_popup", auth, async (req, res) => {
         expireTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes later
       });
 
-      console.log(newCoupon);
-
       await newCoupon.save();
     }
-
-    console.log(popup_discount);
 
     let newPopUpUser = new adminSchemas.PopupUser({
       userID: req.body.user._id,
@@ -138,6 +134,11 @@ router.post("/check_popup", auth, async (req, res) => {
     });
 
     await newPopUpUser.save();
+
+    console.log(
+      "🎁 Gift Type: ",
+      popup_type == "coupon" ? "🎫 Coupon" : "↘️ Discount Rate"
+    );
 
     if (popup_type == "coupon") {
       res.send({
@@ -933,11 +934,6 @@ router.get("/check_invite_code", (req, res) => {
   adminSchemas.GachaVisitStatus.findOne().then((status) => {
     res.send(status);
   });
-});
-
-router.get("/popup_rate", auth, async (req, res) => {
-  let popupRate = await adminSchemas.PopupRate.findOne();
-  res.send({ ...popupRate });
 });
 
 async function sendSms(phoneNumber, message) {

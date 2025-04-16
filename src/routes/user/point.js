@@ -39,7 +39,6 @@ router.post("/purchase", auth, async (req, res) => {
 
     const rank = await userRankData(user._id);
     //when first purchase, inviter add 500pt
-    // console.log(rank.totalPointsAmount,user.invited )
     if (rank.totalPointsAmount === 1000 && user.invited) {
       const inviter = await Users.findOne({ inviteCode: user.otherCode });
       inviter.point_remain += 700;
@@ -104,13 +103,13 @@ router.post("/purchase", auth, async (req, res) => {
       // update aff rank and notify to affiliate by using mail
       const rankData = await AffRankData(user.aff_id, affUser.rank);
       if (affUser.rank !== rankData.updatedRankId) {
-        console.log("updated aff rank and send mail to affiliate");
+        console.log("✅ Updated aff rank and send mail to affiliate");
       }
     }
 
     res.send({ status: 1, msg: "Successfully purchased points." });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Purchase Error: ", error);
     res.send({ status: 0, msg: "Failed to purchase points.", error: error });
   }
 });
@@ -231,7 +230,7 @@ router.post("/create-checkout-session", auth, async (req, res) => {
       payload: JSON.stringify(payload),
     });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Amazon Pay Error: ", error);
     res.send({ status: 0 });
   }
 });
@@ -417,7 +416,7 @@ router.post("/paidy/retrieve-payment", auth, async (req, res) => {
 
     res.send({ status: 1, payment: response.data.amount });
   } catch (err) {
-    // console.log(err)
+    console.log("💥 Paidy Error: ", err);
     res.send({ status: 0 });
   }
 });

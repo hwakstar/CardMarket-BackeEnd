@@ -18,18 +18,7 @@ const Users = require("../../models/user");
 const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
 
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const fs = require("fs");
-const { pipeline, isReadable } = require("stream");
-const { count } = require("console");
-
 const logger = require("../../utils/logger");
-
-const mutex = new Mutex();
-
-const job = schedule.scheduleJob("0 * * * *", () => {
-  console.log("I run once a day");
-});
 
 // static function
 var gachaInfo = {};
@@ -558,6 +547,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
   let purchaseLimit = gacha.purchaseLimit;
   let discountRate = 0;
 
+  // ✅ Check New Registered User
   let userCreateTime = new Date(user.createtime);
 
   if (Date.now() - userCreateTime.getTime() < 24 * 3 * 3600) {
@@ -566,6 +556,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
     discountRate = gacha.discountRate;
   }
 
+  // ✅ Check Purchase Only Gacha
   if (purchaseLimit > 0) {
     let userPurchase = await PointLog.aggregate([
       {
@@ -588,6 +579,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
       return res.send({ status: 0, msg: "ForbiddenAccess" });
   }
 
+  // ✅ Check Limit Gacha
   if (gachaLimit != -1) {
     let userlimit = await adminSchemas.GachaLimit.findOne({
       gachaID: gachaID,
@@ -613,9 +605,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
   }
 
   try {
+    // ✅ Check Gacha Remain Number
     if (gacha.remove_number + Number(counts) > gacha.total_number)
       return res.send({ status: 0, msg: "SoldOutOrLittleNumber" });
 
+    // ✅ Check Gacha Type 🔂 ➡ ONCE_PER_DAY
     if (gacha.kind[0].label == "once_per_day") {
       let ticket = await adminSchemas.GachaTicketSchema.findOne({
         userID: user._id,
@@ -626,9 +620,11 @@ router.post("/draw_gacha", auth, async (req, res) => {
         return res.send({ status: 0, msg: "YouBoughtEarly" });
     }
 
+    // 💰 Check User Remain Points
     if (user.point_remain < counts * gacha.price * (100 - discountRate) * 0.01)
       return res.send({ status: 0, msg: "NotEnoughMoney" });
 
+    // 🏆 Find Prizes
     let prizes = await adminSchemas.GachaTicketSchema.find({
       gachaID: gachaID,
       order: {
@@ -637,23 +633,23 @@ router.post("/draw_gacha", auth, async (req, res) => {
       },
     });
 
-    console.log(
-      "/\\_/\\/\\_/\\/\\_/\\ GACHA REMOVE NUMBER /\\_/\\/\\_/\\/\\_/\\"
-    );
-    console.log("Gacha Remove Number: ", gacha.remove_number);
-    console.log("Counts: ", Number(counts));
-    console.log("Prizes Length: ", prizes.length);
+    console.log("📦 Remain: ", gacha.remove_number);
+    console.log("🔄 Counts: ", Number(counts));
+    console.log("🛒 Prizes: ", prizes.length);
 
     let user_ = await Users.findOne({ _id: user._id });
 
+    // 💳 Discount User Points
     user_.point_remain -=
       gacha.price * (100 - discountRate) * 0.01 * Number(counts);
     user_.save();
 
+    // ⌛ 14 Days Later, Prize Return ➡ 🚚
     const currentDate = new Date();
     const expireTime = new Date(currentDate);
     expireTime.setDate(currentDate.getDate() + 14);
 
+    // 🛒 Set User's Tickets
     adminSchemas.GachaTicketSchema.updateMany(
       {
         gachaID: gachaID,
@@ -673,14 +669,16 @@ router.post("/draw_gacha", auth, async (req, res) => {
       }
     )
       .then(() => {})
-      .catch((err) => console.log(err));
+      .catch((err) => console.log("💥 Draw Gacha Error: ", err));
 
+    // 🥃 Set Gacha Remain Number
     gacha.remove_number += Number(counts);
 
     let gacha__ = await Gacha.findOne({ _id: gachaID });
     gacha__.remove_number = gacha.remove_number;
     gacha__.save();
 
+    // 🧾 Remain User Record
     const newPointLog = new PointLog({
       aff_id: user.aff_id,
       user_id: user._id,
@@ -705,22 +703,25 @@ router.post("/shipping", auth, async (req, res) => {
   let cashback = 0;
 
   try {
+    // 🔨 Check Maintenanence Mode
     const statis = await adminSchemas.GachaVisitStatus.findOne();
     if (statis.currentMaintance) return res.send({ status: 2 });
-    // return all prizes
 
+    // 🚛 Check Shipping Prizes
     const shipIds = [];
     for (let i = 0; i < shippingPrizes.length; i++) {
       shipIds.push(shippingPrizes[i]._id);
     }
 
+    // 💰 Check Return Prizes
     const returnIds = [];
     for (let i = 0; i < returningPrizes.length; i++) {
       returnIds.push(returningPrizes[i]._id);
     }
 
-    console.log(returnIds);
+    console.log("💰 Return Prizes: ", returnIds);
 
+    // 🤚 Prevent Repeat
     let unreturnedTickets = await adminSchemas.GachaTicketSchema.find({
       _id: { $in: returnIds },
       deliverStatus: { $ne: "returned" },
@@ -733,6 +734,7 @@ router.post("/shipping", auth, async (req, res) => {
       cashback += unreturnedTickets[i].cashback;
     }
 
+    // 🤚 Prevent Repeat
     if (shipIds.length > 0) {
       await adminSchemas.GachaTicketSchema.updateMany(
         {

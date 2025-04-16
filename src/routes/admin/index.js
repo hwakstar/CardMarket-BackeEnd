@@ -228,7 +228,7 @@ router.get("/prize", auth, async (req, res) => {
 
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Get Prize Error: ", error);
 
     res.send({ status: 0 });
   }
@@ -454,8 +454,6 @@ router.post("/chang_auth", auth, async (req, res) => {
 
 /* Deliever management */
 router.get("/deliveries", auth, async (req, res) => {
-  // console.log(" deliveries ");
-
   try {
     let prizes = await adminSchemas.GachaTicketSchema.aggregate(
       // Pipeline
@@ -892,7 +890,7 @@ router.post(
 
       existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
-      console.log(error);
+      console.log("💥 Setting Prize Video Error: ", error);
       res.send({ status: 0 });
     }
   }

@@ -228,7 +228,7 @@ router.get("/prize", auth, async (req, res) => {
 
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Prize Getting Error: ", error);
 
     res.send({ status: 0 });
   }
@@ -861,8 +861,7 @@ router.post(
 
       existVidData ? res.send({ status: 2 }) : res.send({ status: 1 });
     } catch (error) {
-      console.log(error);
-
+      console.log("💥 Prize Video Setting Error: ", error);
       res.send({ status: 0 });
     }
   }
@@ -894,7 +893,7 @@ router.delete("/del_prizeVideo/:id", auth, async (req, res) => {
 
     return res.send({ status: 1 });
   } catch (error) {
-    console.log(error);
+    console.log("💥 Prize Video Delete Error: ", error);
     res.send({ status: 0, err: error });
   }
 });
