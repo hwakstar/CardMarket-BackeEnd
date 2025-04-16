@@ -245,6 +245,50 @@ router.get("/user/:id", async (req, res) => {
   else res.send({ status: 0 });
 });
 
+router.get("/check_hidden", auth, async (req, res) => {
+  console.log("✅ Hidden Gacha");
+  const specifiedDate = new Date();
+  const startOfDay = new Date(specifiedDate.setHours(0, 0, 0, 0)); // Start of the day
+  const endOfDay = new Date(specifiedDate.setHours(23, 59, 59, 999)); // End of the day
+  let userRecord = await adminSchemas.HiddenGachaRecord.findOne({
+    userID: req.body.user._id,
+    date: {
+      $gte: startOfDay,
+      $lt: endOfDay,
+    },
+  });
+  if (userRecord) {
+    return res.send({ status: 0 });
+  } else {
+    let counts = await PointLog.countDocuments({
+      user_id: req.body.user._id,
+      usage: "draw_gacha",
+      createdAt: {
+        $gte: new Date(new Date().getTime() - 10 * 60 * 1000), // 10 minutes ago
+      },
+    });
+    console.log("✔️ Counts: ", counts);
+    if (counts > 0) {
+      let hiddenGachas = await Gacha.find({ secret: true, isRelease: true });
+      let random_num = Math.floor(Math.random() * hiddenGachas.length);
+
+      if (hiddenGachas.length != 0) {
+        let newHiddenGachaRecord = new adminSchemas.HiddenGachaRecord({
+          userID: req.body.user._id,
+          gachaID: hiddenGachas[random_num]._id,
+        });
+        newHiddenGachaRecord.save();
+        res.send({
+          status: 1,
+          gachaName: hiddenGachas[random_num].name,
+          gachaImgUrl: hiddenGachas[random_num].img_url,
+          gachaID: hiddenGachas[random_num]._id,
+        });
+      }
+    }
+  }
+});
+
 router.get("/:id", async (req, res) => {
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
@@ -790,51 +834,6 @@ router.post("/ticket", auth, async (req, res) => {
   res.send({
     tickets: tickets,
   });
-});
-
-router.get("/check_hidden", auth, async (req, res) => {
-  const specifiedDate = new Date();
-  const startOfDay = new Date(specifiedDate.setHours(0, 0, 0, 0)); // Start of the day
-  const endOfDay = new Date(specifiedDate.setHours(23, 59, 59, 999)); // End of the day
-
-  let userRecord = await adminSchemas.HiddenGachaRecord.findOne({
-    userID: req.body.user._id,
-    date: {
-      $gte: startOfDay,
-      $lt: endOfDay,
-    },
-  });
-
-  if (!userRecord) {
-    return res.send({ status: 0 });
-  } else {
-    let counts = await PointLogs.countDocuments({
-      createdAt: {
-        $gte: new Date(new Date().getTime() - 10 * 60 * 1000), // 10 minutes ago
-      },
-    });
-
-    if (counts > 0) {
-      let hiddenGachas = await Gacha.find({ secret: true, isRelease: true });
-      let random_num = Math.floor(Math.random() * hiddenGachas.length);
-
-      if (hiddenGachas.length != 0) {
-        let newHiddenGachaRecord = new adminSchemas.HiddenGachaRecord({
-          userID: req.body.user._id,
-          gachaID: hiddenGachas[random_num]._id,
-        });
-
-        newHiddenGachaRecord.save();
-
-        res.send({
-          status: 1,
-          gachaName: hiddenGachas[random_num].name,
-          gachaImgUrl: hiddenGachas[random_num].img_url,
-          gachaID: hiddenGachas[random_num]._id,
-        });
-      }
-    }
-  }
 });
 
 const setPreInfo = () => {
