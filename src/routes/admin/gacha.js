@@ -192,7 +192,11 @@ router.get("/admin", async (req, res) => {
 });
 
 router.get("/user", async (req, res) => {
-  const gachas = await Gacha.find({ isRelease: true, secret: false })
+  const gachas = await Gacha.find({
+    isRelease: true,
+    secret: false,
+    $expr: { $eq: ["$total_number", "$remove_number"] },
+  })
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
   const homeSeo = await adminSchemas.Themes.findOne();

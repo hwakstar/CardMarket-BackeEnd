@@ -463,7 +463,7 @@ router.get("/deliveries", auth, async (req, res) => {
           $match: {
             // enter query here
             sold: true,
-            deliverStatus: { $ne: "returned" },
+            deliverStatus: { $in: ["shipped", "awaiting"] },
           },
         },
 
