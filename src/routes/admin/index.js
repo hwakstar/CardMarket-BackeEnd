@@ -491,10 +491,10 @@ router.get("/deliveries", auth, async (req, res) => {
             as: "shipAddress",
           },
         },
-
         // Stage 5
         {
-          $unwind: "$shipAddress",
+          path: "$shipAddress",
+          preserveNullAndEmptyArrays: true,
         },
 
         // Stage 6
@@ -504,7 +504,13 @@ router.get("/deliveries", auth, async (req, res) => {
             _id: 1,
             userName: "$userDetails.name",
             userEmail: "$userDetails.email",
-            shipAddress: 1,
+            shipAddress: {
+              $cond: {
+                if: { $gt: [{ $size: { $ifNull: ["$shipAddress", []] } }, 0] }, // Check if shipAddress is not empty
+                then: "$shipAddress",
+                else: null, // or you can set it to an empty object {}
+              },
+            },
             prizeName: "$name",
             prizeImg: "$img_url",
             prizeKind: "$kind",
