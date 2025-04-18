@@ -530,6 +530,7 @@ router.get("/deliveries", auth, async (req, res) => {
 
     res.send({ status: 1, prizes: prizes });
   } catch (error) {
+    console.log("💥 Delivery Error: ", error);
     res.send({ status: 0, err: error });
   }
 });
