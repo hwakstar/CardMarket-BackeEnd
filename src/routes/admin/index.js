@@ -517,6 +517,7 @@ router.get("/deliveries", auth, async (req, res) => {
             prizeName: "$name",
             prizeImg: "$img_url",
             prizeKind: "$kind",
+            prizeType: "$type",
             prizeTrackingNumber: "$trackingNumber",
             prizeDeliveryCompany: "$deliveryCompany",
             prizeDeliverStatus: "$deliverStatus",

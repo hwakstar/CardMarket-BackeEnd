@@ -903,7 +903,8 @@ router.delete("/del_shipping_address/:id", auth, async (req, res) => {
 router.get("/obtainedPrizes/:id", auth, async (req, res) => {
   const id = req.params.id;
 
-  if (id == undefined) return res.send({ status: 0 });
+  if (id === undefined) return res.send({ status: 0 });
+  console.log(id);
 
   try {
     const tickets = await adminSchemas.GachaTicketSchema.find({
