@@ -455,7 +455,7 @@ router.post("/chang_auth", auth, async (req, res) => {
 /* Deliever management */
 router.get("/deliveries", auth, async (req, res) => {
   try {
-    let prizes = await adminSchemas.GachaTicketSchema.aggregate(
+    let prizes = await adminSchemas.GachaTicketSchemadb.aggregate(
       // Pipeline
       [
         // Stage 1
@@ -491,10 +491,13 @@ router.get("/deliveries", auth, async (req, res) => {
             as: "shipAddress",
           },
         },
+
         // Stage 5
         {
-          path: "$shipAddress",
-          preserveNullAndEmptyArrays: true,
+          $unwind: {
+            path: "$shipAddress",
+            preserveNullAndEmptyArrays: true,
+          },
         },
 
         // Stage 6
