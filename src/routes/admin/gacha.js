@@ -195,7 +195,7 @@ router.get("/user", async (req, res) => {
   const gachas = await Gacha.find({
     isRelease: true,
     secret: false,
-    $expr: { $eq: ["$total_number", "$remove_number"] },
+    $expr: { $ne: ["$total_number", "$remove_number"] },
   })
     .sort({ order: 1, createdAt: -1 })
     .populate("category");
