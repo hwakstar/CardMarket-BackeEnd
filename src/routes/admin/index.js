@@ -554,16 +554,14 @@ router.post("/statistics", auth, async (req, res) => {
     ]);
 
     const users = await Users.find();
-    // get prize status
-    let pendings = 0;
-    let deliverings = 0;
-    users.map((user) => {
-      for (let i = 0; i < user.obtained_prizes.length; i++) {
-        const prize = user.obtained_prizes[i];
-        if (prize.deliverStatus === "awaiting") pendings++;
-        if (prize.deliverStatus === "shipped") deliverings++;
-      }
-    });
+
+    // ? get prize status
+    let pendings = await adminSchemas.GachaTicketSchema.find({
+      deliverStatus: "notSelected",
+    }).count();
+    let deliverings = await adminSchemas.GachaTicketSchema.find({
+      deliverStatus: "awaiting",
+    }).count();
 
     let periodPendings = [];
     let periodDeliverings = [];
