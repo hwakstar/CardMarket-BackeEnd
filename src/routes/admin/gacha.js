@@ -765,7 +765,7 @@ router.post("/shipping", auth, async (req, res) => {
   let cashback = 0;
 
   try {
-    // 🔨 Check Maintenanence Mode
+    // 🔨 Check Maintenances Mode
     const statis = await adminSchemas.GachaVisitStatus.findOne();
     if (statis.currentMaintance) return res.send({ status: 2 });
 
@@ -807,7 +807,7 @@ router.post("/shipping", auth, async (req, res) => {
       );
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
-        { _id: { $in: returnIds } },
+        { _id: { $in: returnIds }, type: { $ne: "shipping" } },
         { deliverStatus: "returned", deliveryTime: Date.now() }
       );
 
