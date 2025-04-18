@@ -455,7 +455,7 @@ router.post("/chang_auth", auth, async (req, res) => {
 /* Deliever management */
 router.get("/deliveries", auth, async (req, res) => {
   try {
-    let prizes = await adminSchemas.GachaTicketSchemadb.aggregate(
+    let prizes = await adminSchemas.GachaTicketSchema.aggregate(
       // Pipeline
       [
         // Stage 1
