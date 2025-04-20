@@ -39,7 +39,11 @@ router.post("/purchase", auth, async (req, res) => {
 
     const rank = await userRankData(user._id);
     //when first purchase, inviter add 500pt
-    if (rank.totalPointsAmount === 1000 && user.invited) {
+    if (
+      rank.totalPointsAmount === 1000 &&
+      user.invited &&
+      user.lineID !== undefined
+    ) {
       const inviter = await Users.findOne({ inviteCode: user.otherCode });
       inviter.point_remain += 700;
       await inviter.save();

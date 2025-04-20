@@ -189,9 +189,9 @@ router.post("/register", async (req, res) => {
     password,
     affId,
     linkId,
-    userId,
     randomcode,
-    lineId,
+    phoneNumber,
+    lineID,
   } = req.body;
 
   try {
@@ -217,6 +217,8 @@ router.post("/register", async (req, res) => {
       hashedPass: hashedPassword,
       inviteCode: generatecode,
       otherCode: randomcode,
+      phoneNumber: phoneNumber,
+      line_user_id: lineID,
     };
 
     // add affiliate id if user introduced by affiliate
@@ -227,7 +229,7 @@ router.post("/register", async (req, res) => {
 
     // if new user is someone who invites by randomcode
 
-    if (randomcode) {
+    if (randomcode && lineID !== undefined) {
       const inviter = await Users.findOne({ inviteCode: randomcode });
       inviter.point_remain += 300;
       inviter.save();
@@ -445,46 +447,87 @@ router.post("/activate", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, type } = req.body;
 
-  try {
-    const user = await Users.findOne({ email: email });
+  if (type == "email") {
+    try {
+      const user = await Users.findOne({ email: email });
 
-    if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
-    if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
-    if (!user.active) return res.send({ status: 0, msg: "withdrawedAccount" });
+      if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
+      if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
+      if (!user.active)
+        return res.send({ status: 0, msg: "withdrawedAccount" });
 
-    const checkPass = await bcrypt.compare(password, user.hashedPass);
-    if (!checkPass) return res.send({ status: 0, msg: "invalidLoginInfo" });
+      const checkPass = await bcrypt.compare(password, user.hashedPass);
+      if (!checkPass) return res.send({ status: 0, msg: "invalidLoginInfo" });
 
-    // make user data for token
-    const userData = {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      point_remain: user.point_remain,
-      point_total: user.point_total,
-      shipAddress_id: user.shipAddress_id,
-      address: user.address,
-      city: user.city,
-      country: user.country,
-      inviteCode: user.inviteCode,
-      inviteCount: user.inviteCount,
-      invited: user.invited,
-      createtime: user.createdAt,
-    };
+      // make user data for token
+      const userData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        point_remain: user.point_remain,
+        point_total: user.point_total,
+        shipAddress_id: user.shipAddress_id,
+        address: user.address,
+        city: user.city,
+        country: user.country,
+        inviteCode: user.inviteCode,
+        inviteCount: user.inviteCount,
+        invited: user.invited,
+        createtime: user.createdAt,
+      };
 
-    // get rank data
-    const rank = await userRankData(user._id);
-    userData.rankData = rank;
+      // get rank data
+      const rank = await userRankData(user._id);
+      userData.rankData = rank;
 
-    const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
+      const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
 
-    res.send({ status: 1, msg: "successLogin", user: userData, token });
-  } catch (error) {
-    console.log("💥 Login Error", error);
+      res.send({ status: 1, msg: "successLogin", user: userData, token });
+    } catch (error) {
+      console.log("💥 Login Error", error);
 
-    res.send({ status: 0, msg: "failedReq", err: error });
+      res.send({ status: 0, msg: "failedReq", err: error });
+    }
+  }
+
+  if (type == "line") {
+    try {
+      const user = await Users.findOne({ line_user_id: lineID });
+      if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
+      if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
+      if (!user.active)
+        return res.send({ status: 0, msg: "withdrawedAccount" });
+
+      const userData = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        point_remain: user.point_remain,
+        point_total: user.point_total,
+        shipAddress_id: user.shipAddress_id,
+        address: user.address,
+        city: user.city,
+        country: user.country,
+        inviteCode: user.inviteCode,
+        inviteCount: user.inviteCount,
+        invited: user.invited,
+        createtime: user.createdAt,
+      };
+
+      // get rank data
+      const rank = await userRankData(user._id);
+      userData.rankData = rank;
+
+      const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
+
+      res.send({ status: 1, msg: "successLogin", user: userData, token });
+    } catch (error) {
+      console.log("💥 Login Error", error);
+
+      res.send({ status: 0, msg: "failedReq", err: error });
+    }
   }
 });
 

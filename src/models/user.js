@@ -26,6 +26,7 @@ const UserSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ranks",
     },
+    phoneNumber: { type: String },
     line_user_id: { type: String },
   },
   {
