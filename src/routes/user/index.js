@@ -975,10 +975,26 @@ router.get("/check_invite_code", (req, res) => {
 });
 
 async function sendSms(phoneNumber, message) {
+  function formatPhoneNumber(phoneNumber) {
+    // Check if the phone number starts with '0'
+    if (phoneNumber.startsWith("0")) {
+      // Remove the leading '0'
+      phoneNumber = phoneNumber.slice(1);
+    }
+
+    // Validate the phone number format (10 digits after removing '0')
+    const pattern = /^\d{10}$/;
+    if (!pattern.test(phoneNumber)) {
+      throw new Error("💥: Invalid phone number format");
+    }
+
+    return phoneNumber;
+  }
+
   console.log(`📱 SNS SENT ➡️ ${phoneNumber}`);
 
   const params = {
-    PhoneNumber: "+81" + phoneNumber, // E.164 format: +12345678901
+    PhoneNumber: "+81" + formatPhoneNumber(phoneNumber), // E.164 format: +12345678901
     Message: message,
     MessageAttributes: {
       "AWS.SNS.SMS.SenderID": {
