@@ -555,14 +555,12 @@ router.post("/sns", async (req, res) => {
 router.post("/sns/verify-code", (req, res) => {
   const { phoneNumber, code } = req.body;
 
-  console.log("=============");
-  console.log(phoneNumber, code);
+  console.log("✅ User Verified :");
+  console.log("📱 => ", phoneNumber, " 🔑 => ", code);
 
   if (!phoneNumber || !code) {
     return res.send({ status: 0 });
   }
-
-  console.log(verificationCodes);
 
   const storedData = verificationCodes.get(phoneNumber);
 
