@@ -333,6 +333,7 @@ router.post("/register", async (req, res) => {
       res.send({ status: 0, msg: "failedReq" });
     }
   } catch (error) {
+    console.log("Register Error: ", error);
     res.send({ status: 0, msg: "failedReq" });
   }
 });
