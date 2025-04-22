@@ -561,6 +561,8 @@ router.post("/sns/verify-code", (req, res) => {
     return res.send({ status: 0 });
   }
 
+  console.log(verificationCodes);
+
   const storedData = verificationCodes.get(phoneNumber);
 
   if (!storedData) {
