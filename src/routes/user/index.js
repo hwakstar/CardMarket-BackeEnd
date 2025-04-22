@@ -546,12 +546,16 @@ router.post("/sns", async (req, res) => {
 
   verificationCodes.set(phonenumber, { code, expiresAt });
 
-  await sendSms(phonenumber, message);
+  console.log("📧 Message: ", message);
+  // await sendSms(phonenumber, message);
   res.send({ status: 1 });
 });
 
 router.post("/sns/verify-code", (req, res) => {
   const { phoneNumber, code } = req.body;
+
+  console.log("=============");
+  console.log(phoneNumber, code);
 
   if (!phoneNumber || !code) {
     return res.send({ status: 0 });
