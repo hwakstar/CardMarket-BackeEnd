@@ -548,7 +548,7 @@ router.post("/sns", async (req, res) => {
   verificationCodes.set(phonenumber, { code, expiresAt });
 
   console.log("📧 Message: ", message);
-  // await sendSms(phonenumber, message);
+  await sendSms(phonenumber, message);
   res.send({ status: 1 });
 });
 
