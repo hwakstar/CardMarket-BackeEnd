@@ -448,7 +448,18 @@ router.post("/activate", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password, type } = req.body;
+  const {
+    email,
+    password,
+    type,
+    name,
+    country,
+    affId,
+    linkId,
+    randomcode,
+    phoneNumber,
+    lineID,
+  } = req.body;
 
   if (type == "email") {
     try {
@@ -494,40 +505,101 @@ router.post("/login", async (req, res) => {
   }
 
   if (type == "line") {
-    try {
-      const user = await Users.findOne({ line_user_id: lineID });
-      if (!user) return res.send({ status: 0, msg: "invalidLoginInfo" });
-      if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
-      if (!user.active)
-        return res.send({ status: 0, msg: "withdrawedAccount" });
+    const user = await Users.findOne({ line_user_id: lineID });
 
-      const userData = {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        point_remain: user.point_remain,
-        point_total: user.point_total,
-        shipAddress_id: user.shipAddress_id,
-        address: user.address,
-        city: user.city,
-        country: user.country,
-        inviteCode: user.inviteCode,
-        inviteCount: user.inviteCount,
-        invited: user.invited,
-        createtime: user.createdAt,
+    if (!user) {
+      console.log("💡 Creating Line USER: ", name);
+
+      let generatecode = generateRandomCode();
+
+      // create new user object
+      const userObj = {
+        name: name,
+        email: email,
+        inviteCode: generatecode,
+        line_user_id: lineID,
+        isVerify: true,
       };
 
-      // get rank data
-      const rank = await userRankData(user._id);
-      userData.rankData = rank;
+      // add affiliate id if user introduced by affiliate
+      if (affId && affId !== "null") userObj.aff_id = affId;
+      // add new rank id
+      const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
+      userObj.rank_id = userRank._id;
 
-      const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
+      // if new user is someone who invites by randomcode
 
-      res.send({ status: 1, msg: "successLogin", user: userData, token });
-    } catch (error) {
-      console.log("💥 Login Error", error);
+      if (randomcode && lineID !== undefined) {
+        const inviter = await Users.findOne({ inviteCode: randomcode });
+        inviter.point_remain += 300;
+        inviter.save();
+      }
 
-      res.send({ status: 0, msg: "failedReq", err: error });
+      const newUser = await new Users(userObj).save();
+
+      try {
+        const userData = {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          point_remain: newUser.point_remain,
+          point_total: newUser.point_total,
+          shipAddress_id: newUser.shipAddress_id,
+          address: newUser.address,
+          city: newUser.city,
+          country: newUser.country,
+          inviteCode: newUser.inviteCode,
+          inviteCount: newUser.inviteCount,
+          invited: newUser.invited,
+          createtime: newUser.createdAt,
+        };
+
+        // get rank data
+        const rank = await userRankData(newUser._id);
+        userData.rankData = rank;
+
+        const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
+
+        res.send({ status: 1, msg: "successLogin", user: userData, token });
+      } catch (error) {
+        console.log("💥 Login Error", error);
+
+        res.send({ status: 0, msg: "failedReq", err: error });
+      }
+    } else {
+      try {
+        if (!user.isVerify) return res.send({ status: 2, msg: "emailVerify" });
+        if (!user.active)
+          return res.send({ status: 0, msg: "withdrawedAccount" });
+
+        const userData = {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          point_remain: user.point_remain,
+          point_total: user.point_total,
+          shipAddress_id: user.shipAddress_id,
+          address: user.address,
+          city: user.city,
+          country: user.country,
+          inviteCode: user.inviteCode,
+          inviteCount: user.inviteCount,
+          invited: user.invited,
+          createtime: user.createdAt,
+        };
+
+        // get rank data
+        const rank = await userRankData(user._id);
+        userData.rankData = rank;
+
+        const token = jwt.sign(userData, "RANDOM-TOKEN", { expiresIn: "60d" });
+
+        res.send({ status: 1, msg: "successLogin", user: userData, token });
+      } catch (error) {
+        console.log("💥 Login Error", error);
+
+        res.send({ status: 0, msg: "failedReq", err: error });
+      }
     }
   }
 });

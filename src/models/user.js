@@ -27,7 +27,7 @@ const UserSchema = new mongoose.Schema(
       ref: "Ranks",
     },
     phoneNumber: { type: String },
-    line_user_id: { type: String },
+    line_user_id: { type: String, default: "" },
   },
   {
     timestamps: true,
