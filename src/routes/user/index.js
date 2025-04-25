@@ -195,9 +195,11 @@ router.post("/register", async (req, res) => {
   } = req.body;
 
   try {
-    const isLineIdExist = await Users.findOne({ line_user_id: lineID });
-    if (isLineIdExist) {
-      return res.send({ status: 0, msg: "existLineId" });
+    if (lineID !== undefined) {
+      const isLineIdExist = await Users.findOne({ line_user_id: lineID });
+      if (isLineIdExist) {
+        return res.send({ status: 0, msg: "existLineId" });
+      }
     }
 
     // check email exist
