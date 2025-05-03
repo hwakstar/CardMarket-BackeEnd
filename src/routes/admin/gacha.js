@@ -959,6 +959,8 @@ router.get("/tag_show", async (req, res) => {
 });
 
 router.post("/tag", async (req, res) => {
+  console.log(req.body);
+
   try {
     let newTag = new adminSchemas.GachaTag(req.body);
     await newTag.save();
