@@ -19,10 +19,12 @@ const PointLog = require("../../models/pointLog");
 const PrizeVideo = require("../../models/prizeVideo");
 
 const logger = require("../../utils/logger");
+const { format } = require("date-fns");
 
-// static function
+// * For prepare Gacha information => HIHG RESPONSE SPEED
 var gachaInfo = {};
 
+// * Remove 14 days later to
 const oripaTimers = {};
 
 // add gacha
@@ -33,10 +35,13 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
     price,
     category,
     kind,
+    desc,
+    tag,
     awardRarity,
     order,
     time,
     secret,
+    pickup,
     limitNumber,
     purchase,
     purchaseLimit,
@@ -52,9 +57,12 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
     price: price,
     category: category,
     kind: kind,
+    tag: tag,
+    desc: desc,
     award_rarity: awardRarity,
     order: order,
     secret: secret,
+    pickup: pickup,
     limitNumber: limitNumber,
     purchase: purchase,
     purchaseLimit: purchaseLimit,
@@ -176,7 +184,8 @@ router.post("/seo", auth, async (req, res) => {
 router.get("/admin", async (req, res) => {
   const gachas = await Gacha.find()
     .sort({ order: 1, createdAt: -1 })
-    .populate("category");
+    .populate("category")
+    .populate("tag");
   const homeSeo = await adminSchemas.Themes.findOne();
   const statis = await adminSchemas.GachaVisitStatus.findOne();
   const home = { title: homeSeo.title, desc: homeSeo.desc };
@@ -191,30 +200,68 @@ router.get("/admin", async (req, res) => {
   else res.send({ status: 0 });
 });
 
+router.post("/search", async (req, res) => {
+  try {
+    const { keyword, category = [], tag = [], page = 1 } = req.body;
+
+    const query = { isRelease: true };
+
+    // Keyword search
+    if (keyword && typeof keyword === "string") {
+      query.name = { $regex: keyword, $options: "i" };
+    }
+
+    // Category filter
+    if (category) {
+      query.category = category;
+    }
+
+    // Tag filter
+    if (Array.isArray(tag) && tag.length > 0) {
+      query.tag = {
+        $in: tag,
+      };
+    }
+
+    const results = await Promise.all([
+      Gacha.find(query).populate("category").populate("tag"),
+    ]);
+
+    res.json({
+      success: true,
+      gachas: results[0],
+    });
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ success: false, error: "Server Error" });
+  }
+});
+
 router.get("/user", async (req, res) => {
-  const gachas = await Gacha.find({
-    isRelease: true,
-    secret: false,
-    $expr: { $ne: ["$total_number", "$remove_number"] },
-  })
-    .sort({ order: 1, createdAt: -1 })
-    .populate("category");
+  // const gachas = await Gacha.find({
+  //   isRelease: true,
+  //   secret: false,
+  //   $expr: { $ne: ["$total_number", "$remove_number"] },
+  // })
+  //   .sort({ order: 1, createdAt: -1 })
+  //   .populate("category");
   const homeSeo = await adminSchemas.Themes.findOne();
   const statis = await adminSchemas.GachaVisitStatus.findOne();
   const home = { title: homeSeo.title, desc: homeSeo.desc };
 
-  if (gachas)
-    res.send({
-      status: 1,
-      gachaList: gachas,
-      home: home,
-      isStop: statis.currentMaintance,
-    });
-  else res.send({ status: 0 });
+  res.send({
+    status: 1,
+    // gachaList: gachas,
+    home: home,
+    isStop: statis.currentMaintance,
+  });
 });
 
 // get user count by gacha id
 router.get("/count/:id", async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
   const gachaID = req.params.id;
 
   try {
@@ -233,6 +280,10 @@ router.get("/count/:id", async (req, res) => {
 
 // get gacha by id
 router.get("/user/:id", async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
@@ -294,53 +345,12 @@ router.get("/check_hidden", auth, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
-  const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
-    "category"
-  );
-  const gachas = await Gacha.find()
-    .sort({ order: 1, createdAt: -1 })
-    .populate("category");
-
-  let gachaID_ = new mongoose.Types.ObjectId(req.params.id);
-
-  let prizes = await adminSchemas.GachaTicketSchema.aggregate(
-    // Pipeline
-    [
-      // Stage 1
-      {
-        $match: {
-          // enter query here
-          gachaID: gachaID_,
-        },
-      },
-
-      // Stage 2
-      {
-        $group: {
-          _id: "$img_url",
-          count: { $count: {} },
-          kind: { $first: "$kind" },
-          img_url: { $first: "$img_url" },
-          name: { $first: "$name" },
-          //...
-        },
-      },
-    ]
-  );
-
-  if (gacha)
-    res.send({
-      status: 1,
-      gacha: gacha,
-      gachas: gachas,
-      prizes: prizes,
-    });
-  else res.send({ status: 0 });
-});
-
 // get gacha by gacha category.id
 router.get("/category/:id", async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
   const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
     "category"
   );
@@ -351,6 +361,10 @@ router.get("/category/:id", async (req, res) => {
 
 // delete gacha
 router.delete("/:id", async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
   try {
     const gacha = await Gacha.findOne({ _id: req.params.id });
     const filePath = path.join("./", gacha.img_url);
@@ -374,6 +388,10 @@ router.delete("/:id", async (req, res) => {
 
 // set gacah release
 router.get("/set_release/:id", auth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
   try {
     const gacha = await Gacha.findOne({ _id: req.params.id });
     gacha.isRelease = !gacha.isRelease;
@@ -405,105 +423,6 @@ router.post("/set_prize", auth, async (req, res) => {
     });
 });
 
-// set prize to gacha
-// router.post("/set_prize", auth, async (req, res) => {
-//   const { gachaID, prizes, prizeId, order } = req.body;
-
-//   let gacha = await Gacha.findOne({ _id: gachaID });
-
-//   let Is_LastPrize = false;
-
-//   try {
-//     if (prizeId) {
-//       let target_prize = await adminSchemas.Prize.findOne({ _id: prizeId });
-
-//       if (
-//         gacha.kind.find((item) => item.value == "last_prize") == undefined &&
-//         target_prize.kind == "last_prize"
-//       ) {
-//         return res.send({ status: 0 });
-//       }
-
-//       if (target_prize.kind == "last_prize") {
-
-//         const count = await adminSchemas.Prize.countDocuments({
-//           gachaID: gachaID,
-//           kind: "last_prize",
-//         });
-
-//         if(count > 0) {
-//           await adminSchemas.Prize.findOneAndDelete({
-//             gachaID: gachaID,
-//             kind: "last_prize",
-//           });
-//           Is_LastPrize = true;
-//         } else if (count > 1) {
-//           return res.send({ status: 0 })
-//         }
-
-//       }
-
-//       let aa = await adminSchemas.Prize.create({
-//         gachaID: gachaID,
-//         img_url: target_prize.img_url,
-//         name: target_prize.name,
-//         cashback: target_prize.cashback,
-//         kind: target_prize.kind,
-//         trackingNumber: target_prize.trackingNumber,
-//         deliveryCompany: target_prize.deliveryCompany,
-//         order: order,
-//       });
-
-//       gacha.total_number++;
-//     } else {
-//       let last_prize = prizes.filter((item) => item.kind == "last_prize");
-
-//       if (last_prize.length > 1) return res.send({ status: 0 });
-
-//       if (
-//         gacha.kind.find((item) => item.value == "last_prize") == undefined &&
-//         last_prize.length == 1
-//       )
-//         return res.send({ status: 0 });
-
-//       if (last_prize.length == 1) {
-//         const count = await adminSchemas.Prize.countDocuments({
-//           gachaID: gachaID,
-//           kind: "last_prize",
-//         });
-
-//         if(count > 0) {
-//           await adminSchemas.Prize.findOneAndDelete({
-//             gachaID: gachaID,
-//             kind: "last_prize",
-//           });
-//           Is_LastPrize = true;
-//         } else if (count > 1) {
-//           return res.send({ status: 0 })
-//         }
-//       }
-
-//       prizes.forEach((item) => (item["gachaID"] = gachaID));
-
-//       await adminSchemas.Prize.insertMany(prizes);
-
-//       gacha.total_number += prizes.length;
-//     }
-
-//     if (Is_LastPrize) {
-//       gacha.total_number--;
-//     }
-
-//     await gacha.save();
-
-//     res.send({ status: 1 });
-//   } catch (error) {
-//     res.send({
-//       status: 0,
-//     });
-//   }
-// });
-// set rubbish to gacha
 router.post("/set_rubbish", auth, async (req, res) => {
   const { gachaID, rubbishes, rubbishId, count } = req.body;
 
@@ -755,7 +674,25 @@ router.post("/draw_gacha", auth, async (req, res) => {
       gacha: gacha.name,
       number: counts,
     });
+
     await newPointLog.save();
+
+    // 🥇 Set Gacha Ranking
+    let todayStr = format(Date.now(), "yyyy-MM-dd");
+    adminSchemas.GachaRanking.findOneAndUpdate(
+      { gachaID: gachaID, date: todayStr },
+      {
+        $inc: { pullNumber: 1 },
+        $setOnInsert: {
+          gachaID: gachaID,
+          date: todayStr,
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
     res.send({ status: 1, prizes: prizes });
   } catch (err) {
@@ -844,6 +781,297 @@ router.post("/ticket", auth, async (req, res) => {
   res.send({
     tickets: tickets,
   });
+});
+
+/*
+ * * -----------------------------+
+ * *     Gacha Ranking Info       |
+ * * -----------------------------+
+ */
+router.get("/rank", async (req, res) => {
+  try {
+    let todayStr = format(Date.now(), "YYYY-MM-DD");
+
+    let gachaRank = await adminSchemas.GachaRanking.find({
+      date: todayStr,
+    })
+      .populate("gachaID")
+      .sort({ pullNumber: -1 });
+
+    res.send({
+      status: 1,
+      gachaRank: gachaRank,
+    });
+  } catch (err) {
+    res.send({
+      status: 0,
+      gachaRank: [],
+    });
+    console.log("💥 Gacha Rank Error: ", err);
+  }
+});
+
+/*
+ * * -----------------------------+
+ * *     USER LIKE / DISLIKE      |
+ * * -----------------------------+
+ */
+
+// * USER LIKE
+
+router.post("/like", async (req, res) => {
+  const { userID, gachaID } = req.body;
+
+  try {
+    let userLikeGacha = await adminSchemas.UserLikeGacha.findOne({ userID });
+
+    // If user has no record and they're disliking (nothing to remove)
+    if (!userLikeGacha) {
+      // Create new doc with liked gachaID
+      userLikeGacha = await adminSchemas.UserLikeGacha.create({
+        userID,
+        gachaIDs: [gachaID],
+      });
+      return res.send({
+        status: 1,
+        message: "liked",
+        userLikeGacha: userLikeGacha.gachaIDs,
+      });
+    }
+
+    const index = userLikeGacha.gachaIDs.indexOf(gachaID);
+
+    if (index !== -1) {
+      // gachaID exists, remove it (dislike)
+      userLikeGacha.gachaIDs.splice(index, 1);
+      await userLikeGacha.save();
+
+      return res.send({
+        status: 1,
+        message: "disliked",
+        userLikeGacha: userLikeGacha.gachaIDs,
+      });
+    } else {
+      // gachaID not found, push it (like)
+      userLikeGacha.gachaIDs.push(gachaID);
+      await userLikeGacha.save();
+
+      return res.send({
+        status: 1,
+        message: "liked",
+        userLikeGacha: userLikeGacha.gachaIDs,
+      });
+    }
+  } catch (err) {
+    console.log("💥 Gacha Like Error: ", err);
+    return res.send({
+      status: 0,
+      userLikeGacha: [],
+    });
+  }
+});
+
+router.post("/get_like_ids", async (req, res) => {
+  const { userID } = req.body;
+
+  try {
+    let userLikeGachas = await adminSchemas.UserLikeGacha.findOne({
+      userID: userID,
+    });
+
+    res.send({
+      status: 1,
+      userLikeGacha: userLikeGachas.gachaIDs,
+    });
+  } catch (err) {
+    console.log("💥 Get Like Gacha ID list Error: ", err);
+  }
+});
+
+router.post("/get_like", async (req, res) => {
+  const { userID } = req.body;
+
+  try {
+    let userLikeGachas = await adminSchemas.UserLikeGacha.findOne({
+      userID: userID,
+    }).populate("gachaIDs");
+
+    res.send({
+      status: 1,
+      userLikeGachas: userLikeGachas,
+    });
+  } catch (err) {
+    console.log("💥 Get Like Gachalist Error: ", err);
+  }
+});
+
+/*
+ * * -----------------------------+
+ * *          Gacha Tags          |
+ * * -----------------------------+
+ */
+
+router.get("/tag", async (req, res) => {
+  try {
+    const tagsWithCount = await adminSchemas.GachaTag.aggregate([
+      {
+        $lookup: {
+          from: "gacha", // collection name of Gacha (must match db)
+          localField: "_id",
+          foreignField: "tag",
+          as: "gachas",
+        },
+      },
+      {
+        $addFields: {
+          gachaCount: { $size: "$gachas" },
+        },
+      },
+      {
+        $project: {
+          gachas: 0, // do not return full gacha array
+        },
+      },
+    ]);
+
+    console.log(tagsWithCount);
+
+    res.send({
+      status: 1,
+      gachaTags: tagsWithCount,
+    });
+  } catch (err) {
+    console.log("💥 Gacha Tag Get Error: ", err);
+    res.send({
+      status: 0,
+      gachaTags: [],
+    });
+  }
+});
+
+router.get("/tag_show", async (req, res) => {
+  const showTags = await adminSchemas.GachaTag.find({ showOnTopPage: true });
+
+  res.send({
+    status: 1,
+    showTags: showTags,
+  });
+});
+
+router.post("/tag", async (req, res) => {
+  try {
+    let newTag = new adminSchemas.GachaTag(req.body);
+    await newTag.save();
+
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Gacha Tag Create Error: ", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
+});
+
+router.put("/tag/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+
+  console.log(req.body);
+
+  try {
+    await adminSchemas.GachaTag.findByIdAndUpdate(id, {
+      $set: req.body.updatedData,
+    });
+
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Gacha Tag Update Error: ", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
+});
+
+router.delete("/tag/:id", async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+
+  try {
+    await adminSchemas.GachaTag.findByIdAndDelete(id);
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Gacha Tag Delete Error: ", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
+});
+
+// * This is must be last line
+router.get("/:id", async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "Invalid ID format" });
+  }
+  const gacha = await Gacha.findOne({ _id: req.params.id }).populate(
+    "category"
+  );
+  const gachas = await Gacha.find()
+    .sort({ order: 1, createdAt: -1 })
+    .populate("category");
+
+  let gachaID_ = new mongoose.Types.ObjectId(req.params.id);
+
+  let prizes = await adminSchemas.GachaTicketSchema.aggregate(
+    // Pipeline
+    [
+      // Stage 1
+      {
+        $match: {
+          // enter query here
+          gachaID: gachaID_,
+        },
+      },
+
+      // Stage 2
+      {
+        $group: {
+          _id: "$img_url",
+          count: { $count: {} },
+          kind: { $first: "$kind" },
+          img_url: { $first: "$img_url" },
+          name: { $first: "$name" },
+          //...
+        },
+      },
+    ]
+  );
+
+  if (gacha)
+    res.send({
+      status: 1,
+      gacha: gacha,
+      gachas: gachas,
+      prizes: prizes,
+    });
+  else res.send({ status: 0 });
 });
 
 const setPreInfo = () => {

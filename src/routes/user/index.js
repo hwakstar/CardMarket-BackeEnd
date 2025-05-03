@@ -1,7 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const { ObjectId } = require("mongodb");
+const schedule = require("node-schedule");
 
 const router = express.Router();
 
@@ -27,7 +29,6 @@ const eventDate = new Date("1925-04-05T17:00:00");
 
 const { Mutex } = require("async-mutex");
 const shipAddress = require("../../models/shipAddress");
-const mutex = new Mutex();
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION,
@@ -225,21 +226,59 @@ router.post("/register", async (req, res) => {
 
     // add affiliate id if user introduced by affiliate
     if (affId && affId !== "null") userObj.aff_id = affId;
-    // add new rank id
+
+    // * 🥉 add new rank id
     const userRank = await adminSchemas.Rank.findOne({ start_amount: 0 });
     userObj.rank_id = userRank._id;
 
-    // if new user is someone who invites by randomcode
-
+    // * 👩‍💻 if new user is someone who invites by randomcode
     if (randomcode && lineID !== undefined) {
       const inviter = await Users.findOne({ inviteCode: randomcode });
       inviter.point_remain += 300;
+
+      // * 🧾 Bonous Record
+      const inviterRec = new PointLog({
+        user_id: inviter._id,
+        point_num: 300,
+        usage: "invite_bonus_1", // * Inviter Bonus
+      });
+
+      // * 📩 Bonous News
+      const bonusNews = new adminSchemas.GachaNews({
+        title: "Invitation Bonus",
+        content: "You get bonus for invitation",
+        userID: inviter._id,
+        type: "private",
+      });
+
       inviter.save();
+      inviterRec.save();
+      bonusNews.save();
+
+      userObj.point_remain = 300;
     }
 
     const newUser = await new Users(userObj).save();
 
-    // if new user is someone invited by affiliate
+    // * 🧾 Bonous Record
+    const newUserRec = new PointLog({
+      user_id: newUser._id,
+      point_num: 300,
+      usage: "invite_bonus_2", // * New User Bonus
+    });
+    newUserRec.save();
+
+    // * 📩 Bonous News
+    const bonusNews = new adminSchemas.GachaNews({
+      title: "Invitation Bonus",
+      content: "You get bonus for invitation",
+      userID: newUser._id,
+      type: "private",
+    });
+
+    bonusNews.save();
+
+    // * ⛔ APPLITATE if new user is someone invited by affiliate
     if (affId && affId !== "null" && linkId && linkId !== "null") {
       // add affiliate status for register counts
       const registerByLink = new RegisterModel({
@@ -290,9 +329,9 @@ router.post("/register", async (req, res) => {
       await newAffEarn.save();
     }
 
+    // * 📧 Email Authentication
     const token = jwt.sign({ email }, "RANDOM-TOKEN", { expiresIn: "30m" });
 
-    // Mail send
     const params = {
       Source: "オンガチャ運営<verify@on-gacha.net>", // Your verified domain email
       Destination: {
@@ -490,6 +529,7 @@ router.post("/login", async (req, res) => {
         inviteCount: user.inviteCount,
         invited: user.invited,
         createtime: user.createdAt,
+        line_user_id: user.line_user_id,
       };
 
       // get rank data
@@ -554,6 +594,7 @@ router.post("/login", async (req, res) => {
           inviteCount: newUser.inviteCount,
           invited: newUser.invited,
           createtime: newUser.createdAt,
+          line_user_id: newUser.line_user_id,
         };
 
         // get rank data
@@ -588,6 +629,7 @@ router.post("/login", async (req, res) => {
           inviteCount: user.inviteCount,
           invited: user.invited,
           createtime: user.createdAt,
+          line_user_id: user.line_user_id,
         };
 
         // get rank data
@@ -791,6 +833,7 @@ router.get("/get_user/:id", auth, async (req, res) => {
       invited: user.invited,
       country: user.country,
       createtime: createtime,
+      line_user_id: user.line_user_id,
     };
 
     // get rank data
@@ -1052,6 +1095,214 @@ router.get("/check_invite_code", (req, res) => {
     res.send(status);
   });
 });
+
+/*
+ * * -----------------------------+
+ * *      Membership Ranking      |
+ * * -----------------------------+
+ */
+
+// Get all ranks
+router.get("/membership", async (req, res) => {
+  try {
+    const ranks = await adminSchemas.MembershipRank.find().sort({
+      requiredPoints: -1,
+    });
+    res.json(ranks);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Create a rank
+router.post("/membership", async (req, res) => {
+  console.log(req.body);
+
+  try {
+    const newRank = new adminSchemas.MembershipRank(req.body);
+    await newRank.save();
+    res.status(201).json(newRank);
+  } catch (err) {
+    res.status(400).json({ message: "Error creating rank" });
+  }
+});
+
+// Update a rank
+router.put("/membership/:id", async (req, res) => {
+  try {
+    const updatedRank = await adminSchemas.MembershipRank.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
+    if (!updatedRank) {
+      return res.status(404).json({ message: "Rank not found" });
+    }
+    res.json(updatedRank);
+  } catch (err) {
+    res.status(400).json({ message: "Error updating rank" });
+  }
+});
+
+// Delete a rank
+router.delete("/membership/:id", async (req, res) => {
+  try {
+    const deletedRank = await adminSchemas.MembershipRank.findByIdAndDelete(
+      req.params.id
+    );
+    if (!deletedRank) {
+      return res.status(404).json({ message: "Rank not found" });
+    }
+    res.json({ message: "Rank deleted" });
+  } catch (err) {
+    res.status(400).json({ message: "Error deleting rank" });
+  }
+});
+
+// * LINE Integration
+router.post("/line_integration", async (req, res) => {
+  //check userID
+  function isValidObjectId(id) {
+    return mongoose.Types.ObjectId.isValid(id);
+  }
+
+  // Usage
+  if (!isValidObjectId(req.body.userID)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
+
+  let lineUser = await Users.findOne({ line_user_id: req.body.lineID });
+  if (lineUser != null)
+    return res.send({
+      status: 0,
+      message: "Existing Line ID",
+    });
+
+  try {
+    let user = await Users.findById(req.body.userID);
+    user.line_user_id = req.body.lineID;
+    await user.save();
+
+    res.send({
+      status: 1,
+      message: "success!",
+    });
+  } catch (err) {
+    res.send({
+      status: 0,
+      message: err,
+    });
+    console.log(err);
+  }
+});
+0;
+
+// * Check usaged points
+router.post("/check_usage_points", async (req, res) => {
+  try {
+    const result = await PointLog.aggregate([
+      {
+        $match: { user_id: new mongoose.Types.ObjectId(req.body.userID) }, // apply your match condition
+      },
+      {
+        $group: {
+          _id: null,
+          totalPoints: { $sum: "$point_num" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    return res.send({
+      status: 1,
+      totalPoints: result[0]?.totalPoints ? result[0].totalPoints : 0,
+      count: result[0]?.count ? result[0].count : 0,
+    });
+  } catch (err) {
+    console.log("💥 Check Usage Error: ", err);
+    return res.send({
+      status: 0,
+      totalPoints: 0,
+      count: 0,
+    });
+  }
+});
+
+function determineMembership(points, membershipConditions) {
+  for (const condition of membershipConditions) {
+    if (points >= condition.requiredPoints) {
+      return condition;
+    }
+  }
+  return membershipConditions[membershipConditions.length - 1]; // Rookie fallback
+}
+
+async function updateMembershipsAndBonuses() {
+  const membershipConditions = await adminSchemas.MembershipRank.find();
+
+  try {
+    const now = new Date();
+    const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayPrevMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1
+    );
+
+    // Aggregate points for previous month with usage "draw_gacha"
+    const pointSums = await PointLog.aggregate([
+      {
+        $match: {
+          usage: "draw_gacha",
+          createdAt: { $gte: firstDayPrevMonth, $lt: firstDayThisMonth },
+        },
+      },
+      {
+        $group: {
+          _id: "$user_id",
+          totalPoints: { $sum: "$point_num" },
+        },
+      },
+    ]);
+
+    for (const { _id: userId, totalPoints } of pointSums) {
+      const membership = determineMembership(totalPoints, membershipConditions);
+
+      const user = await Users.findById(userId);
+      if (!user) {
+        console.warn(`User not found: ${userId}`);
+        continue;
+      }
+
+      // Update membership and add bonus points
+      user.membership = membership.rank;
+      user.point_remain = (user.point_remain || 0) + membership.rankUpBonus;
+      await user.save();
+
+      // Record membership bonus PointLog if bonus > 0
+      if (membership.rankUpBonus > 0) {
+        await PointLog.create({
+          user_id: userId,
+          point_num: membership.rankUpBonus,
+          usage: "membership_bonus",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
+
+    console.log("Memberships and bonuses updated successfully.");
+  } catch (error) {
+    console.error("Error updating memberships and bonuses:", error);
+  }
+}
+
+schedule.scheduleJob(
+  { date: 1, hour: 0, minute: 0 },
+  updateMembershipsAndBonuses
+);
 
 async function sendSms(phoneNumber, message) {
   function formatPhoneNumber(phoneNumber) {

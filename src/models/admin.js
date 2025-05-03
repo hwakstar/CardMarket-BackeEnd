@@ -163,23 +163,59 @@ const HiddenGachaRecordSchema = new Schema({
   date: { type: Date, default: Date.now() },
 });
 
-const Category = mongoose.model("Category", categorySchema, "category");
-const Prize = mongoose.model("Prize", prizeSchema, "prize");
-const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
-const Point = mongoose.model("Point", pointSchema, "point");
-const Coupon = mongoose.model("Coupon", couponSchema, "coupon");
-const Rank = mongoose.model("Rank", rankSchema, "rank");
-const Terms = mongoose.model("Term", termsSchema, "terms");
-const Themes = mongoose.model("Theme", themeSchema, "themes");
-const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
-const Administrator = mongoose.model("Admin", AdminSchema, "admin");
-const GachaLimit = mongoose.model("gachaLimit", gachaLimitSchema, "gachaLimit");
-const PopupRate = mongoose.model("popupRate", popupRateSchema, "popupRate");
-const PopupUser = mongoose.model("popupUser", popupUserSchema, "popupUser");
-const HiddenGachaRecord = mongoose.model(
-  "hiddenGachaHistory",
-  HiddenGachaRecordSchema,
-  "hiddenGachaHistory"
+// * Gacha Ranking
+const GachaRankingSchema = new Schema({
+  gachaID: { type: mongoose.Types.ObjectId, ref: "gacha" },
+  date: { type: String }, // * Date type is "2025-04-26"
+  pullNumber: { type: Number },
+});
+
+// * Gacha News
+const GachaNewsSchema = new Schema(
+  {
+    title: { type: String },
+    content: { type: String },
+    userID: { type: mongoose.Types.ObjectId, ref: "Users" },
+    img_url: { type: String },
+    type: { type: String },
+    read: { type: Boolean, default: false },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
+);
+
+// * Favorite Gachas
+const UserLikeGachaSchema = new Schema({
+  userID: { type: mongoose.Types.ObjectId, ref: "Users" },
+  gachaIDs: [{ type: mongoose.Types.ObjectId, ref: "gacha" }],
+});
+
+// * Gacha Tags
+const GachaTagSchema = new Schema(
+  {
+    nameJP: { type: String },
+    nameEN: { type: String },
+    showOnTopPage: { type: Boolean, default: false },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// * Membership Rank
+const MembershipRankSchema = new Schema(
+  {
+    rank: { type: String },
+    requiredPoints: { type: Number },
+    rankUpBonus: { type: Number },
+    cashbackRate: { type: Number },
+  },
+  {
+    timestamps: true,
+  }
 );
 
 const CouponHistory = mongoose.model(
@@ -197,6 +233,42 @@ const GachaTicketSchema = mongoose.model(
   gachaTicketSchema,
   "ticket"
 );
+const UserLikeGacha = mongoose.model(
+  "UserLikeGacha",
+  UserLikeGachaSchema,
+  "userLikeGacha"
+);
+const Category = mongoose.model("Category", categorySchema, "category");
+const Prize = mongoose.model("Prize", prizeSchema, "prize");
+const Rubbish = mongoose.model("Rubbish", rubbishSchema, "rubbish");
+const Point = mongoose.model("Point", pointSchema, "point");
+const Coupon = mongoose.model("Coupon", couponSchema, "coupon");
+const Rank = mongoose.model("Rank", rankSchema, "rank");
+const Terms = mongoose.model("Term", termsSchema, "terms");
+const Themes = mongoose.model("Theme", themeSchema, "themes");
+const Carousels = mongoose.model("carousels", carouselSchema, "carousels");
+const Administrator = mongoose.model("Admin", AdminSchema, "admin");
+const GachaLimit = mongoose.model("gachaLimit", gachaLimitSchema, "gachaLimit");
+const PopupRate = mongoose.model("popupRate", popupRateSchema, "popupRate");
+const PopupUser = mongoose.model("popupUser", popupUserSchema, "popupUser");
+const GachaTag = mongoose.model("tags", GachaTagSchema, "tags");
+const MembershipRank = mongoose.model(
+  "membership",
+  MembershipRankSchema,
+  "membership"
+);
+const HiddenGachaRecord = mongoose.model(
+  "hiddenGachaHistory",
+  HiddenGachaRecordSchema,
+  "hiddenGachaHistory"
+);
+const GachaRanking = mongoose.model(
+  "GachaRanking",
+  GachaRankingSchema,
+  "gachaRanking"
+);
+
+const GachaNews = mongoose.model("news", GachaNewsSchema, "news");
 
 const adminSchemas = {
   Category: Category,
@@ -216,6 +288,11 @@ const adminSchemas = {
   PopupUser: PopupUser,
   CouponHistory: CouponHistory,
   HiddenGachaRecord: HiddenGachaRecord,
+  GachaRanking: GachaRanking,
+  UserLikeGacha: UserLikeGacha,
+  GachaTag: GachaTag,
+  GachaNews: GachaNews,
+  MembershipRank: MembershipRank,
 };
 
 module.exports = adminSchemas;

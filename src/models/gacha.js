@@ -5,9 +5,11 @@ const gachaSchema = new mongoose.Schema(
     img_url: { type: String, required: true },
     detail_img_url: { type: String, default: "" },
     name: { type: String, required: true },
+    desc: { type: String, required: true },
     price: { type: Number, required: true },
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     kind: { type: Array },
+    tag: [{ type: mongoose.Schema.Types.ObjectId, ref: "tags" }],
     type: { type: String },
     award_rarity: { type: Number },
     order: { type: Number, default: 1 },
@@ -28,6 +30,8 @@ const gachaSchema = new mongoose.Schema(
     endTime: { type: Date },
 
     discountRate: { type: Number, default: 0 },
+
+    pickup: { type: Boolean, default: false },
   },
   {
     timestamps: true,

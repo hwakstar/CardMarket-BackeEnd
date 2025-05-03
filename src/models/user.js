@@ -28,6 +28,8 @@ const UserSchema = new mongoose.Schema(
     },
     phoneNumber: { type: String },
     line_user_id: { type: String, default: "" },
+    membership: { type: String, default: "Rookie" },
+    get_bonus: { type: String, default: true },
   },
   {
     timestamps: true,

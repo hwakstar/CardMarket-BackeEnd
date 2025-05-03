@@ -14,6 +14,7 @@ const uploadRank = require("../../utils/multer/rank_multer");
 const uploadLogo = require("../../utils/multer/logo_multer");
 const uploadCarousel = require("../../utils/multer/carousel_multer");
 const uploadPrizeVideo = require("../../utils/multer/prizevideo_multer");
+const uploadBlog = require("../../utils/multer/blog_multer");
 const deleteFile = require("../../utils/delete");
 
 const auth = require("../../middleware/auth");
@@ -22,6 +23,7 @@ const adminSchemas = require("../../models/admin");
 const Users = require("../../models/user");
 const PrizeVideo = require("../../models/prizeVideo");
 const PoingLogs = require("../../models/pointLog");
+const Blog = require("../../models/blog");
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -1018,6 +1020,196 @@ router.post("/popup_update", auth, async (req, res) => {
   );
 
   res.send({ status: 1 });
+});
+
+// * OnGacha News
+
+router.get("/news_all", async (req, res) => {
+  try {
+    const news = await adminSchemas.GachaNews.find();
+    res.send({ status: 1, news });
+  } catch (error) {
+    console.log("💥 News Fetch Error: ", error);
+    res.send({ status: 0, message: error });
+  }
+});
+
+router.post("/news_user", async (req, res) => {
+  console.log("📩 News User", req.body);
+
+  try {
+    const news = await adminSchemas.GachaNews.find({
+      $or: [{ userID: req.body.userID }, { userID: null }],
+    });
+
+    res.send({ status: 1, news });
+  } catch (err) {
+    console.log("💥 News User Fetch Error: ", err);
+    res.send({ status: 0, message: err });
+  }
+});
+
+router.post("/news", uploadBlog.single("file"), async (req, res) => {
+  try {
+    let newBlog = new adminSchemas.GachaNews({
+      title: req.body.title,
+      content: req.body.content,
+      type: req.body.type,
+      img_url: req.body.img_url,
+    });
+    newBlog["img_url"] = `uploads/blog/${req.file.filename}`;
+    if (req.body.userID != null && req.body.userID != "")
+      newBlog["userID"] = req.body.userID;
+    await newBlog.save();
+
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Blog Create Error: ", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
+});
+
+router.post("/news/pic", uploadBlog.single("file"), async (req, res) => {
+  try {
+    console.log("📁 File Upload: ", req.file);
+    // let gacha = await Gacha.findOne({ _id: req.body.id });
+    // if (!gacha) return res.send({ status: 0, msg: "failedReq" });
+    // gacha.detail_img_url = `uploads/gacha/detail/${req.file.filename}`;
+    // await gacha.save();
+
+    res.send({ status: 1, msg: "successAdded" });
+  } catch (error) {
+    console.log("💥 Post or Add Error: ", error);
+    res.send({ status: 0, msg: "failedReq" });
+  }
+});
+router.post("/news/search", async (req, res) => {
+  const { keyword } = req.body;
+
+  console.log(req.body);
+
+  const users = await Users.find({
+    $or: [
+      { name: { $regex: keyword, $options: "i" } },
+      { email: { $regex: keyword, $options: "i" } },
+    ],
+  }).select({ name: 1, _id: 1, email: 1 });
+
+  res.send(users);
+});
+
+router.post("/news/unread", async (req, res) => {
+  try {
+    const unreadNum = await adminSchemas.GachaNews.countDocuments({
+      $or: [{ userID: req.body.userID }, { userID: null }],
+      read: false,
+    });
+
+    res.send({
+      status: 1,
+      unreadNum,
+    });
+  } catch (error) {
+    console.error("Error fetching unread count:", error);
+    res.status(500).send({ status: 0, message: "Server error" });
+  }
+});
+
+router.get("/news/read/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const updatedNews = await adminSchemas.GachaNews.findByIdAndUpdate(
+      id,
+      { $set: { read: true } },
+      { new: true }
+    );
+
+    if (!updatedNews) {
+      return res.status(404).json({ message: "News not found" });
+    }
+  } catch (error) {
+    console.error("Error marking news as read:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/news/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const news = await adminSchemas.GachaNews.findById(id);
+
+    if (!news) return res.send({ status: 0, msg: "Not Found" });
+
+    res.send({ status: 1, news });
+  } catch (error) {
+    console.log("💥 News Fetch Error: ", error);
+    res.send({ status: 0, message: error });
+  }
+});
+
+router.put("/news/:id", uploadBlog.single("file"), async (req, res) => {
+  const { id } = req.params;
+
+  const { title, content, type, userID, img_url } = req.body;
+  console.log(req.body);
+
+  // Build JSON object manually
+  const updatedData = {
+    title,
+    content,
+    type,
+    img_url,
+  };
+
+  if (userID != null && userID != "undefined") updatedData.userID = userID;
+
+  console.log("Parsed updatedData:", updatedData);
+
+  try {
+    await adminSchemas.GachaNews.findByIdAndUpdate(id, {
+      $set: {
+        ...updatedData,
+        img_url: `uploads/blog/${req.file ? req.file.filename : img_url}`,
+      },
+    });
+
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Blog Updating Error", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
+});
+
+router.delete("/news/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await adminSchemas.GachaNews.findByIdAndDelete(id);
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Error Delete Blog: ", err);
+    res.send({
+      status: 0,
+      message: err,
+    });
+  }
 });
 
 module.exports = router;
