@@ -959,10 +959,12 @@ router.get("/tag_show", async (req, res) => {
 });
 
 router.post("/tag", async (req, res) => {
-  console.log(req.body);
-
   try {
-    let newTag = new adminSchemas.GachaTag(req.body);
+    let newTag = new adminSchemas.GachaTag({
+      nameJP: req.body.nameJP,
+      nameEN: req.body.nameEN,
+      showOnTopPage: req.body.showOnTopPage,
+    });
     await newTag.save();
 
     res.send({
