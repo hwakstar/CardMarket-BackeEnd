@@ -1029,6 +1029,12 @@ router.delete("/tag/:id", async (req, res) => {
   }
 });
 
+// * Get Current Server Time
+router.get("/current_server_time", (req, res) => {
+  let current_time = Date.now();
+  res.send({ status: 1, current_time: current_time });
+});
+
 // * This is must be last line
 router.get("/:id", async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
