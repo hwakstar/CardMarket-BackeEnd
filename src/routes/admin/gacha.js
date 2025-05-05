@@ -881,7 +881,7 @@ router.post("/get_like_ids", async (req, res) => {
 
     res.send({
       status: 1,
-      userLikeGacha: userLikeGachas.gachaIDs,
+      userLikeGacha: userLikeGachas?.gachaIDs ?? [],
     });
   } catch (err) {
     console.log("💥 Get Like Gacha ID list Error: ", err);
