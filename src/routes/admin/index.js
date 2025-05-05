@@ -1034,6 +1034,16 @@ router.get("/news_all", async (req, res) => {
   }
 });
 
+router.get("/news_public", async (req, res) => {
+  try {
+    const news = await adminSchemas.GachaNews.find({ type: "public" });
+    res.send({ status: 1, news });
+  } catch (error) {
+    console.log("💥 News Fetch Error: ", error);
+    res.send({ status: 0, message: error });
+  }
+});
+
 router.post("/news_user", async (req, res) => {
   console.log("📩 News User", req.body);
 
