@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/static/css/main.9dfe4b5b.css",
+    "main.css": "/static/css/main.92addbc0.css",
     "main.js": "/static/js/main.96dec4ee.js",
     "static/js/688.11b1fdc9.chunk.js": "/static/js/688.11b1fdc9.chunk.js",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.07ed6d5fa32c1d54af0f.ttf",
@@ -32,7 +32,7 @@
     "static/media/check-email.svg": "/static/media/check-email.04306f2e57becc2aceba4df730d3e6e6.svg"
   },
   "entrypoints": [
-    "static/css/main.9dfe4b5b.css",
+    "static/css/main.92addbc0.css",
     "static/js/main.96dec4ee.js"
   ]
 }
