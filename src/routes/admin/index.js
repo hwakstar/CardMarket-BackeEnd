@@ -821,8 +821,8 @@ router.post(
   auth,
   uploadCarousel.single("file"),
   async (req, res) => {
-    const { id, link } = req.body;
-    const carouselData = { link: link };
+    const { id, link, top } = req.body;
+    const carouselData = { link: link, top: top };
 
     try {
       if (req.file?.filename !== undefined)

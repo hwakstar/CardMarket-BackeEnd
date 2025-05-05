@@ -147,6 +147,7 @@ const couponHistory = new Schema({
 const carouselSchema = new Schema({
   link: { type: String, required: true },
   img_url: { type: String, required: true },
+  top: { type: Boolean, default: true },
 });
 
 // Admin
