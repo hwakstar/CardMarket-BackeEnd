@@ -1230,6 +1230,18 @@ router.post("/check_usage_points", async (req, res) => {
   }
 });
 
+// * Get Invite Bonus List
+router.post("/get_invite_list", async (req, res) => {
+  let list = await PointLog.find({
+    usage: "invite_bonus_1",
+    userID: req.body.userID,
+  });
+
+  res.send({
+    list: list,
+  });
+});
+
 function determineMembership(points, membershipConditions) {
   for (const condition of membershipConditions) {
     if (points >= condition.requiredPoints) {
