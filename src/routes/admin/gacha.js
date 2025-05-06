@@ -334,7 +334,7 @@ router.get("/check_hidden", auth, async (req, res) => {
           gachaID: hiddenGachas[random_num]._id,
         });
         newHiddenGachaRecord.save();
-        res.send({
+        return res.send({
           status: 1,
           gachaName: hiddenGachas[random_num].name,
           gachaImgUrl: hiddenGachas[random_num].img_url,
@@ -342,6 +342,8 @@ router.get("/check_hidden", auth, async (req, res) => {
         });
       }
     }
+
+    res.send({ status: 0 });
   }
 });
 
