@@ -722,10 +722,13 @@ router.post("/forgot", async (req, res) => {
         Body: {
           Html: {
             Data: `
-              <h1>Please use the following link to reset your password</h1>
-              <a href="https://testsite.on-gacha.net/auth/forgot?token=${token}"> <h2> Reset Password </h2> </a>
+              <h1>パスワード再設定のお知らせ</h1>
+              <p>あなたのアカウントからパスワード再設定のリクエストがありました。</p>
+              <a href="https://testsite.on-gacha.net/auth/forgot?token=${token}"> 
+              <h4> パスワード再設定のお知らせ </h2> 
+              </a>
               <hr />
-              <p>This email may contain sensetive information</p>
+              <p>このメールには機微な情報が含まれている可能性があります。</p>
             `,
             Charset: "UTF-8",
           },

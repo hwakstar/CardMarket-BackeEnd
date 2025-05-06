@@ -1,29 +1,29 @@
 {
   "files": {
-    "main.css": "/static/css/main.4597467e.css",
-    "main.js": "/static/js/main.d664c0de.js",
+    "main.css": "/static/css/main.748c2a70.css",
+    "main.js": "/static/js/main.7167539d.js",
     "static/js/688.11b1fdc9.chunk.js": "/static/js/688.11b1fdc9.chunk.js",
+    "static/media/instagram.png": "/static/media/instagram.4e744daa1a7b8597d40b.png",
     "static/media/fa-solid-900.ttf": "/static/media/fa-solid-900.07ed6d5fa32c1d54af0f.ttf",
+    "static/media/threads.png": "/static/media/threads.738db0e14d91ec44fbc7.png",
     "static/media/fa-brands-400.ttf": "/static/media/fa-brands-400.0ff70dcbf135d859ebf3.ttf",
     "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.93f719f4d62bfa3e748c.woff2",
     "static/media/coin.png": "/static/media/coin.63af60f5b20d418862ce.png",
     "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.bb8d5a145e22822103fb.woff2",
-    "static/media/instagram.jpg": "/static/media/instagram.f8191acd0e54751e04e5.jpg",
     "static/media/on-gacha_logo.png": "/static/media/on-gacha_logo.4bc63264ea79ce85ae6e.png",
     "static/media/paidy.png": "/static/media/paidy.e6aafbef42c386b92950.png",
+    "static/media/x.png": "/static/media/x.a6433f0615861412b371.png",
+    "static/media/tiktok.png": "/static/media/tiktok.9eeeba50f5ff29075efc.png",
     "static/media/fa-regular-400.ttf": "/static/media/fa-regular-400.17a6e1aebccdbaa39e78.ttf",
+    "static/media/facebook.png": "/static/media/facebook.928bf9a2f9a06aa748ee.png",
+    "static/media/line.png": "/static/media/line.5eaa27be82169d324e37.png",
     "static/media/amazonpay.png": "/static/media/amazonpay.7ca038f586b39e449a3c.png",
     "static/media/login.png": "/static/media/login.a952913a7a42e036aa49.png",
     "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.bc3722686635b5f86132.woff2",
     "static/media/upload.png": "/static/media/upload.011989731c79ae349704.png",
-    "static/media/line.png": "/static/media/line.99ebb67660a5abe864ef.png",
     "static/media/admin-logo.png": "/static/media/admin-logo.929b09097ee36a4175ee.png",
-    "static/media/tiktok.png": "/static/media/tiktok.41413c2fa8472363a6f8.png",
-    "static/media/facebook.png": "/static/media/facebook.3dbb32661dff47d02e95.png",
-    "static/media/x.png": "/static/media/x.ceb79d63ad4700297342.png",
     "static/media/fa-v4compatibility.ttf": "/static/media/fa-v4compatibility.0f6cb412603527bda691.ttf",
     "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.6cfec8414be20e2c3426.woff2",
-    "static/media/threads.webp": "/static/media/threads.ca1ad1400fb6f88b7369.webp",
     "static/media/slick.svg": "/static/media/slick.2630a3e3eab21c607e21.svg",
     "static/media/slick.eot": "/static/media/slick.a4e97f5a2a64f0ab1323.eot",
     "static/media/slick.ttf": "/static/media/slick.c94f7671dcc99dce43e2.ttf",
@@ -32,7 +32,7 @@
     "static/media/check-email.svg": "/static/media/check-email.04306f2e57becc2aceba4df730d3e6e6.svg"
   },
   "entrypoints": [
-    "static/css/main.4597467e.css",
-    "static/js/main.d664c0de.js"
+    "static/css/main.748c2a70.css",
+    "static/js/main.7167539d.js"
   ]
 }
