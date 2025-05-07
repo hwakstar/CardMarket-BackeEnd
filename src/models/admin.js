@@ -43,24 +43,28 @@ const rubbishSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const gachaTicketSchema = new mongoose.Schema({
-  gachaID: { type: mongoose.Schema.Types.ObjectId, ref: "gacha" },
-  userID: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
-  name: { type: String },
-  trackingNumber: { type: String },
-  deliveryCompany: { type: String },
-  unique_id: { type: String },
-  deliverStatus: { type: String },
-  kind: { type: String },
-  img_url: { type: String },
-  cashback: { type: Number },
-  order: { type: Number },
-  sold: { type: Boolean, default: false },
-  soldTime: { type: Date },
-  type: { type: String, default: "" },
-  deliveryTime: { type: Date },
-  expireTime: { type: Date },
-});
+const gachaTicketSchema = new mongoose.Schema(
+  {
+    gachaID: { type: mongoose.Schema.Types.ObjectId, ref: "gacha" },
+    userID: { type: mongoose.Schema.Types.ObjectId, ref: "Users" },
+    name: { type: String },
+    trackingNumber: { type: String },
+    deliveryCompany: { type: String },
+    unique_id: { type: String },
+    deliverStatus: { type: String }, // * in transit, pending, delivered, canceled
+    kind: { type: String },
+    img_url: { type: String },
+    cashback: { type: Number },
+    order: { type: Number },
+    sold: { type: Boolean, default: false },
+    soldTime: { type: Date },
+    type: { type: String, default: "" },
+    deliveryTime: { type: Date },
+    expireTime: { type: Date },
+    remarks: { type: String },
+  },
+  { timestamps: true }
+);
 
 // Coupon
 const couponSchema = new Schema({

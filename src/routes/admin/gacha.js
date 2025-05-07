@@ -746,7 +746,7 @@ router.post("/shipping", auth, async (req, res) => {
           _id: { $in: shipIds },
           type: "shipping",
         },
-        { deliverStatus: "awaiting", deliveryTime: Date.now() }
+        { deliverStatus: "pending", deliveryTime: Date.now() }
       );
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
@@ -792,7 +792,7 @@ router.post("/ticket", auth, async (req, res) => {
  */
 router.get("/rank", async (req, res) => {
   try {
-    let todayStr = format(Date.now(), "YYYY-MM-DD");
+    let todayStr = format(Date.now(), "yyyy-MM-DD");
 
     let gachaRank = await adminSchemas.GachaRanking.find({
       date: todayStr,

@@ -556,61 +556,86 @@ router.post("/changeDeliverStatus", auth, async (req, res) => {
 });
 
 // get statistics data such as total income and gacha status
+const mongoose = require("mongoose");
+
 router.post("/statistics", auth, async (req, res) => {
   const { pendingStartDate, deliveringStartDate } = req.body;
 
   try {
-    // get total income (purchase points)
+    // Get total income (purchase points)
     const pointLogs = await PoingLogs.aggregate([
       { $match: { usage: "purchasePoints" } },
       { $group: { _id: null, totalPoints: { $sum: "$point_num" } } },
     ]);
 
-    const users = await Users.find();
+    // Get current total status counts
+    const [pendings, delivereds, transits, canceled] = await Promise.all([
+      adminSchemas.GachaTicketSchema.countDocuments({
+        deliverStatus: "pending",
+        sold: true,
+      }),
+      adminSchemas.GachaTicketSchema.countDocuments({
+        deliverStatus: "delivered",
+        sold: true,
+      }),
+      adminSchemas.GachaTicketSchema.countDocuments({
+        sold: true,
+        deliverStatus: "transit",
+      }),
+      adminSchemas.GachaTicketSchema.countDocuments({
+        sold: true,
+        deliverStatus: "canceled",
+      }),
+    ]);
 
-    // ? get prize status
-    let pendings = await adminSchemas.GachaTicketSchema.find({
-      deliverStatus: "notSelected",
-    }).count();
-    let deliverings = await adminSchemas.GachaTicketSchema.find({
-      deliverStatus: "awaiting",
-    }).count();
+    // Prepare 7-day range filter
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 30);
 
-    let periodPendings = [];
-    let periodDeliverings = [];
-    users.map((user) => {
-      for (let i = 0; i < user.obtained_prizes.length; i++) {
-        const prize = user.obtained_prizes[i];
+    // Filtered ticket records from past 7 days by status
+    const [recentPendings, recentDelivereds, recentTransits, recentCanceleds] =
+      await Promise.all([
+        adminSchemas.GachaTicketSchema.find({
+          deliverStatus: "pending",
+          sold: true,
+        }),
+        adminSchemas.GachaTicketSchema.find({
+          deliverStatus: "delivered",
+          sold: true,
+        }),
+        adminSchemas.GachaTicketSchema.find({
+          deliverStatus: "transit",
+          sold: true,
+        }),
+        adminSchemas.GachaTicketSchema.find({
+          deliverStatus: "canceled",
+          sold: true,
+        }),
+      ]);
 
-        if (
-          prize.deliverStatus === "awaiting" &&
-          prize.drawDate > pendingStartDate
-        )
-          periodPendings.push(prize);
-        if (
-          prize.deliverStatus === "shipped" &&
-          prize.drawDate > deliveringStartDate
-        )
-          periodDeliverings.push(prize);
-      }
-    });
+    // Gacha visit status
     const gachaVisitStatus = await adminSchemas.GachaVisitStatus.findOne();
     const currentStatus = {
-      gacha: gachaVisitStatus.currentGacha,
-      invite: gachaVisitStatus.currentInvite,
+      gacha: gachaVisitStatus?.currentGacha,
+      invite: gachaVisitStatus?.currentInvite,
     };
-    const maintance = gachaVisitStatus.currentMaintance;
+    const maintance = gachaVisitStatus?.currentMaintance;
 
     res.send({
       status: 1,
-      totalIncome: pointLogs[0] ? pointLogs[0].totalPoints : 0,
-      prizeStatus: [pendings, deliverings],
-      periodPendings,
-      periodDeliverings,
-      currentStatus: currentStatus,
-      maintance: maintance,
+      totalIncome: pointLogs[0]?.totalPoints || 0,
+      prizeStatus: [pendings, delivereds, transits, canceled],
+      recentStatus: {
+        pending: recentPendings,
+        delivered: recentDelivereds,
+        transit: recentTransits,
+        canceled: recentCanceleds,
+      },
+      currentStatus,
+      maintance,
     });
   } catch (error) {
+    console.error("Statistics error:", error);
     res.send({ status: 0, msg: "Failed to get data." });
   }
 });
@@ -1219,6 +1244,134 @@ router.delete("/news/:id", async (req, res) => {
       status: 0,
       message: err,
     });
+  }
+});
+
+router.get("/ticket_shipping_log", async (req, res) => {
+  const results = await adminSchemas.GachaTicketSchema.aggregate([
+    // Step 1: Filter sold tickets
+    { $match: { sold: true } },
+
+    // Step 2: Join gacha data
+    {
+      $lookup: {
+        from: "gacha", // collection name for gacha
+        localField: "gachaID",
+        foreignField: "_id",
+        as: "gacha",
+      },
+    },
+    {
+      $addFields: {
+        gacha: { $arrayElemAt: ["$gacha", 0] },
+      },
+    },
+
+    // Step 3: Join user data
+    {
+      $lookup: {
+        from: "users", // actual MongoDB collection name, case-insensitive
+        localField: "userID",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+
+    {
+      $addFields: {
+        userinfo: {
+          _id: "$user._id",
+          name: "$user.name",
+          email: "$user.email",
+          address: "$user.address",
+          city: "$user.city",
+          country: "$user.country",
+          phoneNumber: "$user.phoneNumber",
+          shipAddress_id: "$user.shipAddress_id", // required for shipping address lookup
+        },
+      },
+    },
+
+    // Step 4: Join shipping address from user.shipAddress_id
+    {
+      $lookup: {
+        from: "shipAddress", // correct collection name
+        localField: "user.shipAddress_id",
+        foreignField: "_id",
+        as: "user.shipAddress",
+      },
+    },
+    {
+      $addFields: {
+        "user.shipAddress": { $arrayElemAt: ["$user.shipAddress", 0] },
+      },
+    },
+
+    // Step 5: Group by user and collect tickets
+    {
+      $group: {
+        _id: "$userID",
+        user: { $first: "$userinfo" },
+        tickets: {
+          $push: {
+            _id: "$_id",
+            name: "$name",
+            kind: "$kind",
+            img_url: "$img_url",
+            trackingNumber: "$trackingNumber",
+            deliveryCompany: "$deliveryCompany",
+            deliverStatus: "$deliverStatus",
+            cashback: "$cashback",
+            order: "$order",
+            soldTime: "$soldTime",
+            type: "$type",
+            remarks: "$remarks",
+            deliveryTime: "$deliveryTime",
+            expireTime: "$expireTime",
+            gacha: {
+              _id: "$gacha._id",
+              name: "$gacha.name",
+            },
+          },
+        },
+      },
+    },
+
+    // Step 6: Format output
+    {
+      $project: {
+        _id: 1,
+        user: 1,
+        tickets: 1,
+      },
+    },
+  ]);
+
+  res.send({
+    results,
+  });
+});
+
+router.post("/ticket_change_status", async (req, res) => {
+  const { id, updatedData } = req.body;
+
+  try {
+    await adminSchemas.GachaTicketSchema.findByIdAndUpdate(id, {
+      $set: {
+        ...updatedData,
+      },
+    });
+
+    res.send({
+      status: 1,
+    });
+  } catch (err) {
+    res.send({
+      status: 0,
+      message: err,
+    });
+    console.log("💥 Error Ticket Change Status: ", err);
   }
 });
 
