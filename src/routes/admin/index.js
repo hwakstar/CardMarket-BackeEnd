@@ -1258,7 +1258,7 @@ router.delete("/news/:id", async (req, res) => {
 router.get("/ticket_shipping_log", async (req, res) => {
   const results = await adminSchemas.GachaTicketSchema.aggregate([
     // Step 1: Filter sold tickets
-    { $match: { sold: true } },
+    { $match: { sold: true, type: "shipping" } },
 
     // Step 2: Join gacha data
     {
