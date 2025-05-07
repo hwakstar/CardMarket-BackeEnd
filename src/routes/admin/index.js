@@ -572,18 +572,22 @@ router.post("/statistics", auth, async (req, res) => {
     const [pendings, delivereds, transits, canceled] = await Promise.all([
       adminSchemas.GachaTicketSchema.countDocuments({
         deliverStatus: "pending",
+        type: "shipping",
         sold: true,
       }),
       adminSchemas.GachaTicketSchema.countDocuments({
+        type: "shipping",
         deliverStatus: "delivered",
         sold: true,
       }),
       adminSchemas.GachaTicketSchema.countDocuments({
         sold: true,
+        type: "shipping",
         deliverStatus: "transit",
       }),
       adminSchemas.GachaTicketSchema.countDocuments({
         sold: true,
+        type: "shipping",
         deliverStatus: "canceled",
       }),
     ]);
@@ -597,18 +601,22 @@ router.post("/statistics", auth, async (req, res) => {
       await Promise.all([
         adminSchemas.GachaTicketSchema.find({
           deliverStatus: "pending",
+          type: "shipping",
           sold: true,
         }),
         adminSchemas.GachaTicketSchema.find({
           deliverStatus: "delivered",
+          type: "shipping",
           sold: true,
         }),
         adminSchemas.GachaTicketSchema.find({
           deliverStatus: "transit",
+          type: "shipping",
           sold: true,
         }),
         adminSchemas.GachaTicketSchema.find({
           deliverStatus: "canceled",
+          type: "shipping",
           sold: true,
         }),
       ]);
