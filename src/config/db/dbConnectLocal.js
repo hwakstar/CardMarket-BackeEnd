@@ -11,10 +11,10 @@ async function dbConnect() {
       // useCreateIndex: true
     })
     .then(() => {
-      console.log("Successfully connected to MongoDB!");
+      console.log("✅ Successfully connected to MongoDB!");
     })
     .catch((error) => {
-      console.log("Unable to connect to MongoDB!");
+      console.log("🔴 Unable to connect to MongoDB!");
       console.error(error);
     });
 }

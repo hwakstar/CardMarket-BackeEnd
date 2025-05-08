@@ -796,8 +796,9 @@ router.get("/rank", async (req, res) => {
 
     let gachaRank = await adminSchemas.GachaRanking.find({
       date: todayStr,
-    }).populate("gachaID");
-    // .sort({ pullNumber: -1 });
+    })
+      .populate("gachaID")
+      .sort({ pullNumber: -1 });
 
     res.send({
       status: 1,
