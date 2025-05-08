@@ -268,7 +268,7 @@ const HiddenGachaRecord = mongoose.model(
   "hiddenGachaHistory"
 );
 const GachaRanking = mongoose.model(
-  "GachaRanking",
+  "gachaRanking",
   GachaRankingSchema,
   "gachaRanking"
 );

@@ -374,7 +374,7 @@ router.post("/register", async (req, res) => {
       res.send({ status: 0, msg: "failedReq" });
     }
   } catch (error) {
-    console.log("Register Error: ", error);
+    console.log("💥 Register Error: ", error);
     res.send({ status: 0, msg: "failedReq" });
   }
 });
@@ -1069,10 +1069,11 @@ router.delete("/del_shipping_address/:id", auth, async (req, res) => {
 
 // get all shipping address of user
 router.get("/obtainedPrizes/:id", auth, async (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
 
-  if (id === undefined) return res.send({ status: 0 });
-  console.log(id);
+  if (id == "undefined") {
+    return res.send({ status: 0 });
+  }
 
   try {
     const tickets = await adminSchemas.GachaTicketSchema.find({
@@ -1119,8 +1120,6 @@ router.get("/membership", async (req, res) => {
 
 // Create a rank
 router.post("/membership", async (req, res) => {
-  console.log(req.body);
-
   try {
     const newRank = new adminSchemas.MembershipRank(req.body);
     await newRank.save();
@@ -1197,7 +1196,7 @@ router.post("/line_integration", async (req, res) => {
       status: 0,
       message: err,
     });
-    console.log(err);
+    console.log("💥 Line Integrating Error: ", err);
   }
 });
 0;

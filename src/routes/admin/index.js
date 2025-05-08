@@ -1135,8 +1135,6 @@ router.post("/news/pic", uploadBlog.single("file"), async (req, res) => {
 router.post("/news/search", async (req, res) => {
   const { keyword } = req.body;
 
-  console.log(req.body);
-
   const users = await Users.find({
     $or: [
       { name: { $regex: keyword, $options: "i" } },
@@ -1202,8 +1200,6 @@ router.put("/news/:id", uploadBlog.single("file"), async (req, res) => {
   const { id } = req.params;
 
   const { title, content, type, userID, img_url } = req.body;
-  console.log(req.body);
-
   // Build JSON object manually
   const updatedData = {
     title,

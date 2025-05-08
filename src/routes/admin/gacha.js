@@ -681,7 +681,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 
     // 🥇 Set Gacha Ranking
     let todayStr = format(Date.now(), "yyyy-MM-dd");
-    adminSchemas.GachaRanking.findOneAndUpdate(
+    await adminSchemas.GachaRanking.findOneAndUpdate(
       { gachaID: gachaID, date: todayStr },
       {
         $inc: { pullNumber: 1 },
@@ -792,13 +792,12 @@ router.post("/ticket", auth, async (req, res) => {
  */
 router.get("/rank", async (req, res) => {
   try {
-    let todayStr = format(Date.now(), "yyyy-MM-DD");
+    let todayStr = format(Date.now(), "yyyy-MM-dd");
 
     let gachaRank = await adminSchemas.GachaRanking.find({
       date: todayStr,
-    })
-      .populate("gachaID")
-      .sort({ pullNumber: -1 });
+    }).populate("gachaID");
+    // .sort({ pullNumber: -1 });
 
     res.send({
       status: 1,
@@ -984,9 +983,6 @@ router.post("/tag", async (req, res) => {
 
 router.put("/tag/:id", async (req, res) => {
   const { id } = req.params;
-  console.log(id);
-
-  console.log(req.body);
 
   try {
     await adminSchemas.GachaTag.findByIdAndUpdate(id, {
@@ -1037,7 +1033,32 @@ router.get("/current_server_time", (req, res) => {
   res.send({ status: 1, current_time: current_time });
 });
 
-// * This is must be last line
+// * Send List for Setting Prize Video List
+router.get("/list_for_prize_video", async (req, res) => {
+  let gachaList = await Gacha.find({}).select({
+    _id: 1,
+    name: 1,
+    img_url: 1,
+  });
+
+  res.send(gachaList);
+});
+
+// * Check Prize Video
+router.post("/check_unique_prize_video", async (req, res) => {
+  let result = await PrizeVideo.findOne({
+    gachaID: req.body.gachaID,
+    kind: req.body.kind,
+  });
+
+  if (result != null) {
+    res.send({ status: 1 });
+  } else {
+    res.send({ status: 0 });
+  }
+});
+
+// ! This is must be last line
 router.get("/:id", async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
     return res.status(400).json({ error: "Invalid ID format" });

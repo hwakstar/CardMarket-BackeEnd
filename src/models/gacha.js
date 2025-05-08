@@ -40,6 +40,6 @@ const gachaSchema = new mongoose.Schema(
   }
 );
 
-const Gacha = mongoose.model("Gacha", gachaSchema, "gacha");
+const Gacha = mongoose.model("gacha", gachaSchema, "gacha");
 
 module.exports = mongoose.model.Gacha || Gacha;
