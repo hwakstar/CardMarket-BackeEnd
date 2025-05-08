@@ -1318,9 +1318,9 @@ async function updateMembershipsAndBonuses() {
       }
     }
 
-    console.log("Memberships and bonuses updated successfully.");
+    console.log("✅ Memberships and bonuses updated successfully.");
   } catch (error) {
-    console.error("Error updating memberships and bonuses:", error);
+    console.error("💥 Error updating memberships and bonuses:", error);
   }
 }
 
