@@ -943,7 +943,7 @@ router.post(
 // get all
 router.get("/get_prizeVideos", async (req, res) => {
   try {
-    const prizeVideos = await PrizeVideo.find();
+    const prizeVideos = await PrizeVideo.find().populate("gachaID");
 
     return res.send({ status: 1, prizeVideos: prizeVideos });
   } catch (error) {
