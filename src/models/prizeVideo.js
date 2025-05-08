@@ -4,6 +4,7 @@ const prizeVideoSchema = new mongoose.Schema(
   {
     kind: { type: String, required: true },
     url: { type: String, required: true },
+    gachaID: { type: mongoose.Types.ObjectId, ref: "gacha" },
   },
   {
     timestamps: true,
