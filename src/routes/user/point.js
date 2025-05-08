@@ -135,6 +135,20 @@ router.post("/admincode", auth, async (req, res) => {
       return res.send({ status: 0, msg: "notAdmin" });
     }
 
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    let couponHistoryLength = await PoingLog.find({
+      usage: "coupon",
+      date: { $gte: start, $lte: end },
+    }).countDocuments();
+
+    if (couponHistoryLength > 50) {
+      res.send({ status: 0, msg: "Over Limit Number" });
+    }
+
     const isCheck = await PointLog.findOne({
       user_id: user_id,
       couponcode: code,
