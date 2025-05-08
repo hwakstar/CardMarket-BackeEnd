@@ -918,7 +918,10 @@ router.post(
     const vidData = { kind: req.body.kind };
 
     try {
-      const existVidData = await PrizeVideo.findOne({ kind: req.body.kind });
+      const existVidData = await PrizeVideo.findOne({
+        kind: req.body.kind,
+        gachaID: req.body.gachaID,
+      });
 
       // if (existVidData) {
       //   const filePath = path.join("./", existVidData.url);
