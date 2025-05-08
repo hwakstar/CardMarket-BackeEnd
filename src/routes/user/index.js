@@ -1245,6 +1245,17 @@ router.post("/get_invite_list", async (req, res) => {
   });
 });
 
+router.post("/get_coupon_list", async (req, res) => {
+  let list = await PointLog.find({
+    usage: "coupon",
+    userID: req.body.userID,
+  });
+
+  res.send({
+    list: list,
+  });
+});
+
 function determineMembership(points, membershipConditions) {
   for (const condition of membershipConditions) {
     if (points >= condition.requiredPoints) {
