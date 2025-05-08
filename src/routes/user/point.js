@@ -146,7 +146,7 @@ router.post("/admincode", auth, async (req, res) => {
     }).countDocuments();
 
     if (couponHistoryLength > 50) {
-      res.send({ status: 0, msg: "Over Limit Number" });
+      return res.send({ status: 0, msg: "Over Limit Number" });
     }
 
     const isCheck = await PointLog.findOne({
