@@ -915,7 +915,7 @@ router.post(
   auth,
   uploadPrizeVideo.single("file"),
   async (req, res) => {
-    const vidData = { kind: req.body.kind };
+    const vidData = { kind: req.body.kind, gachaID: req.body.gachaID };
 
     try {
       const existVidData = await PrizeVideo.findOne({
