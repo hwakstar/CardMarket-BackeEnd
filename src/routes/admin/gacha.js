@@ -744,9 +744,11 @@ router.post("/shipping", auth, async (req, res) => {
       await adminSchemas.GachaTicketSchema.updateMany(
         {
           _id: { $in: shipIds },
-          type: "shipping",
+          type: {
+            $ne: "return",
+          },
         },
-        { deliverStatus: "pending", deliveryTime: Date.now() }
+        { deliverStatus: "transit", deliveryTime: Date.now() }
       );
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
