@@ -703,7 +703,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
 });
 
 router.post("/shipping", auth, async (req, res) => {
-  const { shippingPrizes, returningPrizes, user } = req.body;
+  const { shippingPrizes, returningPrizes, user, remarks } = req.body;
 
   let cashback = 0;
 
@@ -753,7 +753,11 @@ router.post("/shipping", auth, async (req, res) => {
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
         { _id: { $in: returnIds }, type: { $ne: "shipping" } },
-        { deliverStatus: "returned", deliveryTime: Date.now() }
+        {
+          deliverStatus: "returned",
+          deliveryTime: Date.now(),
+          remarks: remarks,
+        }
       );
 
       let user_ = await Users.findOne({ _id: user._id });
