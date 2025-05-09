@@ -649,7 +649,7 @@ router.post("/draw_gacha", auth, async (req, res) => {
         $set: {
           userID: user._id,
           sold: true,
-          deliverStatus: "notSelected",
+          deliverStatus: "pending",
           soldTime: Date.now(),
           expireTime: expireTime,
         },
@@ -748,7 +748,7 @@ router.post("/shipping", auth, async (req, res) => {
             $ne: "return",
           },
         },
-        { deliverStatus: "transit", deliveryTime: Date.now() }
+        { deliverStatus: "transit", deliveryTime: Date.now(), remarks: remarks }
       );
     } else {
       await adminSchemas.GachaTicketSchema.updateMany(
@@ -756,7 +756,6 @@ router.post("/shipping", auth, async (req, res) => {
         {
           deliverStatus: "returned",
           deliveryTime: Date.now(),
-          remarks: remarks,
         }
       );
 
