@@ -90,12 +90,14 @@ router.post("/", auth, uploadGacha.single("file"), async (req, res) => {
         { $set: gachaData } // Update object using $set
       );
 
+      // 📈 Update Gacha
       if (result) {
         let gacha = await Gacha.findOne({ _id: req.body.id });
 
         if (gacha.period) {
           clearTimeout(oripaTimers[gacha._id]);
-          let remainTime = gacha.endTime.getTime() - Date.now();
+          let remainTime =
+            gacha.endTime.getTime() - Date.now() - 9 * 60 * 60 * 1000;
 
           let timer = setTimeout(async () => {
             let ugacha = await Gacha.findOne({ _id: req.body.id });
@@ -1149,7 +1151,7 @@ const setPreInfo = () => {
 
       // Timer Setting
       if (gc.period) {
-        let remainTime = gc.endTime.getTime() - Date.now();
+        let remainTime = gc.endTime.getTime() - Date.now() - 9 * 60 * 60 * 1000;
         let timer = setTimeout(() => {
           gc.isRelease = false;
           gc.save();
