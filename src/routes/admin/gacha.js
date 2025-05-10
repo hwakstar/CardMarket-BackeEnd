@@ -776,6 +776,29 @@ router.post("/shipping", auth, async (req, res) => {
   }
 });
 
+router.post("/confirm_deliver", async (req, res) => {
+  const { ticketID } = req.body;
+
+  try {
+    await adminSchemas.GachaTicketSchema.findByIdAndUpdate(ticketID, {
+      $set: {
+        deliverStatus: "delivered",
+      },
+    });
+
+    res.send({
+      status: 1,
+      message: "success",
+    });
+  } catch (err) {
+    console.log("💥 Confirm Deliver Error: ", err);
+    res.send({
+      status: 0,
+      err: err,
+    });
+  }
+});
+
 router.post("/ticket", auth, async (req, res) => {
   const { gachaID } = req.body;
 
