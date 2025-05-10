@@ -1058,8 +1058,12 @@ router.delete("/tag/:id", async (req, res) => {
 
 // * Get Current Server Time
 router.get("/current_server_time", (req, res) => {
-  let current_time = Date.now();
-  res.send({ status: 1, current_time: current_time });
+  const utcTime = Date.now(); // UTC timestamp in ms
+  const jstGapMs = 9 * 60 * 60 * 1000; // 9 hours in milliseconds
+
+  const jstTime = utcTime + jstGapMs;
+
+  res.send({ status: 1, current_time: jstTime });
 });
 
 // * Send List for Setting Prize Video List
